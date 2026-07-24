@@ -1,0 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@tailwind base; @tailwind components; @tailwind utilities;
+@layer base { * { @apply border-white/10; } html { scroll-behavior:smooth; } body { @apply bg-white text-zinc-900 antialiased dark:bg-ink dark:text-zinc-100; font-family:Manrope,system-ui,sans-serif; } ::selection { @apply bg-violet-500/40 text-white; } }
+@layer components { .container-page { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; } .glass { @apply border border-zinc-200/70 bg-white/80 backdrop-blur-xl dark:border-white/10 dark:bg-white/[.04]; } .section-title { @apply text-2xl font-extrabold tracking-tight sm:text-3xl; } .text-muted { @apply text-zinc-600 dark:text-zinc-400; } }
+@keyframes float { 0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)} } .animate-float{animation:float 5s ease-in-out infinite}

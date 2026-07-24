@@ -1,0 +1,46 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 600 760"
+  role="img"
+  aria-labelledby="cover-title cover-description"
+>
+  <title id="cover-title">Wynn Store game cover</title>
+  <desc id="cover-description">A premium purple and blue abstract gaming placeholder.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#18181b" />
+      <stop offset="1" stop-color="#09090b" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#8b5cf6" />
+      <stop offset="0.55" stop-color="#4f46e5" />
+      <stop offset="1" stop-color="#2563eb" />
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop stop-color="#a78bfa" stop-opacity="0.72" />
+      <stop offset="1" stop-color="#7c3aed" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="600" height="760" rx="32" fill="url(#background)" />
+  <circle cx="438" cy="210" r="250" fill="url(#glow)" />
+  <path d="M0 556 204 278l96 154 80-102 220 284v146H0Z" fill="url(#accent)" opacity="0.88" />
+  <path
+    d="m148 278 72-72 72 72-72 72Zm250-102 52-52 52 52-52 52Z"
+    fill="none"
+    stroke="#fff"
+    stroke-width="12"
+    opacity="0.82"
+  />
+  <path d="M82 86h110M408 674h110" stroke="#fff" stroke-linecap="round" opacity="0.2" />
+  <text
+    x="50%"
+    y="88%"
+    fill="#fff"
+    font-family="Arial, sans-serif"
+    font-size="34"
+    font-weight="700"
+    letter-spacing="9"
+    text-anchor="middle"
+  >WYNN</text>
+</svg>
