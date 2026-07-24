@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" role="img" aria-labelledby="title desc">
+<title id="title">GENSHIN IMPACT</title><desc id="desc">Local cover artwork for GENSHIN IMPACT</desc>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#17334c"/><stop offset="1" stop-color="#07080d"/></linearGradient><radialGradient id="glow"><stop stop-color="#8bd3ff" stop-opacity=".55"/><stop offset="1" stop-color="#8bd3ff" stop-opacity="0"/></radialGradient></defs>
+<rect width="960" height="720" fill="url(#bg)"/><circle cx="700" cy="180" r="330" fill="url(#glow)"/>
+<circle cx="480" cy="250" r="175" fill="#4c8ac0" opacity=".45"/><path d="M480 65l34 105 110-30-70 88 82 75-112-4-44 103-44-103-112 4 82-75-70-88 110 30z" fill="none" stroke="#d9f3ff" stroke-width="15"/><path d="M190 470c120-90 220-50 290 0 80-70 185-88 290 0" fill="none" stroke="#87d8ff" stroke-width="20"/>
+<rect x="0" y="505" width="960" height="215" fill="#050609" opacity=".82"/>
+<text x="480" y="598" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="58" font-weight="900" letter-spacing="4">GENSHIN IMPACT</text>
+<text x="480" y="650" text-anchor="middle" fill="#8bd3ff" font-family="Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="7">STEP INTO TEYVAT</text>
+</svg>
