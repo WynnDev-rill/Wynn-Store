@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import os
 import subprocess
 from pathlib import Path
@@ -35,9 +36,12 @@ def _api_cli(args) -> int:
             print(f"{p.key:16} {masked(p.key)}")
         return 0
     if args.action == "set":
-        if not args.provider or not args.value:
-            raise SystemExit("Gunakan: cyber api set PROVIDER KEY")
-        set_key(args.provider, args.value)
+        if not args.provider:
+            raise SystemExit("Gunakan: cyber api set PROVIDER")
+        value = getpass.getpass(f"API key {args.provider}: ").strip()
+        if not value:
+            raise SystemExit("API key kosong")
+        set_key(args.provider, value)
         print(f"API {args.provider} tersimpan lokal.")
         return 0
     if args.action == "remove":
@@ -64,7 +68,6 @@ def build_parser() -> argparse.ArgumentParser:
     a = sub.add_parser("api")
     a.add_argument("action", choices=["list", "set", "remove"], nargs="?", default="list")
     a.add_argument("provider", nargs="?")
-    a.add_argument("value", nargs="?")
     return p
 
 
@@ -84,14 +87,16 @@ def main(argv: list[str] | None = None) -> int:
         update_app(update_engines=args.engines)
         print("Cyber Tool sudah diperbarui.")
         return 0
-    if args.cmd == "repair": return _repair()
+    if args.cmd == "repair":
+        return _repair()
     if args.cmd == "doctor":
         for name, ok in engine_status().items():
             print(f"{name:10} {'READY' if ok else 'MISSING'}")
         print(f"api        {len(configured())} configured")
         print(f"data       {ROOT}")
         return 0
-    if args.cmd == "api": return _api_cli(args)
+    if args.cmd == "api":
+        return _api_cli(args)
     if args.cmd == "history":
         from .tui import _history, _rich
         _, Console, _, _, _, _, _ = _rich()
