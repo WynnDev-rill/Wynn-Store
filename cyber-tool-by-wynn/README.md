@@ -54,14 +54,15 @@ API key bersifat **opsional**. Tanpa key, sumber publik yang didukung engine tet
 cyber api list
 cyber api set virustotal
 cyber api set github
-cyber api set censys
+cyber api set urlscan
+cyber api set netlas
 ```
 
 Untuk Censys, masukkan nilai dengan format `API_ID:API_SECRET` ketika prompt muncul.
 
-Key disimpan di `$HOME/.cyber-tool-by-wynn/api-keys.json` dengan permission lokal yang ketat dan tidak pernah ditulis ke repository. Konfigurasi provider Subfinder dibuat otomatis.
+Key disimpan di `$HOME/.cyber-tool-by-wynn/api-keys.json` dengan permission lokal yang ketat dan tidak pernah ditulis ke repository. Konfigurasi provider Subfinder dibuat otomatis. Tool hanya menyimpan provider yang masih didukung registry Cyber Tool agar key provider lama/tidak dikenal tidak ikut masuk konfigurasi scanner.
 
-Provider v0.1: GitHub, VirusTotal, SecurityTrails, Shodan, ProjectDiscovery Chaos, Censys, BinaryEdge, BeVigil, Hunter, dan BuiltWith.
+Provider v0.1.1: GitHub, VirusTotal, SecurityTrails, ProjectDiscovery Chaos, URLScan.io, Netlas, LeakIX, HackerTarget, WhoisXML API, Censys, Shodan, BinaryEdge, BeVigil, FullHunt, dan Cert Spotter.
 
 ## Cara kerja otomatis
 
