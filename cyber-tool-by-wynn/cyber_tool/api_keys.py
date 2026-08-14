@@ -13,17 +13,25 @@ class Provider:
     hint: str
 
 
+# Keep this registry aligned with current Subfinder provider names.  Unknown or
+# retired sources are intentionally not written to provider-config.yaml so an
+# old key cannot break a future scan.
 PROVIDERS: tuple[Provider, ...] = (
-    Provider("github", "GitHub", "token milikmu"),
+    Provider("github", "GitHub", "personal access token"),
     Provider("virustotal", "VirusTotal", "API key"),
     Provider("securitytrails", "SecurityTrails", "API key"),
-    Provider("shodan", "Shodan", "API key"),
     Provider("chaos", "ProjectDiscovery Chaos", "API key"),
+    Provider("urlscan", "URLScan.io", "API key (opsional)"),
+    Provider("netlas", "Netlas", "API key"),
+    Provider("leakix", "LeakIX", "API key"),
+    Provider("hackertarget", "HackerTarget", "API key (opsional)"),
+    Provider("whoisxmlapi", "WhoisXML API", "API key"),
     Provider("censys", "Censys", "API_ID:API_SECRET"),
+    Provider("shodan", "Shodan", "API key"),
     Provider("binaryedge", "BinaryEdge", "API key"),
     Provider("bevigil", "BeVigil", "API key"),
-    Provider("hunter", "Hunter", "API key"),
-    Provider("builtwith", "BuiltWith", "API key"),
+    Provider("fullhunt", "FullHunt", "API key"),
+    Provider("certspotter", "Cert Spotter", "API key (opsional)"),
 )
 
 
