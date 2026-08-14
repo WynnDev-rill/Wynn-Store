@@ -40,14 +40,16 @@ cyber repair
 
 ## API Sources
 
-API key bersifat **opsional**. Tanpa key, sumber publik yang didukung engine tetap dipakai. Key legal/free-tier milik pengguna dapat ditambahkan dari menu `API Sources` di TUI, atau CLI:
+API key bersifat **opsional**. Tanpa key, sumber publik yang didukung engine tetap dipakai. Key legal/free-tier milik pengguna paling mudah ditambahkan dari menu `API Sources` di TUI. CLI juga tersedia dan meminta key secara tersembunyi agar nilainya tidak masuk shell history:
 
 ```bash
 cyber api list
-cyber api set virustotal YOUR_KEY
-cyber api set github YOUR_TOKEN
-cyber api set censys API_ID:API_SECRET
+cyber api set virustotal
+cyber api set github
+cyber api set censys
 ```
+
+Untuk Censys, masukkan nilai dengan format `API_ID:API_SECRET` ketika prompt muncul.
 
 Key disimpan di `$HOME/.cyber-tool-by-wynn/api-keys.json` dengan permission lokal yang ketat dan tidak pernah ditulis ke repository. Konfigurasi provider Subfinder dibuat otomatis.
 
@@ -62,7 +64,7 @@ Provider v0.1: GitHub, VirusTotal, SecurityTrails, Shodan, ProjectDiscovery Chao
 5. Standard crawling dengan Katana, termasuk JavaScript endpoint parsing, `robots.txt`, dan sitemap.
 6. Nuclei screening dengan rate limit konservatif; template fuzz/DoS/intrusive dikecualikan eksplisit.
 7. Pass tambahan untuk exposure/configuration findings.
-8. Scope filter kedua setelah discovery/crawl.
+8. Scope filter kedua setelah discovery/crawl dan sebelum kandidat masuk report.
 9. Secret/token pada evidence dan URL disamarkan sebelum report.
 10. Report JSON + Markdown disimpan per scan.
 
