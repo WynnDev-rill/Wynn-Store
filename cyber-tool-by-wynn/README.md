@@ -6,19 +6,27 @@ Tool pertama dalam proyek **Cyber Tool By Wynn**: automation bug-bounty untuk Te
 
 ## Instalasi Termux
 
+Cara paling sederhana:
+
 ```bash
-pkg install -y git
-git clone --depth 1 https://github.com/WynnDev-rill/Wynn-Store.git
-bash Wynn-Store/cyber-tool-by-wynn/install.sh
+pkg install -y curl && curl -fsSL https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/cyber-tool-by-wynn/install.sh | bash
 ```
 
-Setelah itu cukup:
+Installer akan mengambil source terbaru dan memasang dependency/engine yang diperlukan. Setelah selesai cukup jalankan:
 
 ```bash
 cyber
 ```
 
 Tidak perlu masuk ke folder repository lagi.
+
+Alternatif instalasi manual:
+
+```bash
+pkg install -y git
+git clone --depth 1 https://github.com/WynnDev-rill/Wynn-Store.git
+bash Wynn-Store/cyber-tool-by-wynn/install.sh
+```
 
 ## Update
 
