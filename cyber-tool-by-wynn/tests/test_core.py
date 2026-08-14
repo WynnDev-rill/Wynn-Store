@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 
+from cyber_tool.api_keys import PROVIDERS
 from cyber_tool.report import parse_nuclei, redact_text, redact_url
 from cyber_tool.scope import filter_domains, filter_urls, normalize_domain
 
@@ -34,3 +35,10 @@ def test_nuclei_out_of_scope_is_dropped(tmp_path: Path):
     row = {"template-id": "outside", "host": "evil.example.net:443", "matched-at": "evil.example.net:443", "info": {"name": "Outside", "severity": "high"}}
     p.write_text(json.dumps(row) + "\n", encoding="utf-8")
     assert parse_nuclei([p], ["example.com"]) == []
+
+
+def test_api_registry_tracks_current_subfinder_sources():
+    keys = {provider.key for provider in PROVIDERS}
+    assert "hunter" not in keys
+    assert "builtwith" not in keys
+    assert {"github", "virustotal", "urlscan", "netlas", "leakix", "hackertarget"}.issubset(keys)
