@@ -107,7 +107,7 @@ def parse_nuclei(paths: list[Path], roots: list[str]) -> list[Finding]:
             tags = _tags(info)
             target = str(row.get("matched-at") or row.get("host") or row.get("url") or "")
             host_target = target if "://" in target else str(row.get("host") or target)
-            if "://" in host_target and not url_in_scope(host_target, roots):
+            if not host_target or not url_in_scope(host_target, roots):
                 continue
             template_id = str(row.get("template-id") or row.get("template_id") or row.get("template") or "unknown")
             dedupe = (template_id, target)
