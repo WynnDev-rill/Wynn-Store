@@ -105,6 +105,9 @@ def _load_resume(scan_id: str | None) -> tuple[dict, Path]:
 def scan(target: str, progress: Progress | None = None) -> ScanResult:
     ensure_layout()
     domain = normalize_domain(target)
+    # Preflight before creating a scan directory. A missing engine must not
+    # leave a fake "running" scan that appears in Resume.
+    require_engines()
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     scan_id = f"{stamp}-{domain.replace('.', '_')}"
     scan_dir = SCANS_DIR / scan_id
@@ -126,6 +129,9 @@ def scan(target: str, progress: Progress | None = None) -> ScanResult:
 def resume_scan(scan_id: str | None = None, progress: Progress | None = None) -> ScanResult:
     ensure_layout()
     meta, scan_dir = _load_resume(scan_id)
+    # Keep the previous state intact if the local toolchain is broken. This
+    # avoids flipping an interrupted/failed scan back to "running" on preflight.
+    require_engines()
     domain = normalize_domain((meta.get("authorized_scope") or [""])[0])
     meta["status"] = "running"
     meta["resumed_utc"] = datetime.now(timezone.utc).isoformat()
@@ -141,7 +147,6 @@ def _run_scan(
     progress: Progress | None,
     resumed: bool,
 ) -> ScanResult:
-    require_engines()
     cfg = load_config()
     roots = [domain]
     scan_id = str(meta.get("scan_id") or scan_dir.name)
@@ -170,13 +175,13 @@ def _run_scan(
             _write_lines(subs_file, subs)
             _mark_stage(scan_dir, meta, "recon")
         else:
-            _notify(progress, "resume", "Recon sudah selesai, dilewati")
+            _notify(progress, "resume", "Recon selesai")
         subs = filter_domains(_read_lines(subs_file) + [domain], roots)
 
         resolved_raw = scan_dir / "resolved-raw.txt"
         resolved_file = scan_dir / "resolved.txt"
         if not _stage_done(meta, "dns", resolved_file):
-            _notify(progress, "dns", f"Memeriksa {len(subs)} aset")
+            _notify(progress, "dns", f"{len(subs)} aset")
             run_command([
                 "dnsx", "-l", str(subs_file), "-silent", "-retry", "2",
                 "-rl", str(max(5, rate * 4)), "-duc", "-o", str(resolved_raw),
@@ -185,12 +190,12 @@ def _run_scan(
             _write_lines(resolved_file, resolved)
             _mark_stage(scan_dir, meta, "dns")
         else:
-            _notify(progress, "resume", "DNS validation sudah selesai, dilewati")
+            _notify(progress, "resume", "DNS selesai")
         resolved = filter_domains(_read_lines(resolved_file) + [domain], roots)
 
         httpx_file = scan_dir / "httpx.jsonl"
         if not _stage_done(meta, "web", httpx_file):
-            _notify(progress, "web", "Mengecek layanan web aktif")
+            _notify(progress, "web", "Mengecek web aktif")
             run_command([
                 "httpx", "-l", str(resolved_file), "-silent", "-j", "-sc", "-title", "-td",
                 "-server", "-ip", "-cname", "-fhr", "-maxr", "3",
@@ -199,7 +204,7 @@ def _run_scan(
             ], log_file, timeout=900)
             _mark_stage(scan_dir, meta, "web")
         else:
-            _notify(progress, "resume", "HTTP probing sudah selesai, dilewati")
+            _notify(progress, "resume", "Web selesai")
         assets = parse_httpx(httpx_file, roots)
         live_urls = sorted({a["url"] for a in assets})
         live_file = scan_dir / "live-urls.txt"
@@ -209,7 +214,7 @@ def _run_scan(
         if not _stage_done(meta, "crawl", crawl_file):
             crawled: list[str] = []
             if live_urls:
-                _notify(progress, "crawl", f"Mempelajari endpoint dari {len(live_urls)} web")
+                _notify(progress, "crawl", f"{len(live_urls)} web")
                 crawl_raw = scan_dir / "crawl-raw.txt"
                 run_command([
                     "katana", "-list", str(live_file), "-silent",
@@ -222,7 +227,7 @@ def _run_scan(
             _write_lines(crawl_file, crawled)
             _mark_stage(scan_dir, meta, "crawl")
         else:
-            _notify(progress, "resume", "Crawl sudah selesai, dilewati")
+            _notify(progress, "resume", "Crawl selesai")
         crawled = filter_urls(_read_lines(crawl_file), roots)
 
         nuclei_targets = filter_urls(live_urls + crawled, roots)[:2500]
@@ -232,7 +237,7 @@ def _run_scan(
         main_out = scan_dir / "nuclei-main.jsonl"
         if not _stage_done(meta, "screen", main_out):
             if nuclei_targets:
-                _notify(progress, "screen", f"Screening {len(nuclei_targets)} endpoint")
+                _notify(progress, "screen", f"{len(nuclei_targets)} endpoint")
                 run_command([
                     "nuclei", "-l", str(targets_file),
                     "-s", "low,medium,high,critical",
@@ -247,12 +252,12 @@ def _run_scan(
                 main_out.write_text("", encoding="utf-8")
             _mark_stage(scan_dir, meta, "screen")
         else:
-            _notify(progress, "resume", "Vulnerability screening sudah selesai, dilewati")
+            _notify(progress, "resume", "Screen selesai")
 
         exposure_out = scan_dir / "nuclei-exposure.jsonl"
         if not _stage_done(meta, "exposure", exposure_out):
             if nuclei_targets:
-                _notify(progress, "exposure", "Mencari exposure dan konfigurasi sensitif")
+                _notify(progress, "exposure", "Exposure/config")
                 run_command([
                     "nuclei", "-l", str(targets_file),
                     "-tags", "exposure,exposures,config",
@@ -267,9 +272,9 @@ def _run_scan(
                 exposure_out.write_text("", encoding="utf-8")
             _mark_stage(scan_dir, meta, "exposure")
         else:
-            _notify(progress, "resume", "Exposure screening sudah selesai, dilewati")
+            _notify(progress, "resume", "Exposure selesai")
 
-        _notify(progress, "report", "Mengurutkan kandidat temuan")
+        _notify(progress, "report", "Mengurutkan temuan")
         findings = parse_nuclei([main_out, exposure_out], roots)
         meta.update({
             "finished_utc": datetime.now(timezone.utc).isoformat(),
@@ -286,7 +291,7 @@ def _run_scan(
         _save_meta(scan_dir, meta)
         report_json, report_md = write_report(scan_dir, domain, assets, findings, meta)
         elapsed = time.monotonic() - started
-        _notify(progress, "done", f"Selesai: {len(findings)} kandidat")
+        _notify(progress, "done", f"{len(findings)} kandidat")
         return ScanResult(scan_id, domain, scan_dir, assets, findings, report_md, report_json, elapsed)
     except KeyboardInterrupt:
         meta["status"] = "interrupted"

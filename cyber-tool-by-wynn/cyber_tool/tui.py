@@ -23,288 +23,371 @@ def _rich():
         raise SystemExit("UI membutuhkan Rich. Jalankan installer Cyber Tool lagi.") from exc
 
 
-def _header(console):
+def _header(console) -> None:
     box, _, Panel, _, _, _, Text = _rich()
-    title = Text("CYBER TOOL", style="bold bright_cyan")
-    title.append("  BY WYNN", style="bold bright_magenta")
-    subtitle = f"v{VERSION}  •  bounty automation  •  Termux  •  authorized scope only"
-    console.print(Panel(Text.assemble(title, "\n", (subtitle, "dim")), border_style="bright_blue", box=box.ROUNDED, padding=(1, 2)))
+    title = Text("CYBER", style="bold bright_cyan")
+    title.append(" / WYNN", style="bold bright_magenta")
+    console.print(
+        Panel(
+            Text.assemble(title, ("   "), (f"v{VERSION} • Termux", "dim")),
+            border_style="bright_blue",
+            box=box.ROUNDED,
+            padding=(0, 1),
+        )
+    )
 
 
-def _dashboard(console):
-    box, _, Panel, _, _, Table, _ = _rich()
+def _status_line(console) -> None:
     status = engine_status()
     ready = sum(status.values())
+    total = len(status)
     api_count = len(configured())
-    scans = list(SCANS_DIR.glob("*/scan.json")) if SCANS_DIR.exists() else []
+    scans = len(list(SCANS_DIR.glob("*/scan.json"))) if SCANS_DIR.exists() else 0
     resumable = len(list_resumable_scans())
-    table = Table.grid(expand=True, padding=(0, 2))
-    table.add_column(ratio=1)
-    table.add_column(ratio=1)
-    engine_state = "[bold green]READY[/]" if ready == len(status) else f"[yellow]{ready}/{len(status)}[/]"
-    table.add_row(
-        f"[dim]ENGINE[/]\n{engine_state}\n[dim]recon • web • crawl • screening[/]",
-        f"[dim]API SOURCES[/]\n[bold cyan]{api_count}[/] configured\n[dim]disaring sesuai Subfinder terpasang[/]",
-    )
-    table.add_row(
-        f"[dim]HISTORY[/]\n[bold cyan]{len(scans)}[/] scan • [yellow]{resumable} resumable[/]",
-        "[dim]POLICY[/]\n[bold green]SCOPE GUARD[/]\n[dim]secret disamarkan • no login abuse • no OAST[/]",
-    )
-    console.print(Panel(table, title="SYSTEM", border_style="blue", box=box.ROUNDED))
+    if ready == total:
+        engine = "[green]● READY[/]"
+    else:
+        engine = f"[yellow]● {ready}/{total} ENGINE[/]"
+    tail = f"API [bold]{api_count}[/]   SCAN [bold]{scans}[/]"
+    if resumable:
+        tail += f"   [yellow]RESUME {resumable}[/]"
+    console.print(f"{engine}   {tail}")
 
 
 def _menu(console) -> str:
-    box, _, Panel, _, Prompt, Table, _ = _rich()
+    _, _, _, _, Prompt, Table, _ = _rich()
     table = Table.grid(padding=(0, 2))
-    table.add_column(style="bold bright_cyan", width=5)
+    table.add_column(style="bold bright_cyan", width=3)
     table.add_column()
-    table.add_row("1", "Mulai Bounty Scan")
-    table.add_row("2", "Lanjutkan scan terhenti")
-    table.add_row("3", "Hasil sebelumnya")
-    table.add_row("4", "API Sources")
-    table.add_row("5", "Health / repair")
-    table.add_row("6", "Update")
-    table.add_row("r", "Refresh")
-    table.add_row("q", "Keluar")
-    console.print(Panel(table, title="ACTIONS", border_style="magenta", box=box.ROUNDED))
+    table.add_row("1", "Scan")
+    table.add_row("2", "Resume")
+    table.add_row("3", "Reports")
+    table.add_row("4", "API")
+    table.add_row("5", "System")
+    table.add_row("q", "Exit")
+    console.print(table)
     return Prompt.ask("[bold]Pilih[/]", default="1").strip().lower()
 
 
-def _labels() -> dict[str, str]:
-    return {
-        "recon": "Mencari aset publik",
-        "dns": "Memastikan aset aktif",
-        "web": "Mengenali layanan web",
-        "crawl": "Mempelajari endpoint",
-        "screen": "Screening kerentanan",
-        "exposure": "Mencari exposure sensitif",
-        "resume": "Melewati tahap selesai",
-        "report": "Menyusun hasil",
-        "done": "Selesai",
-    }
+_STAGE = {
+    "recon": (10, "Recon"),
+    "dns": (25, "DNS"),
+    "web": (40, "Web"),
+    "crawl": (55, "Crawl"),
+    "screen": (78, "Screen"),
+    "exposure": (92, "Exposure"),
+    "report": (98, "Report"),
+    "done": (100, "Done"),
+}
 
 
-def _progress(console):
-    labels = _labels()
+def _live_scan(console, title: str, runner):
+    from rich.live import Live
 
-    def progress(stage: str, detail: str):
-        console.print(f"[bright_magenta]›[/] [bold]{labels.get(stage, stage)}[/] [dim]{detail}[/]")
-    return progress
-
-
-def _show_result(console, result) -> None:
     box, _, Panel, _, _, _, _ = _rich()
-    sev = {}
-    for finding in result.findings:
-        sev[finding.severity] = sev.get(finding.severity, 0) + 1
-    summary = (
-        f"[bold green]SCAN SELESAI[/]\n\nTarget: [cyan]{result.domain}[/]\n"
-        f"Web aktif: [bold]{len(result.assets)}[/]\nKandidat: [bold]{len(result.findings)}[/]\n"
-        f"Critical/High: [bold]{sev.get('critical', 0) + sev.get('high', 0)}[/]\n\n"
-        f"Report: [dim]{result.report_md}[/]"
-    )
-    console.print(Panel(summary, title="RESULT", border_style="green", box=box.ROUNDED))
-    for finding in result.findings[:10]:
-        console.print(f"[{_severity_color(finding.severity)}]{finding.severity.upper():8}[/] {finding.title} [dim]{finding.target}[/]")
+    state = {"pct": 0, "label": "Start", "detail": ""}
+
+    def render():
+        pct = int(state["pct"])
+        width = 18
+        filled = round(width * pct / 100)
+        bar = "█" * filled + "░" * (width - filled)
+        detail = str(state["detail"]).strip()
+        line = f"[bright_magenta]{bar}[/] [bold]{pct:3d}%[/]  {state['label']}"
+        if detail:
+            line += f"\n[dim]{detail}[/]"
+        return Panel(line, title=title, border_style="blue", box=box.ROUNDED, padding=(0, 1))
+
+    with Live(render(), console=console, refresh_per_second=8, transient=True) as live:
+        def progress(stage: str, detail: str):
+            if stage == "resume":
+                state["label"] = "Resume"
+                state["detail"] = detail
+            elif stage in _STAGE:
+                pct, label = _STAGE[stage]
+                state["pct"] = max(int(state["pct"]), pct)
+                state["label"] = label
+                state["detail"] = detail
+            live.update(render(), refresh=True)
+
+        return runner(progress)
 
 
 def _scope_confirmation(console) -> bool:
-    box, _, Panel, Confirm, _, _, _ = _rich()
-    console.print(Panel(
-        "Cyber Tool hanya boleh digunakan pada aset yang memang termasuk scope program bounty/VDP atau yang kamu miliki.\n"
-        "Automation tidak menggunakan credential yang ditemukan untuk login, tidak menjalankan DoS/fuzzing berisiko, "
-        "dan OAST dinonaktifkan pada profile bawaan.",
-        title="SCOPE", border_style="yellow", box=box.ROUNDED,
-    ))
-    return Confirm.ask("Saya memiliki izin untuk menguji target ini", default=False)
+    _, _, _, Confirm, _, _, _ = _rich()
+    console.print("[yellow]Hanya aset milikmu atau scope bounty/VDP.[/]")
+    return Confirm.ask("Target ini berizin?", default=False)
 
 
-def _scan(console):
-    box, _, Panel, _, Prompt, _, _ = _rich()
-    target = Prompt.ask("[bold bright_cyan]Domain target[/]").strip()
-    if not _scope_confirmation(console):
-        console.print("[yellow]Scan dibatalkan.[/]")
+def _scan(console) -> None:
+    _, _, Panel, _, Prompt, _, _ = _rich()
+    target = Prompt.ask("[bold bright_cyan]Target[/]").strip()
+    if not target or not _scope_confirmation(console):
         return
     try:
-        result = scan(target, progress=_progress(console))
+        result = _live_scan(console, target, lambda cb: scan(target, progress=cb))
     except KeyboardInterrupt:
-        console.print("\n[yellow]Scan dihentikan. Jalankan menu Resume; tahap yang selesai tidak diulang.[/]")
+        console.print("[yellow]Dihentikan • checkpoint tersimpan.[/]")
+        _pause(console)
         return
     except Exception as exc:
-        console.print(Panel(str(exc), title="SCAN GAGAL", border_style="red"))
-        console.print("[dim]Scan dapat dicoba dilanjutkan dari menu Resume jika metadata sudah dibuat.[/]")
+        console.print(Panel(str(exc), title="GAGAL", border_style="red", padding=(0, 1)))
+        _pause(console)
         return
     _show_result(console, result)
+    _pause(console)
 
 
-def _resume(console):
-    box, _, Panel, _, Prompt, Table, _ = _rich()
-    rows = list_resumable_scans()
-    if not rows:
-        console.print("[dim]Tidak ada scan terhenti/gagal yang bisa dilanjutkan.[/]")
+def _show_result(console, result) -> None:
+    box, _, Panel, _, _, Table, _ = _rich()
+    high = sum(f.severity in {"critical", "high"} for f in result.findings)
+    body = (
+        f"[bold cyan]{result.domain}[/]  •  {len(result.assets)} web  •  "
+        f"{len(result.findings)} kandidat  •  [bold]{high} high+[/]\n"
+        f"[dim]{result.scan_id}/REPORT.md[/]"
+    )
+    console.print(Panel(body, title="RESULT", border_style="green", box=box.ROUNDED, padding=(0, 1)))
+    if not result.findings:
         return
+    table = Table(box=box.SIMPLE, expand=True, show_header=False, padding=(0, 1))
+    table.add_column(width=8)
+    table.add_column(overflow="fold")
+    table.add_column(overflow="fold")
+    for finding in result.findings[:6]:
+        table.add_row(
+            f"[{_severity_color(finding.severity)}]{finding.severity.upper()}[/]",
+            finding.title,
+            f"[dim]{finding.target}[/]",
+        )
+    console.print(table)
+
+
+def _resume(console) -> None:
+    box, _, Panel, _, Prompt, Table, _ = _rich()
+    rows = list_resumable_scans(limit=8)
+    if not rows:
+        console.print("[dim]Tidak ada scan untuk dilanjutkan.[/]")
+        _pause(console)
+        return
+
     table = Table(box=box.SIMPLE, expand=True)
     table.add_column("#", width=3, style="cyan")
     table.add_column("Target")
-    table.add_column("Status")
-    table.add_column("Tahap selesai", justify="right")
-    table.add_column("Scan ID", overflow="fold")
-    for idx, (meta, directory) in enumerate(rows, 1):
-        scope = (meta.get("authorized_scope") or ["?"])[0]
+    table.add_column("Status", width=11)
+    table.add_column("Step", justify="right", width=5)
+    for idx, (meta, _) in enumerate(rows, 1):
+        scope = str((meta.get("authorized_scope") or ["?"])[0])
         stages = meta.get("stages") or {}
-        table.add_row(str(idx), str(scope), str(meta.get("status", "?")), str(sum(v == "complete" for v in stages.values())), directory.name)
-    console.print(Panel(table, title="RESUME", border_style="yellow"))
-    raw = Prompt.ask("Nomor scan", default="1").strip()
+        table.add_row(str(idx), scope, str(meta.get("status", "?")), str(sum(v == "complete" for v in stages.values())))
+    console.print(Panel(table, title="RESUME", border_style="yellow", box=box.ROUNDED, padding=(0, 1)))
+
     try:
-        _, directory = rows[int(raw) - 1]
+        idx = int(Prompt.ask("Pilih", default="1")) - 1
+        meta, directory = rows[idx]
     except (ValueError, IndexError):
         console.print("[red]Pilihan tidak valid.[/]")
+        _pause(console)
         return
+
     if not _scope_confirmation(console):
-        console.print("[yellow]Resume dibatalkan.[/]")
         return
+
+    target = str((meta.get("authorized_scope") or [directory.name])[0])
     try:
-        result = resume_scan(directory.name, progress=_progress(console))
+        result = _live_scan(console, target, lambda cb: resume_scan(directory.name, progress=cb))
     except KeyboardInterrupt:
-        console.print("\n[yellow]Scan dihentikan lagi; checkpoint tetap tersimpan.[/]")
+        console.print("[yellow]Dihentikan • checkpoint tetap tersimpan.[/]")
+        _pause(console)
         return
     except Exception as exc:
-        console.print(Panel(str(exc), title="RESUME GAGAL", border_style="red"))
+        console.print(Panel(str(exc), title="GAGAL", border_style="red", padding=(0, 1)))
+        _pause(console)
         return
     _show_result(console, result)
+    _pause(console)
 
 
 def _severity_color(sev: str) -> str:
-    return {"critical": "bold red", "high": "red", "medium": "yellow", "low": "cyan", "info": "dim"}.get(sev, "white")
+    return {
+        "critical": "bold red",
+        "high": "red",
+        "medium": "yellow",
+        "low": "cyan",
+        "info": "dim",
+    }.get(sev, "white")
 
 
-def _history(console):
+def _history(console) -> None:
     box, _, Panel, _, _, Table, _ = _rich()
     rows = []
-    for path in sorted(SCANS_DIR.glob("*/scan.json"), reverse=True)[:20] if SCANS_DIR.exists() else []:
-        try:
-            meta = json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
-            continue
-        rows.append((meta, path.parent))
+    if SCANS_DIR.exists():
+        for path in sorted(SCANS_DIR.glob("*/scan.json"), reverse=True)[:10]:
+            try:
+                meta = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            rows.append(meta)
     if not rows:
-        console.print("[dim]Belum ada scan.[/]")
+        console.print("[dim]Belum ada report.[/]")
         return
+
     table = Table(box=box.SIMPLE, expand=True)
     table.add_column("Target", style="cyan")
-    table.add_column("Status")
-    table.add_column("Web", justify="right")
-    table.add_column("Findings", justify="right")
-    table.add_column("Report", overflow="fold")
-    for meta, directory in rows:
+    table.add_column("Status", width=11)
+    table.add_column("Web", justify="right", width=5)
+    table.add_column("Find", justify="right", width=5)
+    for meta in rows:
         table.add_row(
             str((meta.get("authorized_scope") or ["?"])[0]),
             str(meta.get("status", "?")),
             str(meta.get("live_web", "-")),
             str(meta.get("findings", "-")),
-            str(directory / "REPORT.md"),
         )
-    console.print(Panel(table, title="HISTORY", border_style="blue"))
+    console.print(Panel(table, title="REPORTS", border_style="blue", box=box.ROUNDED, padding=(0, 1)))
 
 
-def _api(console):
+def _provider_picker(console, only_configured: bool = False):
+    _, _, _, _, Prompt, Table, _ = _rich()
+    active = set(configured())
+    providers = [p for p in PROVIDERS if not only_configured or p.key in active]
+    if not providers:
+        console.print("[dim]Belum ada API tersimpan.[/]")
+        return None
+
+    grid = Table.grid(padding=(0, 2))
+    grid.add_column()
+    grid.add_column()
+    cells = [f"[cyan]{i}[/] {p.label}" for i, p in enumerate(providers, 1)]
+    if len(cells) % 2:
+        cells.append("")
+    for i in range(0, len(cells), 2):
+        grid.add_row(cells[i], cells[i + 1])
+    console.print(grid)
+    try:
+        return providers[int(Prompt.ask("Source")) - 1]
+    except (ValueError, IndexError):
+        console.print("[red]Pilihan tidak valid.[/]")
+        return None
+
+
+def _api(console) -> None:
     box, _, Panel, _, Prompt, Table, _ = _rich()
     while True:
-        runtime = {row["key"]: row["supported"] for row in provider_status()}
-        table = Table(box=box.SIMPLE, expand=True)
-        table.add_column("#", width=3, style="cyan")
-        table.add_column("Source")
-        table.add_column("API")
-        table.add_column("Engine", width=11)
-        table.add_column("Format", style="dim")
-        for i, p in enumerate(PROVIDERS, 1):
-            supported = runtime.get(p.key)
-            engine = "[dim]?[/]" if supported is None else ("[green]READY[/]" if supported else "[yellow]SKIP[/]")
-            table.add_row(str(i), p.label, masked(p.key), engine, p.hint)
-        console.print(Panel(table, title="API SOURCES", border_style="bright_blue"))
-        console.print("[dim]a Tambah/update  d Hapus  c Cek kompatibilitas  b Kembali. Key tetap lokal.[/]")
-        action = Prompt.ask("Pilih", default="b").strip().lower()
-        if action in {"b", "q", "back"}:
-            return
-        if action == "c":
-            active = [row for row in provider_status() if row["configured"]]
-            if not active:
-                console.print("[dim]Belum ada API key.[/]")
-            for row in active:
-                state = row["supported"]
-                label = "UNKNOWN" if state is None else ("READY" if state else "SKIPPED")
-                console.print(f"{row['label']}: {label}")
-            continue
-        if action not in {"a", "d"}:
-            continue
-        raw = Prompt.ask("Nomor source").strip()
-        try:
-            provider = PROVIDERS[int(raw) - 1]
-        except (ValueError, IndexError):
-            console.print("[red]Pilihan tidak valid.[/]")
-            continue
-        if action == "d":
-            remove_key(provider.key)
-            console.print(f"[green]✓[/] {provider.label} dihapus")
+        console.clear()
+        _header(console)
+        active = set(configured())
+        statuses = {row["key"]: row["supported"] for row in provider_status()}
+
+        if active:
+            table = Table(box=box.SIMPLE, expand=True)
+            table.add_column("Source", style="cyan")
+            table.add_column("Key")
+            table.add_column("Engine", justify="right")
+            by_key = {p.key: p for p in PROVIDERS}
+            for key in sorted(active):
+                provider = by_key.get(key)
+                if provider is None:
+                    continue
+                supported = statuses.get(key)
+                engine = "[dim]?[/]" if supported is None else ("[green]READY[/]" if supported else "[yellow]SKIP[/]")
+                table.add_row(provider.label, masked(key), engine)
+            console.print(Panel(table, title=f"API • {len(active)}", border_style="blue", box=box.ROUNDED, padding=(0, 1)))
         else:
-            value = Prompt.ask(f"{provider.label} ({provider.hint})", password=True).strip()
+            console.print("[dim]Belum ada API key.[/]")
+
+        console.print("[dim]1 Add/update   2 Remove   3 Check   b Back[/]")
+        action = Prompt.ask("Pilih", default="b").strip().lower()
+        if action in {"b", "back", "q"}:
+            return
+        if action == "1":
+            provider = _provider_picker(console)
+            if provider:
+                value = Prompt.ask(f"{provider.label} • {provider.hint}", password=True).strip()
+                if value:
+                    try:
+                        set_key(provider.key, value)
+                        console.print("[green]✓ Tersimpan lokal.[/]")
+                    except ValueError as exc:
+                        console.print(f"[red]{exc}[/]")
+                    _pause(console)
+        elif action == "2":
+            provider = _provider_picker(console, only_configured=True)
+            if provider:
+                remove_key(provider.key)
+                console.print("[green]✓ Dihapus.[/]")
+                _pause(console)
+        elif action == "3":
+            configured_rows = [row for row in provider_status() if row["configured"]]
+            if not configured_rows:
+                console.print("[dim]Belum ada API key.[/]")
+            for row in configured_rows:
+                supported = row["supported"]
+                state = "?" if supported is None else ("READY" if supported else "SKIP")
+                style = "green" if supported else ("yellow" if supported is False else "dim")
+                console.print(f"[{style}]{state:5}[/] {row['label']}")
+            _pause(console)
+
+
+def _system(console) -> None:
+    box, _, Panel, _, Prompt, Table, _ = _rich()
+    while True:
+        console.clear()
+        _header(console)
+        status = engine_status()
+        table = Table(box=box.SIMPLE, expand=True, show_header=False)
+        table.add_column()
+        table.add_column(justify="right")
+        for name, ok in status.items():
+            table.add_row(name, "[green]READY[/]" if ok else "[red]MISSING[/]")
+        table.add_row("API", str(len(configured())))
+        console.print(Panel(table, title="SYSTEM", border_style="blue", box=box.ROUNDED, padding=(0, 1)))
+        if not all(status.values()):
+            console.print("[yellow]Engine hilang → cyber repair[/]")
+        console.print("[dim]u Update   e Update + engines   b Back[/]")
+        action = Prompt.ask("Pilih", default="b").strip().lower()
+        if action in {"b", "back", "q"}:
+            return
+        if action in {"u", "e"}:
             try:
-                set_key(provider.key, value)
-                console.print(f"[green]✓[/] {provider.label} tersimpan")
-            except ValueError as exc:
-                console.print(f"[red]{exc}[/]")
+                with console.status("[bright_magenta]Updating…[/]", spinner="dots"):
+                    update_app(update_engines=action == "e")
+                console.print("[green]✓ Updated.[/]")
+            except Exception as exc:
+                console.print(Panel(str(exc), title="GAGAL", border_style="red", padding=(0, 1)))
+            _pause(console)
 
 
-def _health(console):
-    box, _, Panel, _, _, Table, _ = _rich()
-    table = Table(box=box.SIMPLE, expand=True)
-    table.add_column("Engine")
-    table.add_column("Status")
-    status = engine_status()
-    for name, ok in status.items():
-        table.add_row(name, "[green]READY[/]" if ok else "[red]MISSING[/]")
-    api_rows = [row for row in provider_status() if row["configured"]]
-    api_ready = sum(row["supported"] is not False for row in api_rows)
-    table.add_row("API sources", f"{api_ready}/{len(api_rows)} usable/unknown")
-    console.print(Panel(table, title="HEALTH", border_style="blue"))
-    if not all(status.values()):
-        console.print("[yellow]Ada engine yang hilang. Jalankan `cyber repair` dari Termux.[/]")
-    unsupported = [str(row["label"]) for row in api_rows if row["supported"] is False]
-    if unsupported:
-        console.print("[yellow]Key disimpan tetapi dilewati oleh Subfinder terpasang: " + ", ".join(unsupported) + "[/]")
-
-
-def _update(console):
-    _, _, _, Confirm, _, _, _ = _rich()
-    engines = Confirm.ask("Sekalian perbarui engine security? (lebih lama)", default=False)
-    with console.status("[bright_magenta]Memperbarui Cyber Tool…[/]", spinner="dots"):
-        update_app(update_engines=engines)
-    console.print("[green]✓ Cyber Tool sudah diperbarui.[/]")
+def _pause(console) -> None:
+    try:
+        console.input("\n[dim]Enter[/]")
+    except (EOFError, KeyboardInterrupt):
+        pass
 
 
 def run_tui() -> int:
     _, Console, _, _, _, _, _ = _rich()
     ensure_layout()
     console = Console()
-    while True:
-        console.clear()
-        _header(console)
-        _dashboard(console)
-        choice = _menu(console)
-        if choice == "1":
-            _scan(console)
-        elif choice == "2":
-            _resume(console)
-        elif choice == "3":
-            _history(console)
-        elif choice == "4":
-            _api(console)
-        elif choice == "5":
-            _health(console)
-        elif choice == "6":
-            _update(console)
-        elif choice in {"q", "quit", "exit"}:
-            return 0
-        elif choice == "r":
-            continue
-        input("\nEnter untuk kembali…")
+    try:
+        while True:
+            console.clear()
+            _header(console)
+            _status_line(console)
+            console.print()
+            choice = _menu(console)
+            if choice == "1":
+                _scan(console)
+            elif choice == "2":
+                _resume(console)
+            elif choice == "3":
+                _history(console)
+                _pause(console)
+            elif choice == "4":
+                _api(console)
+            elif choice == "5":
+                _system(console)
+            elif choice in {"q", "quit", "exit"}:
+                return 0
+    except (EOFError, KeyboardInterrupt):
+        console.print()
+        return 0
