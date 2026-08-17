@@ -1,6 +1,9 @@
 from pathlib import Path
+from types import SimpleNamespace
 import json
 
+import cyber_tool.api_keys as api_keys
+import cyber_tool.scanner as scanner
 from cyber_tool.api_keys import PROVIDERS
 from cyber_tool.report import parse_nuclei, redact_text, redact_url
 from cyber_tool.scope import filter_domains, filter_urls, normalize_domain
@@ -37,8 +40,41 @@ def test_nuclei_out_of_scope_is_dropped(tmp_path: Path):
     assert parse_nuclei([p], ["example.com"]) == []
 
 
-def test_api_registry_tracks_current_subfinder_sources():
+def test_api_registry_tracks_current_provider_family():
     keys = {provider.key for provider in PROVIDERS}
-    assert "hunter" not in keys
-    assert "builtwith" not in keys
-    assert {"github", "virustotal", "urlscan", "netlas", "leakix", "hackertarget"}.issubset(keys)
+    assert "facebook" not in keys
+    assert {"github", "virustotal", "urlscan", "netlas", "leakix", "hackertarget", "hunter", "builtwith", "fofa", "intelx"}.issubset(keys)
+
+
+def test_runtime_provider_detection(monkeypatch):
+    monkeypatch.setattr(api_keys.shutil, "which", lambda _: "/bin/subfinder")
+    fake = SimpleNamespace(stdout="github\nvirustotal\nhunter\n", stderr="", returncode=0)
+    monkeypatch.setattr(api_keys.subprocess, "run", lambda *a, **k: fake)
+    assert api_keys.runtime_subfinder_sources() == {"github", "virustotal", "hunter"}
+
+
+def test_provider_config_skips_unsupported_runtime_source(tmp_path: Path, monkeypatch):
+    keys_file = tmp_path / "keys.json"
+    provider_file = tmp_path / "provider.yaml"
+    monkeypatch.setattr(api_keys, "KEYS_FILE", keys_file)
+    monkeypatch.setattr(api_keys, "SUBFINDER_PROVIDER_FILE", provider_file)
+    monkeypatch.setattr(api_keys, "ensure_layout", lambda: None)
+    monkeypatch.setattr(api_keys, "_chmod_private", lambda _: None)
+    monkeypatch.setattr(api_keys, "runtime_subfinder_sources", lambda: {"github"})
+    api_keys.save_keys({"github": ["ghp_demo"], "hunter": ["hunter_demo"]})
+    saved = json.loads(keys_file.read_text(encoding="utf-8"))
+    generated = provider_file.read_text(encoding="utf-8")
+    assert set(saved) == {"github", "hunter"}
+    assert "github:" in generated
+    assert "hunter:" not in generated
+
+
+def test_resumable_scan_listing(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(scanner, "SCANS_DIR", tmp_path)
+    monkeypatch.setattr(scanner, "ensure_layout", lambda: None)
+    for name, status in [("a", "complete"), ("b", "interrupted"), ("c", "failed")]:
+        d = tmp_path / name
+        d.mkdir()
+        (d / "scan.json").write_text(json.dumps({"scan_id": name, "status": status, "authorized_scope": ["example.com"]}), encoding="utf-8")
+    rows = scanner.list_resumable_scans()
+    assert [directory.name for _, directory in rows] == ["c", "b"]
