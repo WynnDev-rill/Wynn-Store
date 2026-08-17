@@ -229,7 +229,6 @@ def _history(console) -> None:
             rows.append(meta)
     if not rows:
         console.print("[dim]Belum ada report.[/]")
-        _pause(console)
         return
 
     table = Table(box=box.SIMPLE, expand=True)
@@ -245,7 +244,6 @@ def _history(console) -> None:
             str(meta.get("findings", "-")),
         )
     console.print(Panel(table, title="REPORTS", border_style="blue", box=box.ROUNDED, padding=(0, 1)))
-    _pause(console)
 
 
 def _provider_picker(console, only_configured: bool = False):
@@ -383,6 +381,7 @@ def run_tui() -> int:
                 _resume(console)
             elif choice == "3":
                 _history(console)
+                _pause(console)
             elif choice == "4":
                 _api(console)
             elif choice == "5":
