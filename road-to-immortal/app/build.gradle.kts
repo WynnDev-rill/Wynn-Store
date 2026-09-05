@@ -80,3 +80,10 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 }
 
+
+val bundleCatalog by tasks.registering(Copy::class) {
+    from(rootProject.file("data/catalog.json"))
+    into(layout.buildDirectory.dir("generated/catalogAssets"))
+}
+android.sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/catalogAssets"))
+tasks.named("preBuild") { dependsOn(bundleCatalog) }
