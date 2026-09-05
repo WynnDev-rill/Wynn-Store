@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "officialBase": "https://api.gms.moontontech.com/api/gms/source/2669606",
+  "communityBase": "https://arena.rone.dev/api",
+  "heroSource": 2756564,
+  "metaSource": 2756569,
+  "windowDays": 7,
+  "ranks": {"all": "101", "epic": "5", "legend": "6", "mythic": "7", "honor": "8", "glory": "9"},
+  "itemsPage": "https://mlbbhub.com/items",
+  "seasonPage": "https://mlbbhub.com/server-time/season-schedule",
+  "catalogUrls": [
+    "https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/road-to-immortal/data/catalog.json",
+    "https://cdn.jsdelivr.net/gh/WynnDev-rill/Wynn-Store@main/road-to-immortal/data/catalog.json"
+  ]
+}
+
