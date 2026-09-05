@@ -149,7 +149,7 @@ def normalize_heroes(rows):
         result.append(dict(id=hero_id, name=h["name"], icon=h.get("head") or d.get("head", ""),
                            portrait=d.get("painting") or d.get("head_big") or h.get("head", ""),
                            roles=[str(r).title() for r in h.get("sortlabel") or [] if r],
-                           lanes=["EXP" if str(l).lower() == "exp" else str(l).title() for l in h.get("roadsortlabel") or [] if l],
+                           lanes=["EXP" if str(l).lower().replace(" lane", "") == "exp" else str(l).lower().replace(" lane", "").title() for l in h.get("roadsortlabel") or [] if l],
                            speciality=h.get("speciality") or [], story=clean(h.get("story")),
                            difficulty=int(float(h.get("difficulty") or 0)), skills=skills,
                            counters=relation("weak"), strongAgainst=relation("strong"), synergy=relation("assist"),
@@ -235,6 +235,8 @@ def normalize_items(official, minimal, hub_text, checked):
     items = {}
     for row in official:
         d = row["data"]
+        if not d.get("equipicon", "").startswith("https://") or "dilepas" in d.get("equipname", "").lower():
+            continue
         description = clean(d.get("equipskilldesc"))
         items[str(d["equipid"])] = dict(id=str(d["equipid"]), name=d["equipname"], icon=d.get("equipicon", ""), category=d.get("equiptypename") or "Lainnya",
             stats=[clean(x) for x in re.split(r"<br\s*/?>|\n", d.get("equiptips", "")) if clean(x)], description=description,
@@ -452,6 +454,8 @@ def main():
     # fabricate statistics/descriptions when only identity is available.
     for row in equipment:
         d = row["data"]; key = str(d["equipid"])
+        if not d.get("equipicon", "").startswith("https://") or "dilepas" in d.get("equipname", "").lower():
+            continue
         if key not in item_ids:
             catalog["items"].append(dict(id=key, name=d["equipname"], icon=d["equipicon"], category="Lainnya", source=provenance("Moonton via Rone Arena", academy + "/equipment", latest([row]), item_checked, "community", "Identitas tersedia; atribut belum diberikan sumber.")))
             item_ids.add(key)
