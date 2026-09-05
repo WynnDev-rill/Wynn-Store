@@ -1,0 +1,65 @@
+name: Road to Immortal Android
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'road-to-immortal/app/**'
+      - 'road-to-immortal/gradle/**'
+      - 'road-to-immortal/*.kts'
+      - '.github/workflows/road-to-immortal-android.yml'
+  pull_request:
+    paths: ['road-to-immortal/**']
+permissions:
+  contents: read
+concurrency:
+  group: rti-android-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: android-actions/setup-android@v3
+      - name: Validate providers
+        run: python -m unittest discover -s road-to-immortal/pipeline -p 'test_*.py'
+      - name: Unit tests, lint, optimized installable APK
+        working-directory: road-to-immortal
+        run: ./gradlew testDebugUnitTest lintRelease assembleRelease assembleDebug assembleDebugAndroidTest --stacktrace
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Installed APK user journey
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb shell setprop persist.sys.timezone Asia/Jakarta
+            adb logcat -c
+            cd road-to-immortal && ./gradlew connectedDebugAndroidTest --stacktrace; result=$?; cd ..
+            mkdir -p road-to-immortal/qa/output
+            adb pull /sdcard/Android/data/id.wynn.roadtoimmortal/files/qa/. road-to-immortal/qa/output/ || true
+            adb logcat -d > road-to-immortal/qa/output/logcat.txt
+            exit $result
+      - name: Upload APK and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Road-to-Immortal
+          path: |
+            road-to-immortal/app/build/outputs/apk/
+            road-to-immortal/app/build/reports/
+            road-to-immortal/qa/output/
+          retention-days: 30
