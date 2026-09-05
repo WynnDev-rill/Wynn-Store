@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "refreshHours": 6,
+  "catalogUrls": [
+    "https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/road-to-immortal/data/catalog.json",
+    "https://cdn.jsdelivr.net/gh/WynnDev-rill/Wynn-Store@main/road-to-immortal/data/catalog.json"
+  ],
+  "disabled": false
+}
