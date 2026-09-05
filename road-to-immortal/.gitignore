@@ -1,0 +1,9 @@
+.gradle/
+.kotlin/
+**/build/
+local.properties
+pipeline/__pycache__/
+pipeline/.cache/
+qa/output/
+*.hprof
+

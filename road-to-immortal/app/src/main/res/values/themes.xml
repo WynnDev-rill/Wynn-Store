@@ -1,0 +1,15 @@
+<resources>
+    <style name="Theme.RoadToImmortal" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:colorAccent">#4E51D8</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowBackground">#F8F8FC</item>
+    </style>
+    <style name="Theme.RoadToImmortal.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#151729</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_immortal</item>
+        <item name="postSplashScreenTheme">@style/Theme.RoadToImmortal</item>
+    </style>
+</resources>
+
