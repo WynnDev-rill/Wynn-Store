@@ -1,5 +1,4 @@
 <full-backup-content>
     <include domain="file" path="datastore/" />
-    <exclude domain="file" path="catalog/" />
 </full-backup-content>
 
