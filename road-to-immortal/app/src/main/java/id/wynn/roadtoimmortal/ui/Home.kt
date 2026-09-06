@@ -158,8 +158,7 @@ fun HomeScreen(
                                     "Season berakhir. Target baru tersedia setelah jadwal diperbarui."
                                 road.daily == null ->
                                     "Menunggu jadwal reset yang dapat diverifikasi."
-                                else ->
-                                    "${road.remaining} bintang lagi · ${road.days} hari bermain tersisa"
+                                else -> "${road.remaining} bintang lagi menuju Immortal"
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color(0xFFD3D1EF),
@@ -445,7 +444,6 @@ fun RankPicker(
                         position.stars.toFloat(),
                         { update(position.copy(stars = it.toInt())) },
                         valueRange = 0f..100f,
-                        steps = 99,
                         modifier =
                             Modifier.semantics {
                                 contentDescription = "Bintang Mythic, 0 sampai 100"
