@@ -123,7 +123,7 @@ class CatalogRepository(private val context: Context, transport: OkHttpClient? =
                 mutable.value = before.copy(refreshing = true)
                 try {
                     try {
-                        val raw = download(CONFIG_URL, 64_000)
+                        val raw = download(CONFIG_URL, 64_000, force)
                         val next = json.decodeFromString<RemoteConfig>(raw)
                         require(
                             next.schemaVersion == 1 &&
@@ -150,7 +150,7 @@ class CatalogRepository(private val context: Context, transport: OkHttpClient? =
                             .distinct()
                             .filter(::trusted)) {
                         try {
-                            val raw = download(url, 16_000_000)
+                            val raw = download(url, 16_000_000, force)
                             val next = validate(json.decodeFromString<Catalog>(raw))
                             val current = before.catalog
                             require(
@@ -207,13 +207,13 @@ class CatalogRepository(private val context: Context, transport: OkHttpClient? =
             }
             .getOrDefault(false)
 
-    private fun download(url: String, limit: Int): String =
+    private fun download(url: String, limit: Int, force: Boolean): String =
         client
             .newCall(
                 Request.Builder()
                     .url(url)
                     .header("User-Agent", "RoadToImmortal/1.0 Android")
-                    .header("Cache-Control", "max-age=300")
+                    .header("Cache-Control", if (force) "no-cache" else "max-age=300")
                     .build()
             )
             .execute()

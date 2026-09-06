@@ -19,7 +19,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -286,10 +288,13 @@ fun RankPicker(
     var position by remember { mutableStateOf(initial) }
     var editing by remember { mutableStateOf(false) }
     var digits by remember { mutableStateOf(initial.stars.toString()) }
+    val haptic = LocalHapticFeedback.current
     val rule = catalog.rankRules.tiers.firstOrNull { it.key == position.tier }
     val max = rule?.starsPerDivision ?: 9999
     fun update(next: RankPosition) {
-        position = Road.normalize(next, catalog.rankRules)
+        val normalized = Road.normalize(next, catalog.rankRules)
+        if (normalized != position) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        position = normalized
         digits = position.stars.toString()
         onChange(position)
     }

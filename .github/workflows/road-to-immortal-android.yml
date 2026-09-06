@@ -6,6 +6,7 @@ on:
       - 'road-to-immortal/app/**'
       - 'road-to-immortal/gradle/**'
       - 'road-to-immortal/*.kts'
+      - 'road-to-immortal/qa/**'
       - '.github/workflows/road-to-immortal-android.yml'
   pull_request:
     paths: ['road-to-immortal/**']

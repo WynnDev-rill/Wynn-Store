@@ -5,6 +5,7 @@ import java.io.File
 import java.time.Instant
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
+import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -28,9 +29,15 @@ class RepositoryTest {
     @Before
     fun setup() {
         File(context.filesDir, "catalog").deleteRecursively()
+        val httpCache =
+            File(context.cacheDir, "test-http").apply {
+                deleteRecursively()
+                mkdirs()
+            }
         server = MockWebServer().apply { start() }
         client =
             OkHttpClient.Builder()
+                .cache(Cache(httpCache, 10L * 1024 * 1024))
                 .addInterceptor { chain ->
                     chain.proceed(
                         chain
@@ -45,6 +52,7 @@ class RepositoryTest {
 
     @After
     fun close() {
+        client.cache?.close()
         server.shutdown()
     }
 
@@ -97,5 +105,23 @@ class RepositoryTest {
         server.enqueue(response(CatalogRepository.json.encodeToString(old)))
         assertTrue(repo.refresh(true))
         assertEquals(initial.generatedAt, repo.state.value.catalog?.generatedAt)
+    }
+
+    @Test
+    fun manualRefreshRevalidatesAnOtherwiseFreshHttpCache() = runBlocking {
+        val repo = CatalogRepository(context, client)
+        repo.initialize()
+        val initial = checkNotNull(repo.state.value.catalog)
+        server.enqueue(response("{}").setHeader("Cache-Control", "public, max-age=3600"))
+        server.enqueue(
+            response(CatalogRepository.json.encodeToString(initial))
+                .setHeader("Cache-Control", "public, max-age=3600")
+        )
+        assertTrue(repo.refresh())
+        repeat(3) { server.enqueue(response("offline", 503)) }
+        assertFalse(repo.refresh(true))
+        assertEquals(5, server.requestCount)
+        assertEquals(initial, repo.state.value.catalog)
+        assertNotNull(repo.state.value.error)
     }
 }

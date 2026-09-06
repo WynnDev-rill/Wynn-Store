@@ -66,6 +66,7 @@ fun categoryLabel(v: String) =
     when (v.lowercase()) {
         "jungling" -> "Jungle"
         "roaming" -> "Roam"
+        "metadata" -> "Belum terverifikasi"
         else -> v
     }
 

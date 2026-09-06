@@ -40,6 +40,9 @@ class UserJourneyTest {
     @Before
     fun configureDevice() {
         Configurator.getInstance().setWaitForIdleTimeout(1500)
+        device.wakeUp()
+        device.executeShellCommand("wm dismiss-keyguard")
+        device.pressHome()
     }
 
     private fun tap(text: String) {
@@ -61,6 +64,7 @@ class UserJourneyTest {
         val dir = File(context.getExternalFilesDir(null), "qa").apply { mkdirs() }
         assertTrue(device.takeScreenshot(File(dir, "$name.png")))
         device.dumpWindowHierarchy(File(dir, "$name.xml"))
+        android.util.Log.i("ImmortalQA", "Captured $name")
     }
 
     private fun back() {
@@ -80,7 +84,10 @@ class UserJourneyTest {
                 .getLaunchIntentForPackage(pkg)!!
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
         context.startActivity(intent)
-        assertTrue(device.wait(Until.hasObject(By.text("Setiap bintang berarti.")), 20_000))
+        assertTrue(
+            "Home did not become accessible",
+            device.wait(Until.hasObject(By.text("Setiap bintang berarti.")), 60_000),
+        )
         shot("01-onboarding")
         tap("Mulai perjalanan")
         tap("Mythic")
@@ -147,7 +154,10 @@ class UserJourneyTest {
         desc("Pengaturan")
         tap("Data & sumber")
         tap("Perbarui sekarang")
-        device.wait(Until.hasObject(By.textStartsWith("Belum bisa memperbarui")), 100_000)
+        assertTrue(
+            "Offline refresh must retain the catalog and report unavailable network",
+            device.wait(Until.hasObject(By.textStartsWith("Belum bisa memperbarui")), 100_000),
+        )
         shot("14-offline")
         back()
         back()
