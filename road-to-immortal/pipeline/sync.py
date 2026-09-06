@@ -123,7 +123,7 @@ def json_records(fetcher, name, url, payload=None, ttl=0):
     return records(json.loads(result["text"])), result["checkedAt"]
 
 
-def normalize_heroes(rows):
+def normalize_heroes(rows, minimum=100):
     result = []
     for row in rows:
         d = row["data"]
@@ -154,7 +154,7 @@ def normalize_heroes(rows):
                            difficulty=int(float(h.get("difficulty") or 0)), skills=skills,
                            counters=relation("weak"), strongAgainst=relation("strong"), synergy=relation("assist"),
                            updatedAt=stamp(d.get("hero", {}).get("_updatedAt") or row.get("updatedAt"))))
-    if len(result) < 100:
+    if len(result) < minimum:
         raise ValueError("Hero catalog unexpectedly small")
     ids = {h["id"] for h in result}
     for h in result:
@@ -218,7 +218,7 @@ def tags_for(text):
     tests = {
         "Regen & shield": r"(reduc\w*|mengurangi).{0,90}(regen|healing|shield)|lifebane",
         "Magic burst": r"magic (defense|damage reduction)|magic damage.{0,90}(reduc|shield)|magic defense",
-        "Physical burst": r"physical defense|physical damage.{0,90}(reduc|immune)|kebal.{0,40}physical",
+        "Physical burst": r"physical defense|physical damage.{0,90}(reduc|immune)|(reduc\w*|mengurangi).{0,45}physical damage|kebal.{0,40}physical",
         "Attack speed": r"(reduc\w*|mengurangi).{0,80}attack speed|attack speed.{0,40}(75%|slow)",
         "HP tinggi": r"(current|max|maksimum|saat ini).{0,25}(hp|health)|hp.{0,25}(target|lawan)",
         "Armor tinggi": r"physical penetration|penetrasi physical",
@@ -247,11 +247,13 @@ def normalize_items(official, minimal, hub_text, checked):
             match = by_name.get(re.sub(r"[^a-z0-9]", "", x["name"].lower()))
             item_id = str(match["data"]["equipid"]) if match else "hub:" + x["slug"]
             effects = [dict(name=clean(a.get("name")), description=clean(a.get("description"))) for a in x.get("abilities") or [] if clean(a.get("description"))]
-            stats = [f"{str(k).replace('_', ' ').title()}: {v}" for k, v in (x.get("stats") or {}).items()]
+            labels = {"hp":"HP", "hpregen":"HP Regen", "mp":"Mana", "mpregen":"Mana Regen", "physatk":"Physical Attack", "physdefense":"Physical Defense", "magicpower":"Magic Power", "magicdefense":"Magic Defense", "magicpenFlat":"Magic Penetration", "movespeed":"Movement Speed", "movespeedPct":"Movement Speed", "adaptiveatk":"Adaptive Attack", "adaptiveatkPct":"Adaptive Attack", "attackspeed":"Attack Speed", "cdreduction":"Pengurangan Cooldown", "critchance":"Critical Chance", "hybridsteal":"Hybrid Lifesteal", "lifesteal":"Lifesteal", "slowreduction":"Pengurangan Slow", "spellvamp":"Spell Vamp"}
+            percent_keys = {"movespeedPct","adaptiveatkPct","attackspeed","cdreduction","critchance","hybridsteal","lifesteal","slowreduction","spellvamp"}
+            stats = [f"+{v}{'%' if k in percent_keys else ''} {labels.get(k, k)}" for k, v in (x.get("stats") or {}).items()]
             description = clean(x.get("uniqueAttribute") or "")
             items[item_id] = dict(id=item_id, name=x["name"], icon=match["data"].get("equipicon") if match else "https://mlbbhub.com/images/items/" + x["iconFilename"],
                 category=(x.get("categories") or ["Lainnya"])[0], price=x.get("cost"), stats=stats, description=description, effects=effects,
-                tags=tags_for(" ".join([description] + [e["description"] for e in effects])), recipe=[],
+                tags=tags_for(" ".join([description] + stats + [e["description"] for e in effects])), recipe=[],
                 source=provenance("MLBBHub / Liquipedia", x.get("sourcePage") or "https://mlbbhub.com/items", page_modified(hub_text), checked, "community",
                     "Katalog komunitas. Teks efek mengikuti bahasa sumber; tanggal adalah revisi katalog, bukan jaminan setiap atribut berubah pada tanggal itu."))
         slug_ids = {}
@@ -381,9 +383,33 @@ def main():
     previous_path = ROOT / "data/catalog.json"
     previous = json.loads(previous_path.read_text()) if previous_path.exists() else {}
     base = dict(pageSize=500, pageIndex=1, filters=[], sorts=[])
-    rows, checked = json_records(fetch, "heroes", f"{cfg['officialBase']}/{cfg['heroSource']}", base)
-    heroes = normalize_heroes(rows)
-    catalog = dict(schemaVersion=1, generatedAt=STAMP, source=provenance("MLBB • GMS", "https://www.mobilelegends.com", latest(rows), checked), heroes=heroes)
+    try:
+        rows, checked = json_records(fetch, "heroes", f"{cfg['officialBase']}/{cfg['heroSource']}", base)
+        heroes = normalize_heroes(rows)
+        hero_source = provenance("MLBB • GMS", "https://www.mobilelegends.com", max((h.get("updatedAt") or "" for h in heroes), default="") or latest(rows), checked)
+    except (ValueError, KeyError):
+        # A documented independent public adapter, with last-good detailed records.
+        # New identities may appear even if the primary GMS response shape changes.
+        try:
+            rows, checked = json_records(fetch, "fallback-heroes", cfg["communityBase"] + "/heroes?size=500&lang=id")
+            basics = normalize_heroes(rows)
+            old = {h["id"]: h for h in previous.get("heroes", [])}
+            heroes = []
+            for basic in basics:
+                if basic["id"] in old:
+                    heroes.append({**old[basic["id"]], "name": basic["name"], "icon": basic["icon"]})
+                else:
+                    try:
+                        detail, _ = json_records(fetch, f"fallback-hero-{basic['id']}", cfg["communityBase"] + f"/heroes/{basic['id']}?lang=id", ttl=72)
+                        heroes.extend(normalize_heroes(detail, minimum=1))
+                    except (ValueError, KeyError):
+                        heroes.append(basic)
+            hero_source = provenance("Moonton via Rone Arena", "https://arena.rone.dev/web/heroes", latest(rows), checked, "community", "Provider cadangan. Identitas diperiksa; detail yang belum tersedia mempertahankan revisi terakhirnya.")
+        except (ValueError, KeyError):
+            if not previous.get("heroes"):
+                raise ValueError("No valid hero provider or last-good snapshot")
+            heroes, hero_source = previous["heroes"], previous["source"]
+    catalog = dict(schemaVersion=1, generatedAt=STAMP, source=hero_source, heroes=heroes)
     academy = cfg["communityBase"] + "/academy"
     def optional(name, path):
         try: return json_records(fetch, name, academy + path + "?size=500&lang=id")
@@ -412,8 +438,17 @@ def main():
                 camps.append(json_records(fetch, f"meta-{rank}-{camp}", f"{cfg['officialBase']}/{cfg['metaSource']}", payload))
             catalog["meta"].append(normalize_meta(camps[0][0], camps[1][0], rank, cfg["windowDays"], min(c[1] for c in camps)))
         except (ValueError, KeyError):
-            old = next((m for m in previous.get("meta", []) if m["rank"] == rank), None)
-            if old: catalog["meta"].append(old)
+            try:
+                rows, checked = json_records(fetch, f"fallback-meta-{rank}", cfg["communityBase"] + f"/heroes/rank?size=500&rank={rank}&days={cfg['windowDays']}&lang=id")
+                # The rank adapter does not promise complete matchup fields.
+                # Retain rates only; do not relabel undated cached edges as fresh.
+                minimal = [{"data": {**r["data"], "match_type": "0", "sub_hero": [], "sub_hero_last": []}} for r in rows]
+                scope = normalize_meta(minimal, [], rank, cfg["windowDays"], checked)
+                scope["source"] = provenance("Moonton via Rone Arena", "https://arena.rone.dev/web/heroes", latest(rows), checked, "community", "Statistik provider cadangan. Matchup dan sinergi tidak disertakan jika bidang sumber tidak lengkap.")
+                catalog["meta"].append(scope)
+            except (ValueError, KeyError):
+                old = next((m for m in previous.get("meta", []) if m["rank"] == rank), None)
+                if old: catalog["meta"].append(old)
     try:
         source = fetch.get("hub-season", cfg["seasonPage"])
         catalog["season"] = normalize_season(source["text"], source["checkedAt"], cfg["seasonPage"])
