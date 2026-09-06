@@ -23,6 +23,8 @@ Snapshot di `data/catalog.json` dibundel otomatis oleh Gradle. Pembaruan katalog
 
 APK optimized berada di `app/build/outputs/apk/release/app-release.apk`. Nama aplikasi dan application ID tetap `Road to Immortal` / `id.wynn.roadtoimmortal`.
 
+Versi **1.0.1** telah lolos build, verifikasi signature dan tes emulator: [hasil QA](docs/QA.md). Artifact pada [run terverifikasi](https://github.com/WynnDev-rill/Wynn-Store/actions/runs/34064341346) memuat APK siap pasang di `dist/Road-to-Immortal.apk`.
+
 **Signing:** build ini menggunakan kunci development yang sengaja tersedia di `signing/development.jks`, alias `road-to-immortal`, password `android`. Ini memungkinkan APK development yang konsisten dan bisa diinstal/diupdate. Kunci publik ini **bukan production signing**, tidak memberikan keaslian distribusi yang aman. Untuk distribusi publik resmi, gunakan kunci privat milik penerbit dan ubah signing config; pengguna APK lama mungkin perlu memasang ulang karena sertifikat berubah.
 
 ## Sumber dan batas data
@@ -48,7 +50,9 @@ Jangan mengubah timestamp lama menjadi waktu sekarang saat mempertahankan fallba
 
 ## Verifikasi
 
-Workflow Android menjalankan unit tests, lint, release/debug builds dan tes UIAutomator pada emulator Android 15. Artifact workflow menyimpan APK, laporan pengujian, screenshot, hierarchy aksesibilitas, logcat, memory dan frame metrics. Status run adalah bukti aktual; daftar kemampuan pengujian ini tidak berarti setiap run sudah lolos. Hasil yang ditinjau dicatat dalam laporan QA setelah pengujian selesai.
+Workflow Android menjalankan unit tests, lint, build APK optimized dan tes UIAutomator pada emulator Android 15. Artifact workflow menyimpan APK, laporan pengujian, screenshot, hierarchy aksesibilitas, logcat, memory dan frame metrics. Status run adalah bukti aktual; daftar kemampuan pengujian ini tidak berarti setiap run sudah lolos. Hasil yang ditinjau dicatat dalam laporan QA setelah pengujian selesai.
+
+Run 1.0.1: 10 tes pipeline, 19 unit test Android dan 3 perjalanan emulator lolos. Lint selesai dengan 0 error dan 20 warning. Hasil, identitas APK, screenshot yang diperiksa dan batas pengujian tersedia dalam [QA.md](docs/QA.md).
 
 ## Privasi dan hak
 
