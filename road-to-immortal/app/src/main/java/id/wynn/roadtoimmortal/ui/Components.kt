@@ -23,7 +23,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.AsyncImage
 import id.wynn.roadtoimmortal.data.*
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -81,31 +81,41 @@ fun Artwork(
     modifier: Modifier = Modifier,
     scale: ContentScale = ContentScale.Crop,
     round: Dp = 16.dp,
+    fallbackUrl: String? = null,
 ) {
-    SubcomposeAsyncImage(
-        model = url,
-        contentDescription = name,
-        contentScale = scale,
-        modifier =
-            modifier
-                .clip(RoundedCornerShape(round))
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-        loading = {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Icon(
-                    Icons.Outlined.Image,
-                    null,
-                    Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .4f),
-                )
-            }
-        },
-        error = {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(name?.take(1).orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        },
-    )
+    var activeUrl by
+        remember(url, fallbackUrl) {
+            mutableStateOf(url?.takeIf(String::isNotBlank) ?: fallbackUrl)
+        }
+    var state by remember(url, fallbackUrl) { mutableIntStateOf(0) }
+    Box(
+        modifier
+            .clip(RoundedCornerShape(round))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+        contentAlignment = Alignment.Center,
+    ) {
+        AsyncImage(
+            model = activeUrl,
+            contentDescription = name,
+            contentScale = scale,
+            modifier = Modifier.matchParentSize(),
+            onLoading = { state = 0 },
+            onSuccess = { state = 1 },
+            onError = {
+                if (!fallbackUrl.isNullOrBlank() && activeUrl != fallbackUrl) {
+                    activeUrl = fallbackUrl
+                    state = 0
+                } else state = 2
+            },
+        )
+        if (state != 1)
+            Icon(
+                if (state == 2) Icons.Outlined.BrokenImage else Icons.Outlined.Image,
+                null,
+                Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .4f),
+            )
+    }
 }
 
 @Composable

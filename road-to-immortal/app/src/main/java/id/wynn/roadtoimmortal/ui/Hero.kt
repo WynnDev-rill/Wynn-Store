@@ -40,7 +40,14 @@ fun HeroScreen(
     ) {
         item {
             Box(Modifier.fillMaxWidth().height(300.dp)) {
-                Artwork(hero.portrait, null, Modifier.fillMaxSize(), ContentScale.Crop, 0.dp)
+                Artwork(
+                    hero.portrait,
+                    null,
+                    Modifier.fillMaxSize(),
+                    ContentScale.Crop,
+                    0.dp,
+                    hero.icon,
+                )
                 Box(
                     Modifier.fillMaxSize()
                         .background(

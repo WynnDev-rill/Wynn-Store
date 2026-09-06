@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import id.wynn.roadtoimmortal.data.*
@@ -61,9 +62,15 @@ fun AtlasScreen(
                 }
                 .sortedWith(compareBy<Equipment> { it.category }.thenBy { it.name })
         }
-    Column(Modifier.fillMaxSize()) {
+    val compactHeight = LocalConfiguration.current.screenHeightDp < 600
+    val noResults = section == "Hero" && heroes.isEmpty() || section != "Hero" && gear.isEmpty()
+    val header: @Composable () -> Unit = {
         Column(
-            Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp),
+            Modifier.padding(
+                start = if (compactHeight) 0.dp else 20.dp,
+                end = if (compactHeight) 0.dp else 20.dp,
+                top = if (compactHeight) 0.dp else 20.dp,
+            ),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -104,71 +111,77 @@ fun AtlasScreen(
                 else "${gear.size} ${section.lowercase()}"
             )
         }
-        if (section == "Hero" && heroes.isEmpty() || section != "Hero" && gear.isEmpty())
-            EmptyState(
-                "Belum ada hasil",
-                if (saved) "Simpan hero lewat ikon bookmark di halaman hero."
-                else "Coba nama lain atau hapus filter.",
-                action = "Hapus filter",
-                onAction = {
-                    query = ""
-                    lane = "Semua"
-                    category = "Semua"
-                    saved = false
-                },
-            )
-        else
-            LazyVerticalGrid(
-                GridCells.Adaptive(if (section == "Hero") 100.dp else 96.dp),
-                contentPadding = PaddingValues(20.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                if (section == "Hero")
-                    items(heroes, key = { it.id }) { hero ->
+    }
+    Column(Modifier.fillMaxSize()) {
+        if (!compactHeight) header()
+        LazyVerticalGrid(
+            GridCells.Adaptive(if (section == "Hero") 100.dp else 96.dp),
+            contentPadding = PaddingValues(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            if (compactHeight) item(span = { GridItemSpan(maxLineSpan) }) { header() }
+            if (noResults)
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    EmptyState(
+                        "Belum ada hasil",
+                        if (saved) "Simpan hero lewat ikon bookmark di halaman hero."
+                        else "Coba nama lain atau hapus filter.",
+                        action = "Hapus filter",
+                        onAction = {
+                            query = ""
+                            lane = "Semua"
+                            category = "Semua"
+                            saved = false
+                        },
+                    )
+                }
+            else if (section == "Hero")
+                items(heroes, key = { it.id }) { hero ->
+                    Column(
+                        Modifier.clickable { onHero(hero.id) },
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Artwork(
+                            hero.portrait.ifBlank { hero.icon },
+                            null,
+                            Modifier.fillMaxWidth().aspectRatio(.82f),
+                            round = 18.dp,
+                            fallbackUrl = hero.icon,
+                        )
+                        Text(
+                            hero.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Caption(hero.lanes.joinToString(" · "))
+                    }
+                }
+            else
+                items(gear, key = { it.id }) { item ->
+                    Surface(
+                        onClick = { onGear(item) },
+                        shape = RoundedCornerShape(18.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    ) {
                         Column(
-                            Modifier.clickable { onHero(hero.id) },
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            Modifier.padding(12.dp).heightIn(min = 134.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Artwork(
-                                hero.portrait.ifBlank { hero.icon },
-                                null,
-                                Modifier.fillMaxWidth().aspectRatio(.82f),
-                                round = 18.dp,
-                            )
+                            Artwork(item.icon, null, Modifier.size(62.dp), round = 14.dp)
                             Text(
-                                hero.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                maxLines = 1,
+                                item.name,
+                                style = MaterialTheme.typography.labelLarge,
+                                maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                             )
-                            Caption(hero.lanes.joinToString(" · "))
+                            item.price?.let { Caption("$it gold") }
                         }
                     }
-                else
-                    items(gear, key = { it.id }) { item ->
-                        Surface(
-                            onClick = { onGear(item) },
-                            shape = RoundedCornerShape(18.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        ) {
-                            Column(
-                                Modifier.padding(12.dp).heightIn(min = 134.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                Artwork(item.icon, null, Modifier.size(62.dp), round = 14.dp)
-                                Text(
-                                    item.name,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                )
-                                item.price?.let { Caption("$it gold") }
-                            }
-                        }
-                    }
-            }
+                }
+        }
     }
 }

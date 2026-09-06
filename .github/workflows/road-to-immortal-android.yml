@@ -33,6 +33,15 @@ jobs:
       - name: Unit tests, lint, optimized installable APK
         working-directory: road-to-immortal
         run: ./gradlew :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :qa-driver:assembleDebug :qa-driver:assembleDebugAndroidTest --stacktrace
+      - name: Verify APK signature and package
+        working-directory: road-to-immortal
+        run: |
+          mkdir -p qa/output dist
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk | tee qa/output/apk-signature.txt
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/release/app-release.apk > qa/output/apk-package.txt
+          cp app/build/outputs/apk/release/app-release.apk dist/Road-to-Immortal.apk
+          sha256sum dist/Road-to-Immortal.apk > qa/output/apk-sha256.txt
+          git rev-parse HEAD > qa/output/source-commit.txt
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -54,6 +63,7 @@ jobs:
         with:
           name: Road-to-Immortal
           path: |
+            road-to-immortal/dist/
             road-to-immortal/app/build/outputs/apk/
             road-to-immortal/app/build/reports/
             road-to-immortal/qa-driver/build/outputs/apk/

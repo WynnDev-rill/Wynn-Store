@@ -1,5 +1,7 @@
 package id.wynn.roadtoimmortal
 
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -49,6 +51,9 @@ class UserJourneyTest {
         Configurator.getInstance().setWaitForIdleTimeout(1500)
         device.wakeUp()
         device.executeShellCommand("wm dismiss-keyguard")
+        device.executeShellCommand("svc wifi enable")
+        device.executeShellCommand("svc data enable")
+        awaitNetwork(true)
         // This host is isolated, so clearing the consumer APK does not kill tests.
         assertTrue(device.executeShellCommand("pm clear $pkg").contains("Success"))
         device.executeShellCommand("am start -W -n $pkg/.MainActivity")
@@ -99,6 +104,26 @@ class UserJourneyTest {
         SystemClock.sleep(250)
     }
 
+    private fun awaitNetwork(available: Boolean) {
+        val manager = context.getSystemService(ConnectivityManager::class.java)
+        val deadline = SystemClock.elapsedRealtime() + 30_000
+        fun ready(): Boolean {
+            val network = manager.activeNetwork
+            return if (!available) network == null
+            else
+                manager
+                    .getNetworkCapabilities(network)
+                    ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+        }
+        while (!ready() && SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(100)
+        File(output, "network-${if (available) "online" else "offline"}.txt")
+            .writeText(device.executeShellCommand("dumpsys connectivity"))
+        assertTrue(
+            "Android did not reach the requested network state: available=$available",
+            ready(),
+        )
+    }
+
     @Test
     fun roadRankThemeAndAdaptiveText() {
         shot("01-onboarding")
@@ -137,6 +162,22 @@ class UserJourneyTest {
         assertTrue(device.wait(Until.hasObject(By.text(Pattern.compile("[0-9]+ hero"))), 5000))
         SystemClock.sleep(1500)
         shot("04a-atlas")
+        device.setOrientationLeft()
+        SystemClock.sleep(800)
+        search("Miya")
+        // The shorter viewport must let the user scroll past the search/filter header.
+        device
+            .findObject(By.scrollable(true).pkg(pkg))
+            ?.scrollUntil(
+                Direction.DOWN,
+                Until.findObject(By.text("Miya").clazz("android.widget.TextView")),
+            )
+        assertTrue(
+            device.wait(Until.hasObject(By.text("Miya").clazz("android.widget.TextView")), 5000)
+        )
+        shot("04b-atlas-landscape")
+        device.setOrientationNatural()
+        device.unfreezeRotation()
         search("Miya")
         tap("Miya")
         assertTrue(device.wait(Until.hasObject(By.text("Siap masuk ranked")), 5000))
@@ -198,10 +239,13 @@ class UserJourneyTest {
         shot("14a-online-sources")
         device.executeShellCommand("svc wifi disable")
         device.executeShellCommand("svc data disable")
+        // Radio commands return before ConnectivityService finishes disconnecting.
+        // Confirm there is no default network before exercising offline refresh.
+        awaitNetwork(false)
         tap("Perbarui sekarang")
         assertTrue(
             "Offline refresh must retain catalog and report unavailable network",
-            device.wait(Until.hasObject(By.textStartsWith("Belum bisa memperbarui")), 100_000),
+            device.wait(Until.hasObject(By.textStartsWith("Belum bisa memperbarui")), 10_000),
         )
         shot("14-offline")
         back()
@@ -209,5 +253,16 @@ class UserJourneyTest {
         tap("Jelajah")
         assertTrue(device.wait(Until.hasObject(By.text(Pattern.compile("[0-9]+ hero"))), 5000))
         shot("15-offline-atlas")
+        device.executeShellCommand("am force-stop $pkg")
+        device.executeShellCommand("am start -W -n $pkg/.MainActivity")
+        tap("Jelajah")
+        assertTrue(device.wait(Until.hasObject(By.text(Pattern.compile("[0-9]+ hero"))), 5000))
+        shot("16-offline-restart")
+        device.executeShellCommand("svc wifi enable")
+        device.executeShellCommand("svc data enable")
+        awaitNetwork(true)
+        tap("Coba lagi")
+        assertTrue(device.wait(Until.gone(By.text("Mode tersimpan · pembaruan tertunda")), 90_000))
+        shot("17-online-recovery")
     }
 }

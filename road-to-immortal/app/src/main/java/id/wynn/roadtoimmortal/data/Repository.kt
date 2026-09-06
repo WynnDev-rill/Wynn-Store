@@ -1,6 +1,8 @@
 package id.wynn.roadtoimmortal.data
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.util.AtomicFile
 import java.io.File
 import java.time.Instant
@@ -20,7 +22,16 @@ data class DataState(
     val lastCheck: Instant? = null,
 )
 
-class CatalogRepository(private val context: Context, transport: OkHttpClient? = null) {
+class CatalogRepository(
+    private val context: Context,
+    transport: OkHttpClient? = null,
+    private val networkAvailable: () -> Boolean = {
+        val manager = context.getSystemService(ConnectivityManager::class.java)
+        manager
+            ?.getNetworkCapabilities(manager.activeNetwork)
+            ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+    },
+) {
     companion object {
         val json = Json {
             ignoreUnknownKeys = true
@@ -120,6 +131,19 @@ class CatalogRepository(private val context: Context, transport: OkHttpClient? =
                         } == true
                 )
                     return@withLock true
+                // A cached HTTP response is not proof of a successful online check.
+                // Fail promptly once Android has no default internet-capable network;
+                // an available network still has to pass the actual HTTPS requests.
+                if (!networkAvailable()) {
+                    mutable.value =
+                        before.copy(
+                            loading = false,
+                            refreshing = false,
+                            error =
+                                "Belum bisa memperbarui. Periksa koneksi; data tersimpan tetap bisa dibuka.",
+                        )
+                    return@withLock false
+                }
                 mutable.value = before.copy(refreshing = true)
                 try {
                     try {
