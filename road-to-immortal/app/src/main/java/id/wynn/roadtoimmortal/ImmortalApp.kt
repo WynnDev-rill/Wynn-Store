@@ -23,6 +23,7 @@ class ImmortalApp : Application(), SingletonImageLoader.Factory {
                 "catalog-refresh",
                 ExistingPeriodicWorkPolicy.KEEP,
                 PeriodicWorkRequestBuilder<DataRefreshWorker>(6, TimeUnit.HOURS)
+                    .setInitialDelay(6, TimeUnit.HOURS)
                     .setConstraints(
                         Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
                     )

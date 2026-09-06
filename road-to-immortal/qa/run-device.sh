@@ -6,14 +6,18 @@ adb logcat -c
 adb shell input keyevent KEYCODE_WAKEUP
 adb shell wm dismiss-keyguard
 adb install -r app/build/outputs/apk/release/app-release.apk
-adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-# Both variants share the explicit development certificate. The test driver uses
-# accessibility and shell only, so it can verify the actual R8-optimized APK.
+adb shell am start -W -n id.wynn.roadtoimmortal/.MainActivity > qa/output/cold-start.txt
+sleep 4
+adb exec-out screencap -p > qa/output/00-standalone-launch.png
+adb shell am force-stop id.wynn.roadtoimmortal
+adb install -r qa-driver/build/outputs/apk/debug/qa-driver-debug.apk
+adb install -r qa-driver/build/outputs/apk/androidTest/debug/qa-driver-debug-androidTest.apk
+# Tests run in their own process: no dependency on unminified consumer classes.
 set +e
-adb shell am instrument -w -r -e class id.wynn.roadtoimmortal.UserJourneyTest id.wynn.roadtoimmortal.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/instrumentation.txt
+adb shell am instrument -w -r -e class id.wynn.roadtoimmortal.UserJourneyTest id.wynn.roadtoimmortal.qa.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/instrumentation.txt
 instrument_result=${PIPESTATUS[0]}
 # Do not uninstall the app before collecting its screenshots (UTP normally does).
-adb pull /sdcard/Android/data/id.wynn.roadtoimmortal/files/qa/. qa/output/ || true
+adb pull /sdcard/Android/data/id.wynn.roadtoimmortal.qa/files/qa/. qa/output/ || true
 adb logcat -d > qa/output/logcat.txt
 adb shell dumpsys gfxinfo id.wynn.roadtoimmortal > qa/output/gfxinfo-final.txt
 adb shell dumpsys meminfo id.wynn.roadtoimmortal > qa/output/meminfo-final.txt

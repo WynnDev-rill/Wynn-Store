@@ -7,6 +7,7 @@ on:
       - 'road-to-immortal/gradle/**'
       - 'road-to-immortal/*.kts'
       - 'road-to-immortal/qa/**'
+      - 'road-to-immortal/qa-driver/**'
       - '.github/workflows/road-to-immortal-android.yml'
   pull_request:
     paths: ['road-to-immortal/**']
@@ -31,7 +32,7 @@ jobs:
         run: python -m unittest discover -s road-to-immortal/pipeline -p 'test_*.py'
       - name: Unit tests, lint, optimized installable APK
         working-directory: road-to-immortal
-        run: ./gradlew testDebugUnitTest lintRelease assembleRelease assembleDebug assembleDebugAndroidTest --stacktrace
+        run: ./gradlew :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :qa-driver:assembleDebug :qa-driver:assembleDebugAndroidTest --stacktrace
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -55,5 +56,6 @@ jobs:
           path: |
             road-to-immortal/app/build/outputs/apk/
             road-to-immortal/app/build/reports/
+            road-to-immortal/qa-driver/build/outputs/apk/
             road-to-immortal/qa/output/
           retention-days: 30

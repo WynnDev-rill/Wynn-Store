@@ -4,5 +4,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "RoadToImmortal"
-include(":app")
-
+include(":app", ":qa-driver")

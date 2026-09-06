@@ -3,10 +3,13 @@ package id.wynn.roadtoimmortal.ui
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 
 private val Light =
     lightColorScheme(
@@ -91,10 +94,20 @@ private val Type =
 
 @Composable
 fun ImmortalTheme(mode: String, content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme =
-            if (mode == "dark" || mode == "system" && isSystemInDarkTheme()) Dark else Light,
-        typography = Type,
-        content = content,
-    )
+    val dark = mode == "dark" || mode == "system" && isSystemInDarkTheme()
+    val view = LocalView.current
+    if (!view.isInEditMode)
+        SideEffect {
+            var owner = view.context
+            while (owner is android.content.ContextWrapper && owner !is android.app.Activity) {
+                owner = owner.baseContext
+            }
+            (owner as? android.app.Activity)?.let { activity ->
+                WindowCompat.getInsetsController(activity.window, view).apply {
+                    isAppearanceLightStatusBars = !dark
+                    isAppearanceLightNavigationBars = !dark
+                }
+            }
+        }
+    MaterialTheme(colorScheme = if (dark) Dark else Light, typography = Type, content = content)
 }
