@@ -55,7 +55,8 @@ fun AtlasScreen(
             val q = searchKey(query)
             allGear
                 .filter {
-                    (category == "Semua" || categoryLabel(it.category) == category) &&
+                    ((category == "Semua" && it.category != "Metadata") ||
+                        categoryLabel(it.category) == category) &&
                         q in searchKey(it.name + it.category + it.stats.joinToString())
                 }
                 .sortedWith(compareBy<Equipment> { it.category }.thenBy { it.name })

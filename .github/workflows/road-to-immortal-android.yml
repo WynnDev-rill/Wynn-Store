@@ -44,15 +44,8 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: |
-            adb shell setprop persist.sys.timezone Asia/Jakarta
-            adb logcat -c
-            cd road-to-immortal && ./gradlew connectedDebugAndroidTest --stacktrace; result=$?; cd ..
-            mkdir -p road-to-immortal/qa/output
-            adb pull /sdcard/Android/data/id.wynn.roadtoimmortal/files/qa/. road-to-immortal/qa/output/ || true
-            adb logcat -d > road-to-immortal/qa/output/logcat.txt
-            exit $result
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -timezone Asia/Jakarta
+          script: bash road-to-immortal/qa/run-device.sh
       - name: Upload APK and evidence
         if: always()
         uses: actions/upload-artifact@v4

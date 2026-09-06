@@ -409,11 +409,8 @@ fun RankPicker(
                             digits,
                             { s ->
                                 if (s.length <= 4 && s.all(Char::isDigit)) {
-                                    digits = s
-                                    s.toIntOrNull()?.let {
-                                        position = position.copy(stars = it.coerceAtMost(max))
-                                        onChange(position)
-                                    }
+                                    if (s.isEmpty()) digits = s
+                                    else s.toIntOrNull()?.let { update(position.copy(stars = it)) }
                                 }
                             },
                             label = { Text("Bintang") },

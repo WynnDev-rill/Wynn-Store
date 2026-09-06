@@ -6,7 +6,11 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.*
 import java.io.File
 import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
 import org.junit.runner.RunWith
 
 /** Installed app black-box QA via accessibility tree and device shell. */
@@ -16,6 +20,27 @@ class UserJourneyTest {
     private val device = UiDevice.getInstance(instrumentation)
     private val context = instrumentation.targetContext
     private val pkg = "id.wynn.roadtoimmortal"
+
+    @get:Rule
+    val evidence =
+        object : TestWatcher() {
+            override fun failed(e: Throwable, description: Description) {
+                shot("failure-${description.methodName}")
+            }
+
+            override fun finished(description: Description) {
+                device.executeShellCommand("settings put system font_scale 1.0")
+                device.executeShellCommand("svc wifi enable")
+                device.executeShellCommand("svc data enable")
+                device.setOrientationNatural()
+                device.unfreezeRotation()
+            }
+        }
+
+    @Before
+    fun configureDevice() {
+        Configurator.getInstance().setWaitForIdleTimeout(1500)
+    }
 
     private fun tap(text: String) {
         val n = device.wait(Until.findObject(By.text(text)), 12_000)

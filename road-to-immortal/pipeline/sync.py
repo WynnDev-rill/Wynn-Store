@@ -492,7 +492,7 @@ def main():
         if not d.get("equipicon", "").startswith("https://") or "dilepas" in d.get("equipname", "").lower():
             continue
         if key not in item_ids:
-            catalog["items"].append(dict(id=key, name=d["equipname"], icon=d["equipicon"], category="Lainnya", source=provenance("Moonton via Rone Arena", academy + "/equipment", latest([row]), item_checked, "community", "Identitas tersedia; atribut belum diberikan sumber.")))
+            catalog["items"].append(dict(id=key, name=d["equipname"], icon=d["equipicon"], category="Metadata", source=provenance("Moonton via Rone Arena", academy + "/equipment", latest([row]), item_checked, "community", "Identitas tambahan dari metadata Academy; atribut dan status aktif belum terverifikasi. Tidak digunakan dalam rekomendasi item.")))
             item_ids.add(key)
     catalog["builds"] = [b for b in catalog["builds"] if all(i in item_ids for i in b["items"])]
     validate(catalog)
