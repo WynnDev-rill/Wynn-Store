@@ -292,6 +292,10 @@ fun SourceLine(source: Provenance, onClick: () -> Unit) {
     TextButton(onClick, contentPadding = PaddingValues(0.dp)) {
         Icon(Icons.Outlined.Update, null, Modifier.size(15.dp))
         Spacer(Modifier.width(6.dp))
-        Text("Diperbarui ${ageText(source)}", style = MaterialTheme.typography.labelMedium)
+        Text(
+            if (source.updatedAt == null) "Waktu pembaruan belum tersedia"
+            else "Diperbarui ${ageText(source)}",
+            style = MaterialTheme.typography.labelMedium,
+        )
     }
 }

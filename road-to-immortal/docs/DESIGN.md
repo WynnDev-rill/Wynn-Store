@@ -17,7 +17,7 @@ hasil pencarian tidak disalin.
 - Permukaan light #F8F8FC / white; dark #11121C / #1D1E2C.
 - Roboto platform, angka tabular, headline 30sp, daily target 64sp.
 - 4/8dp rhythm; screen gutter 20dp; cards 24dp radius; controls 48dp minimum.
-- Empat tujuan navigasi: Beranda, Jelajah, Meta, Draft. Pengaturan di app bar.
+- Lima tujuan navigasi: Perjalanan, Jelajah, Meta, Tier List, Tim. Pengaturan di app bar. Rancangan Hero dibuka dari Perjalanan; detail hero menyediakan Rancang hero dan Cari partner.
 - State: data cache tampil seketika, refresh tidak mengosongkan layar; sumber
   dan tanggal tersedia melalui indikator data, tidak memenuhi layar utama.
 - Angka berubah via AnimatedContent; sheet memilih rank, haptic saat pilihan
@@ -33,4 +33,3 @@ draft adalah skor transparan berbasis statistik + cakupan lane, bukan peluang
 menang tim. Win rate tidak digandakan menjadi matchup rate jika sumber hanya
 memberikan perubahan terhadap baseline. Ketiadaan data selalu dibedakan dari 0.
 Tanggal season yang hanya diketahui komunitas ditampilkan sebagai perkiraan.
-

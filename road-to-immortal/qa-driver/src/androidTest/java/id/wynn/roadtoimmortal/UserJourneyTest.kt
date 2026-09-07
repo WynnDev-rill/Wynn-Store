@@ -67,6 +67,14 @@ class UserJourneyTest {
         // Search text and a result can have the same name. Select the actual label.
         val selector =
             By.text(text).pkg(pkg).clazz(Pattern.compile("(?!android\\.widget\\.EditText$).*"))
+        if (!device.hasObject(selector)) {
+            device
+                .findObjects(By.scrollable(true).pkg(pkg))
+                .filter { it.visibleBounds.width() > it.visibleBounds.height() }
+                .forEach { row ->
+                    runCatching { row.scrollUntil(Direction.RIGHT, Until.findObject(selector)) }
+                }
+        }
         val n = device.wait(Until.findObject(selector), 12_000)
         assertNotNull("Missing text: $text", n)
         n!!.click()
@@ -282,14 +290,11 @@ class UserJourneyTest {
         tap("Tier List")
         tap("Gold")
         search("Miya")
-        device.pressBack() // keyboard
         reveal("Miya")
         shot("18-tier-gold")
         desc("Rancang Miya")
-        tap("Gold")
         tap("Jelajah")
         search("Layla")
-        device.pressBack()
         desc("Rancang Layla")
         tap("Gold")
         tap("Perjalanan")
@@ -306,6 +311,11 @@ class UserJourneyTest {
         tap("Mid")
         assertTrue(device.wait(Until.hasObject(By.text("Mid · 1/10 hero")), 5000))
         shot("20-pool-moved")
+        assertTrue(
+            device
+                .executeShellCommand("pm install -r /data/local/tmp/rti-update.apk")
+                .contains("Success")
+        )
         device.executeShellCommand("am force-stop $pkg")
         device.executeShellCommand("am start -W -n $pkg/.MainActivity")
         reveal("Rancangan Hero")
@@ -329,5 +339,46 @@ class UserJourneyTest {
         tap("Jelajah")
         tap("Counter")
         shot("23-counter-items")
+    }
+
+    @Test
+    fun poolCapacityAndHeroPartnerAction() {
+        reveal("Rancangan Hero")
+        tap("Atur")
+        repeat(10) {
+            reveal("Tambah hero")
+            val button =
+                device.wait(
+                    Until.findObject(By.desc(Pattern.compile("Tambahkan .+ ke EXP")).enabled(true)),
+                    5000,
+                )
+            if (button == null)
+                device.findObject(By.scrollable(true).pkg(pkg))?.scroll(Direction.DOWN, .5f)
+            val available =
+                device.wait(
+                    Until.findObject(By.desc(Pattern.compile("Tambahkan .+ ke EXP")).enabled(true)),
+                    5000,
+                )
+            assertNotNull("Available hero must be addable", available)
+            available!!.click()
+            device.waitForIdle()
+        }
+        reveal("Pool penuh")
+        shot("24-pool-capacity")
+        assertTrue(
+            device.wait(
+                Until.hasObject(By.text("Hapus atau pindahkan satu hero untuk mengganti pilihan.")),
+                5000,
+            )
+        )
+        back()
+        tap("Jelajah")
+        search("Miya")
+        tap("Miya")
+        reveal("Cari partner")
+        tap("Cari partner")
+        assertTrue(device.wait(Until.hasObject(By.text("Miya")), 5000))
+        reveal("Pilihan 1")
+        shot("25-hero-partners")
     }
 }

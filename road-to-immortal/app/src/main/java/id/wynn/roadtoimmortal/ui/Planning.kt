@@ -48,12 +48,12 @@ fun PoolPortrait(hero: Hero, added: Boolean, onHero: () -> Unit, onAdd: () -> Un
 fun PoolPreview(
     catalog: Catalog,
     pools: Map<String, List<Int>>,
-    onManage: () -> Unit,
+    onManage: (String) -> Unit,
     onHero: (Int) -> Unit,
 ) {
     var lane by rememberSaveable { mutableStateOf("EXP") }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SectionTitle("Rancangan Hero", "Atur", onManage)
+        SectionTitle("Rancangan Hero", "Atur", { onManage(lane) })
         ChoiceRow(listOf("EXP", "Jungle", "Roam", "Mid", "Gold"), lane, { lane = it })
         val ids = pools[lane].orEmpty()
         if (ids.isEmpty())
@@ -64,7 +64,7 @@ fun PoolPreview(
                 ) {
                     Text("Siapa andalanmu di $lane?", style = MaterialTheme.typography.titleMedium)
                     Caption("Simpan hingga 10 hero untuk giliran ranked berikutnya.")
-                    FilledTonalButton(onManage) { Text("Pilih hero") }
+                    FilledTonalButton({ onManage(lane) }) { Text("Pilih hero") }
                 }
             }
         else
@@ -140,11 +140,12 @@ fun PoolAddSheet(
 fun PoolScreen(
     catalog: Catalog,
     pools: Map<String, List<Int>>,
+    initialLane: String,
     onEdit: ((Map<String, List<Int>>) -> Map<String, List<Int>>) -> Unit,
     onHero: (Int) -> Unit,
     onBack: () -> Unit,
 ) {
-    var lane by rememberSaveable { mutableStateOf("EXP") }
+    var lane by rememberSaveable { mutableStateOf(initialLane) }
     var query by rememberSaveable { mutableStateOf("") }
     var moving by rememberSaveable { mutableStateOf<Int?>(null) }
     val ids = pools[lane].orEmpty()

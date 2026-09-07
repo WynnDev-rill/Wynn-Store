@@ -6,6 +6,7 @@ adb logcat -c
 adb shell input keyevent KEYCODE_WAKEUP
 adb shell wm dismiss-keyguard
 adb install -r app/build/outputs/apk/release/app-release.apk
+adb push app/build/outputs/apk/release/app-release.apk /data/local/tmp/rti-update.apk
 adb shell am start -W -n id.wynn.roadtoimmortal/.MainActivity > qa/output/cold-start.txt
 sleep 4
 adb exec-out screencap -p > qa/output/00-standalone-launch.png

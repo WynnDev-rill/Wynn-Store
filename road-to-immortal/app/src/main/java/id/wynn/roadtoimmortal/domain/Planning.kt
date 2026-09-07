@@ -196,8 +196,10 @@ object PartyEngine {
                                 else null
                             }
                     }
-                    .sortedByDescending { evaluate(it).score }
+                    .map(::evaluate)
+                    .sortedByDescending { it.score }
                     .take(60)
+                    .map { it.heroes }
         }
         val selected = mutableListOf<Party>()
         beam

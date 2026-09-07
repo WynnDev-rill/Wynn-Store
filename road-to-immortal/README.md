@@ -7,7 +7,9 @@ Companion MLBB native berbahasa Indonesia. Proyek ini sepenuhnya terpisah dari W
 - **Perjalanan**: pilih logo rank, divisi, dan bintang. Target net harian langsung berubah menuju Mythical Immortal 100★ berdasarkan jadwal season online. Tidak ada riwayat pertandingan atau progress tracking buatan.
 - **Jelajah**: hero dengan artwork, skill, cerita, matchup, sinergi, serta build item inti, spell, emblem dan talent. Item dapat dicari, difilter, dan diperiksa atribut serta komponennya. Bookmark hero favorit.
 - **Meta**: statistik win/pick/ban pada enam cakupan rank, filter hero berdasarkan lane/role, pencarian, dan pengurutan.
-- **Draft**: lima slot tim, lima lawan, sepuluh ban; rekomendasi menyesuaikan cakupan lane, matchup, sinergi dan meta. Item situasional dikelompokkan berdasarkan efek yang melawan ancaman.
+- **Tier List**: SS/S/A/B/C per rank dan lane, dihitung dari win/pick/ban sumber online. Aksi tambah langsung menyimpan hero ke lane tersebut.
+- **Rancangan Hero**: hingga 10 hero per lane, tampil di Perjalanan. Tambah, hapus, naik/turun urutan, dan pindah lane; pilihan tersimpan lintas restart/update tanpa mengubah rank atau favorit.
+- **Tim**: kombinasi Duo, Trio dan Squad dengan hero awal dan lawan opsional. Skor rekomendasi memakai meta, sinergi yang tersedia, lane dan komposisi; bukan win rate combo. Counter item tersedia di Jelajah.
 - **Pengaturan → Data & sumber**: revisi sumber, waktu pemeriksaan, jadwal reset, patch komunitas, dan pembaruan manual. Tema mengikuti sistem atau dipilih terang/gelap.
 
 ## Build

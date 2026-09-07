@@ -106,4 +106,28 @@ class PlanningTest {
         assertTrue(PartyEngine.recommend(catalog(), "missing", 2).isEmpty())
         assertTrue(PartyEngine.recommend(catalog(), "mythic", 2, 1, 1).isEmpty())
     }
+
+    @Test
+    fun opponentAdvantageLowersRecommendationInsteadOfRewardingIt() {
+        val all = catalog()
+        val base = all.copy(heroes = all.heroes.take(2))
+        val risky =
+            base.copy(
+                meta =
+                    base.meta.map { slice ->
+                        slice.copy(
+                            heroes =
+                                slice.heroes.map { m ->
+                                    if (m.heroId == 1)
+                                        m.copy(counters = listOf(Matchup(20, delta = 8.0)))
+                                    else m
+                                }
+                        )
+                    }
+            )
+        val neutral = PartyEngine.recommend(base, "mythic", 2, seed = 1, enemy = 20).first()
+        val countered = PartyEngine.recommend(risky, "mythic", 2, seed = 1, enemy = 20).first()
+        assertTrue(countered.score < neutral.score)
+        assertFalse("Matchup mendukung" in countered.reasons)
+    }
 }

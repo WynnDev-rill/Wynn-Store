@@ -17,6 +17,7 @@ import id.wynn.roadtoimmortal.data.Equipment
 import id.wynn.roadtoimmortal.domain.HeroPool
 import java.time.Instant
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,11 +31,14 @@ fun ImmortalRoot(vm: MainViewModel) {
     var settings by rememberSaveable { mutableStateOf(false) }
     var sources by rememberSaveable { mutableStateOf(false) }
     var poolScreen by rememberSaveable { mutableStateOf(false) }
+    var poolStartLane by rememberSaveable { mutableStateOf("EXP") }
     var poolHero by rememberSaveable { mutableStateOf<Int?>(null) }
     var poolLane by rememberSaveable { mutableStateOf<String?>(null) }
     var partySeed by rememberSaveable { mutableStateOf<Int?>(null) }
     var now by remember { mutableStateOf(Instant.now()) }
     val holder = rememberSaveableStateHolder()
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         while (true) {
             now = Instant.now()
@@ -45,8 +49,27 @@ fun ImmortalRoot(vm: MainViewModel) {
     val openHero: (Int) -> Unit = { heroStack = heroStack + it }
     val openGear: (Equipment) -> Unit = { gearId = it.id }
     val addPool: (Int, String?) -> Unit = { id, lane ->
-        poolHero = id
-        poolLane = lane
+        if (lane == null) {
+            poolHero = id
+            poolLane = null
+        } else {
+            val existing = prefs.pools[lane].orEmpty()
+            val name = catalog?.heroById?.get(id)?.name ?: "Hero"
+            val message =
+                when {
+                    id in existing -> "$name sudah ada di $lane"
+                    existing.size >= 10 ->
+                        "$lane penuh · atur Rancangan Hero untuk mengganti pilihan"
+                    else -> {
+                        vm.pool { HeroPool.add(it, lane, id) }
+                        "$name ditambahkan ke $lane"
+                    }
+                }
+            scope.launch {
+                snackbar.currentSnackbarData?.dismiss()
+                snackbar.showSnackbar(message)
+            }
+        }
     }
     BackHandler(heroStack.isNotEmpty() || settings || sources || poolScreen || tab != 0) {
         when {
@@ -59,6 +82,7 @@ fun ImmortalRoot(vm: MainViewModel) {
     }
     ImmortalTheme(prefs.theme) {
         Scaffold(
+            snackbarHost = { SnackbarHost(snackbar) },
             bottomBar = {
                 if (heroStack.isEmpty() && !settings && !sources && !poolScreen)
                     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
@@ -78,7 +102,7 @@ fun ImmortalRoot(vm: MainViewModel) {
                                 )
                             }
                     }
-            }
+            },
         ) { padding ->
             Column(Modifier.fillMaxSize().padding(padding)) {
                 if (data.refreshing) LinearProgressIndicator(Modifier.fillMaxWidth().height(2.dp))
@@ -149,7 +173,14 @@ fun ImmortalRoot(vm: MainViewModel) {
                             }
                         }
                     poolScreen ->
-                        PoolScreen(catalog, prefs.pools, vm::pool, openHero, { poolScreen = false })
+                        PoolScreen(
+                            catalog,
+                            prefs.pools,
+                            poolStartLane,
+                            vm::pool,
+                            openHero,
+                            { poolScreen = false },
+                        )
                     else ->
                         AnimatedContent(
                             tab,
@@ -168,7 +199,10 @@ fun ImmortalRoot(vm: MainViewModel) {
                                             { tab = 2 },
                                             { settings = true },
                                             { sources = true },
-                                            { poolScreen = true },
+                                            { lane ->
+                                                poolStartLane = lane
+                                                poolScreen = true
+                                            },
                                         )
                                     1 ->
                                         AtlasScreen(

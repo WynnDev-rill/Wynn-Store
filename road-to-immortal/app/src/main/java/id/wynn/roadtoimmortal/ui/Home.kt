@@ -39,7 +39,7 @@ fun HomeScreen(
     onMeta: () -> Unit,
     onSettings: () -> Unit,
     onSources: () -> Unit,
-    onPool: () -> Unit,
+    onPool: (String) -> Unit,
 ) {
     val position = prefs.position
     val road = Road.target(position, catalog.season, now, rules = catalog.rankRules)
@@ -463,7 +463,15 @@ fun RankPicker(
                     )
                 }
             item {
-                Button(onDismiss, Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text("Selesai") }
+                Button(
+                    {
+                        onChange(position)
+                        onDismiss()
+                    },
+                    Modifier.fillMaxWidth().heightIn(min = 52.dp),
+                ) {
+                    Text("Selesai")
+                }
             }
         }
     }
