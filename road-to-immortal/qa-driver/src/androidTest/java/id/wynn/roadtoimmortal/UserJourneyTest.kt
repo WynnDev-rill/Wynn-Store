@@ -104,6 +104,15 @@ class UserJourneyTest {
         SystemClock.sleep(250)
     }
 
+    private fun reveal(text: String) {
+        if (!device.hasObject(By.text(text))) {
+            device
+                .findObject(By.scrollable(true).pkg(pkg))
+                ?.scrollUntil(Direction.DOWN, Until.findObject(By.text(text)))
+        }
+        assertTrue("Cannot reveal $text", device.wait(Until.hasObject(By.text(text)), 5000))
+    }
+
     private fun awaitNetwork(available: Boolean) {
         val manager = context.getSystemService(ConnectivityManager::class.java)
         val deadline = SystemClock.elapsedRealtime() + 30_000
@@ -180,6 +189,7 @@ class UserJourneyTest {
         device.unfreezeRotation()
         search("Miya")
         tap("Miya")
+        reveal("Siap masuk ranked")
         assertTrue(device.wait(Until.hasObject(By.text("Siap masuk ranked")), 5000))
         shot("04-hero-build")
         tap("Skill")
@@ -211,19 +221,20 @@ class UserJourneyTest {
         tap("Legend")
         tap("Ban rate")
         shot("09-meta-ban")
-        tap("Draft")
-        desc("Tim kamu, pilih hero slot 1")
+        tap("Tim")
+        tap("Hero kamu")
         search("Miya")
         tap("Miya")
-        desc("Tim lawan, pilih hero slot 1")
+        tap("Lawan (opsional)")
         search("Miya")
         assertTrue(device.wait(Until.hasObject(By.text("Hero tidak ditemukan")), 5000))
         search("Eudora")
         tap("Eudora")
-        shot("10-draft")
+        reveal("Pilihan 1")
+        shot("10-tim-duo")
         tap("Jelajah")
-        tap("Draft")
-        assertTrue(device.wait(Until.hasObject(By.desc("Tim kamu, hapus Miya")), 5000))
+        tap("Tim")
+        assertTrue(device.wait(Until.hasObject(By.desc("Hapus Hero kamu")), 5000))
         tap("Perjalanan")
         desc("Pengaturan")
         tap("Data & sumber")
@@ -264,5 +275,59 @@ class UserJourneyTest {
         tap("Coba lagi")
         assertTrue(device.wait(Until.gone(By.text("Mode tersimpan · pembaruan tertunda")), 90_000))
         shot("17-online-recovery")
+    }
+
+    @Test
+    fun tierPoolReorderMoveRestartAndParty() {
+        tap("Tier List")
+        tap("Gold")
+        search("Miya")
+        device.pressBack() // keyboard
+        reveal("Miya")
+        shot("18-tier-gold")
+        desc("Rancang Miya")
+        tap("Gold")
+        tap("Jelajah")
+        search("Layla")
+        device.pressBack()
+        desc("Rancang Layla")
+        tap("Gold")
+        tap("Perjalanan")
+        reveal("Rancangan Hero")
+        tap("Atur")
+        tap("Gold")
+        assertTrue(device.wait(Until.hasObject(By.text("Gold · 2/10 hero")), 5000))
+        desc("Naikkan Layla")
+        shot("19-pool-reordered")
+        // First selected row now belongs to Layla; move that row to another lane.
+        val move = device.findObjects(By.text("Pindah lane")).first()
+        move.click()
+        tap("Mid · 0/10")
+        tap("Mid")
+        assertTrue(device.wait(Until.hasObject(By.text("Mid · 1/10 hero")), 5000))
+        shot("20-pool-moved")
+        device.executeShellCommand("am force-stop $pkg")
+        device.executeShellCommand("am start -W -n $pkg/.MainActivity")
+        reveal("Rancangan Hero")
+        tap("Atur")
+        tap("Mid")
+        assertTrue(device.wait(Until.hasObject(By.text("Mid · 1/10 hero")), 5000))
+        desc("Hapus Layla dari Mid")
+        assertTrue(device.wait(Until.hasObject(By.text("Mid · 0/10 hero")), 5000))
+        back()
+        tap("Tim")
+        tap("Hero kamu")
+        search("Miya")
+        tap("Miya")
+        tap("Trio")
+        reveal("Pilihan 1")
+        shot("21-tim-trio")
+        device.findObject(By.scrollable(true).pkg(pkg))?.fling(Direction.UP)
+        tap("Squad")
+        reveal("Pilihan 1")
+        shot("22-tim-squad")
+        tap("Jelajah")
+        tap("Counter")
+        shot("23-counter-items")
     }
 }

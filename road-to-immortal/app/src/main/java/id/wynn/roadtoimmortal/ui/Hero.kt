@@ -29,6 +29,8 @@ fun HeroScreen(
     onHero: (Int) -> Unit,
     onGear: (Equipment) -> Unit,
     onSources: () -> Unit,
+    onPool: () -> Unit,
+    onParty: () -> Unit,
 ) {
     var section by rememberSaveable(hero.id) { mutableStateOf("Build") }
     var rank by rememberSaveable { mutableStateOf("mythic") }
@@ -107,6 +109,18 @@ fun HeroScreen(
                         color = Color(0xFFD3D1EF),
                     )
                 }
+            }
+        }
+        item {
+            Row(
+                Modifier.padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FilledTonalButton(onPool, Modifier.weight(1f)) {
+                    Icon(Icons.Outlined.Add, null, Modifier.size(18.dp))
+                    Text("Rancang hero")
+                }
+                OutlinedButton(onParty, Modifier.weight(1f)) { Text("Cari partner") }
             }
         }
         item {
@@ -189,7 +203,7 @@ fun HeroScreen(
                 if (builds.isNotEmpty())
                     item {
                         Caption(
-                            "Ini kombinasi tiga item inti, bukan urutan membeli enam item. Lengkapi sesuai lawan dan efek item pada draft.",
+                            "Tiga item inti. Lengkapi sesuai lawan dan kebutuhan tim.",
                             Modifier.padding(horizontal = 20.dp),
                         )
                     }

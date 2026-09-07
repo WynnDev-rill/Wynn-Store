@@ -34,10 +34,7 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         item { BackTitle("Ruangmu", onBack) }
-        item {
-            SectionTitle("Tampilan")
-            Caption("Pilih suasana untuk perjalananmu.")
-        }
+        item { SectionTitle("Tampilan") }
         item {
             ChoiceRow(
                 listOf("Sistem", "Terang", "Gelap"),
@@ -71,7 +68,7 @@ fun SettingsScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text("Data & sumber", style = MaterialTheme.typography.titleMedium)
-                        Caption("Kesegaran data, jadwal season, dan pembaruan")
+                        Caption("Pembaruan dan jadwal season")
                     }
                     Icon(Icons.Outlined.ChevronRight, null)
                 }
@@ -80,10 +77,7 @@ fun SettingsScreen(
         item {
             HorizontalDivider()
             SectionTitle("Road to Immortal")
-            Text(
-                "Companion ranked MLBB, dibuat untuk membantu setiap pilihan terasa lebih jelas.",
-                style = MaterialTheme.typography.bodyLarge,
-            )
+            Text("Teman perjalanan ranked MLBB.", style = MaterialTheme.typography.bodyLarge)
         }
         item {
             Caption(
@@ -93,7 +87,7 @@ fun SettingsScreen(
         item {
             Text("Privasi", style = MaterialTheme.typography.titleMedium)
             Caption(
-                "Tanpa akun, iklan, atau analitik. Rank dan favorit disimpan di perangkat. Permintaan data dan gambar dikirim ke penyedia dan CDN; kebijakan mereka berlaku. Pencadangan Android mengikuti pengaturan perangkatmu."
+                "Tanpa akun, iklan, atau analitik. Rank, favorit, dan Rancangan Hero disimpan di perangkat. Data dan gambar dimuat dari penyedia online. Pencadangan mengikuti pengaturan Android."
             )
         }
         item {
@@ -158,7 +152,7 @@ fun SourcesScreen(
                         "${catalog.builds.map {it.heroId}.distinct().size} hero dengan build · ${catalog.meta.size} cakupan rank",
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    Caption("Snapshot disusun ${dateText(catalog.generatedAt)}")
+                    Caption("Terakhir diperiksa ${dateText(catalog.generatedAt)}")
                     Button(refresh, enabled = !refreshing) {
                         Text(if (refreshing) "Memperbarui…" else "Perbarui sekarang")
                     }
@@ -182,9 +176,7 @@ fun SourcesScreen(
                 "Reset: ${dateText(catalog.season.resetsAt)}",
                 style = MaterialTheme.typography.bodyLarge,
             )
-            Caption(
-                "Jam mengikuti zona waktu perangkat. Jadwal komunitas dapat berubah. Jika kedaluwarsa atau tak tersedia, target harian menunggu jadwal yang terverifikasi."
-            )
+            Caption("Waktu lokal perangkat · jadwal komunitas dapat berubah.")
         }
         item {
             Caption(
@@ -194,14 +186,12 @@ fun SourcesScreen(
         if (catalog.patch.version.isNotBlank())
             item {
                 Text("Patch ${catalog.patch.version}", style = MaterialTheme.typography.titleMedium)
-                Caption(
-                    "Label katalog komunitas · ${dateText(catalog.patch.updatedAt)}. Tiap bagian data dapat memiliki waktu revisi berbeda."
-                )
+                Caption("Katalog komunitas · ${dateText(catalog.patch.updatedAt)}")
             }
         item {
-            Text("Diperbarui ≠ diperiksa", style = MaterialTheme.typography.titleLarge)
+            Text("Jadwal pembaruan", style = MaterialTheme.typography.titleLarge)
             Caption(
-                "Diperbarui adalah waktu revisi sumber. Diperiksa adalah saat pipeline mengambil data. Statistik mengikuti jendela pertandingan sumber; bukan pertandingan langsung. Snapshot diperiksa setiap enam jam; item dan build paling sering sekali sehari."
+                "Data diperiksa setiap 6 jam. Item dan build paling sering sekali sehari. Tanggal revisi mengikuti sumber; statistik merangkum 7 hari pertandingan. Tier dan skor Tim dihitung dari data tersebut."
             )
         }
         items(sources) { (label, source) ->
@@ -219,7 +209,6 @@ fun SourcesScreen(
                     Caption(
                         "Revisi · ${dateText(source.updatedAt)}\nDiperiksa · ${dateText(source.checkedAt)}"
                     )
-                    if (source.note.isNotBlank()) Caption(source.note)
                     TextButton(
                         {
                             if (source.url.startsWith("https://"))
@@ -235,9 +224,7 @@ fun SourcesScreen(
             }
         }
         item {
-            Caption(
-                "Jika penyedia gagal, aplikasi mempertahankan snapshot terakhir. Gambar yang sudah dibuka disimpan di cache; gambar lain memerlukan koneksi."
-            )
+            Caption("Saat offline, data terakhir dan gambar yang pernah dibuka tetap tersedia.")
         }
     }
 }

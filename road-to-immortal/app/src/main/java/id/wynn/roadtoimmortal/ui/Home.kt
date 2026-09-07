@@ -39,6 +39,7 @@ fun HomeScreen(
     onMeta: () -> Unit,
     onSettings: () -> Unit,
     onSources: () -> Unit,
+    onPool: () -> Unit,
 ) {
     val position = prefs.position
     val road = Road.target(position, catalog.season, now, rules = catalog.rankRules)
@@ -261,6 +262,7 @@ fun HomeScreen(
                 }
             }
         }
+        item { PoolPreview(catalog, prefs.pools, onPool, onHero) }
         if (recommendations.isNotEmpty()) {
             item {
                 SectionTitle("Pilihan untuk ranked", "Lihat meta", onMeta)

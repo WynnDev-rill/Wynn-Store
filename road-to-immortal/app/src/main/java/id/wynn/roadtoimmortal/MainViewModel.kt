@@ -45,4 +45,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun favorite(id: Int) {
         viewModelScope.launch { app.preferences.toggleFavorite(id) }
     }
+
+    fun pool(change: (Map<String, List<Int>>) -> Map<String, List<Int>>) {
+        viewModelScope.launch { app.preferences.editPool(change) }
+    }
 }

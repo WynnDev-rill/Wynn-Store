@@ -3,6 +3,7 @@ package id.wynn.roadtoimmortal.data
 import android.content.Context
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import id.wynn.roadtoimmortal.domain.HeroPool
 import id.wynn.roadtoimmortal.domain.RankPosition
 import java.io.IOException
 import kotlinx.coroutines.flow.catch
@@ -16,6 +17,7 @@ data class UserPreferences(
     val theme: String = "system",
     val favorites: Set<Int> = emptySet(),
     val lastSeason: Int? = null,
+    val pools: Map<String, List<Int>> = emptyMap(),
 )
 
 class Preferences(context: Context) {
@@ -27,6 +29,7 @@ class Preferences(context: Context) {
     private val theme = stringPreferencesKey("theme")
     private val favorites = stringSetPreferencesKey("favorite_heroes")
     private val season = intPreferencesKey("rank_season")
+    private val pools = stringPreferencesKey("hero_pools_v1")
     val flow =
         store.data
             .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
@@ -37,6 +40,7 @@ class Preferences(context: Context) {
                     p[theme] ?: "system",
                     p[favorites].orEmpty().mapNotNull(String::toIntOrNull).toSet(),
                     p[season],
+                    HeroPool.decode(p[pools]),
                 )
             }
 
@@ -60,5 +64,9 @@ class Preferences(context: Context) {
             val old = p[favorites].orEmpty()
             p[favorites] = if (id.toString() in old) old - id.toString() else old + id.toString()
         }
+    }
+
+    suspend fun editPool(change: (Map<String, List<Int>>) -> Map<String, List<Int>>) {
+        store.edit { p -> p[pools] = HeroPool.encode(change(HeroPool.decode(p[pools]))) }
     }
 }

@@ -60,8 +60,8 @@ fun ageText(p: Provenance): String {
         } ?: return "Tanggal belum tersedia"
     return when {
         h < 0 -> dateText(p.updatedAt)
-        h < 1 -> "< 1 jam lalu"
-        h < 24 -> "$h jam lalu"
+        h < 1 -> "<1j lalu"
+        h < 24 -> "${h}j lalu"
         else -> "${h/24} hari lalu"
     }
 }
@@ -292,6 +292,6 @@ fun SourceLine(source: Provenance, onClick: () -> Unit) {
     TextButton(onClick, contentPadding = PaddingValues(0.dp)) {
         Icon(Icons.Outlined.Update, null, Modifier.size(15.dp))
         Spacer(Modifier.width(6.dp))
-        Text("${source.name} · ${ageText(source)}", style = MaterialTheme.typography.labelMedium)
+        Text("Diperbarui ${ageText(source)}", style = MaterialTheme.typography.labelMedium)
     }
 }

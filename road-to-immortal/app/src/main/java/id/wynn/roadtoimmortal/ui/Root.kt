@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import id.wynn.roadtoimmortal.MainViewModel
 import id.wynn.roadtoimmortal.data.Equipment
+import id.wynn.roadtoimmortal.domain.HeroPool
 import java.time.Instant
 import kotlinx.coroutines.delay
 
@@ -28,6 +29,10 @@ fun ImmortalRoot(vm: MainViewModel) {
     var rankSheet by rememberSaveable { mutableStateOf(false) }
     var settings by rememberSaveable { mutableStateOf(false) }
     var sources by rememberSaveable { mutableStateOf(false) }
+    var poolScreen by rememberSaveable { mutableStateOf(false) }
+    var poolHero by rememberSaveable { mutableStateOf<Int?>(null) }
+    var poolLane by rememberSaveable { mutableStateOf<String?>(null) }
+    var partySeed by rememberSaveable { mutableStateOf<Int?>(null) }
     var now by remember { mutableStateOf(Instant.now()) }
     val holder = rememberSaveableStateHolder()
     LaunchedEffect(Unit) {
@@ -39,24 +44,30 @@ fun ImmortalRoot(vm: MainViewModel) {
     val catalog = data.catalog
     val openHero: (Int) -> Unit = { heroStack = heroStack + it }
     val openGear: (Equipment) -> Unit = { gearId = it.id }
-    BackHandler(heroStack.isNotEmpty() || settings || sources || tab != 0) {
+    val addPool: (Int, String?) -> Unit = { id, lane ->
+        poolHero = id
+        poolLane = lane
+    }
+    BackHandler(heroStack.isNotEmpty() || settings || sources || poolScreen || tab != 0) {
         when {
             sources -> sources = false
             settings -> settings = false
             heroStack.isNotEmpty() -> heroStack = heroStack.dropLast(1)
+            poolScreen -> poolScreen = false
             else -> tab = 0
         }
     }
     ImmortalTheme(prefs.theme) {
         Scaffold(
             bottomBar = {
-                if (heroStack.isEmpty() && !settings && !sources)
+                if (heroStack.isEmpty() && !settings && !sources && !poolScreen)
                     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                         listOf(
                                 "Perjalanan" to Icons.Outlined.AutoAwesome,
                                 "Jelajah" to Icons.Outlined.GridView,
                                 "Meta" to Icons.Outlined.Leaderboard,
-                                "Draft" to Icons.Outlined.Groups,
+                                "Tier List" to Icons.Outlined.ViewAgenda,
+                                "Tim" to Icons.Outlined.Groups,
                             )
                             .forEachIndexed { index, pair ->
                                 NavigationBarItem(
@@ -127,9 +138,18 @@ fun ImmortalRoot(vm: MainViewModel) {
                                     openHero,
                                     openGear,
                                     { sources = true },
+                                    { addPool(h.id, null) },
+                                    {
+                                        partySeed = h.id
+                                        heroStack = emptyList()
+                                        poolScreen = false
+                                        tab = 4
+                                    },
                                 )
                             }
                         }
+                    poolScreen ->
+                        PoolScreen(catalog, prefs.pools, vm::pool, openHero, { poolScreen = false })
                     else ->
                         AnimatedContent(
                             tab,
@@ -148,10 +168,34 @@ fun ImmortalRoot(vm: MainViewModel) {
                                             { tab = 2 },
                                             { settings = true },
                                             { sources = true },
+                                            { poolScreen = true },
                                         )
-                                    1 -> AtlasScreen(catalog, prefs.favorites, openHero, openGear)
+                                    1 ->
+                                        AtlasScreen(
+                                            catalog,
+                                            prefs.favorites,
+                                            openHero,
+                                            openGear,
+                                            addPool,
+                                        )
                                     2 -> MetaScreen(catalog, openHero, { sources = true })
-                                    else -> DraftScreen(catalog, openHero, openGear)
+                                    3 ->
+                                        TierScreen(
+                                            catalog,
+                                            prefs.pools,
+                                            openHero,
+                                            addPool,
+                                            { sources = true },
+                                        )
+                                    else ->
+                                        PartyScreen(
+                                            catalog,
+                                            partySeed,
+                                            { partySeed = it },
+                                            openHero,
+                                            addPool,
+                                            { sources = true },
+                                        )
                                 }
                             }
                         }
@@ -160,6 +204,17 @@ fun ImmortalRoot(vm: MainViewModel) {
         }
         if (rankSheet && catalog != null)
             RankPicker(catalog, prefs.position, vm::rank, { rankSheet = false })
+        poolHero?.let { id ->
+            catalog?.heroById?.get(id)?.let { h ->
+                PoolAddSheet(
+                    h,
+                    prefs.pools,
+                    poolLane,
+                    { lane -> vm.pool { HeroPool.add(it, lane, id) } },
+                    { poolHero = null },
+                )
+            }
+        }
         gearId?.let { id ->
             catalog?.equipmentById?.get(id)?.let { item ->
                 key(id) { EquipmentSheet(item, catalog, { gearId = null }, openGear) }

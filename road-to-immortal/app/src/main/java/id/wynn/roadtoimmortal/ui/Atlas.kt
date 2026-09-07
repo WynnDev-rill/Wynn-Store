@@ -23,12 +23,24 @@ fun AtlasScreen(
     favorites: Set<Int>,
     onHero: (Int) -> Unit,
     onGear: (Equipment) -> Unit,
+    onAdd: (Int, String?) -> Unit,
 ) {
     var section by rememberSaveable { mutableStateOf("Hero") }
     var query by rememberSaveable { mutableStateOf("") }
     var lane by rememberSaveable { mutableStateOf("Semua") }
     var category by rememberSaveable { mutableStateOf("Semua") }
     var saved by rememberSaveable { mutableStateOf(false) }
+    var threat by rememberSaveable { mutableStateOf("Regen & shield") }
+    val threats =
+        listOf(
+            "Regen & shield",
+            "Attack speed",
+            "Physical burst",
+            "Magic burst",
+            "HP tinggi",
+            "Armor tinggi",
+            "Magic defense",
+        )
     val index =
         remember(catalog) {
             catalog.heroes.associate {
@@ -45,16 +57,17 @@ fun AtlasScreen(
         }
     val allGear =
         when (section) {
-            "Item" -> catalog.items
+            "Item",
+            "Counter" -> catalog.items
             "Emblem" -> catalog.emblems
             else -> catalog.spells
         }
     val categories =
         listOf("Semua") + allGear.map { categoryLabel(it.category) }.distinct().sorted()
     val gear =
-        remember(allGear, query, category) {
+        remember(allGear, query, category, section, threat) {
             val q = searchKey(query)
-            allGear
+            (if (section == "Counter") DraftEngine.itemCounters(allGear, threat) else allGear)
                 .filter {
                     ((category == "Semua" && it.category != "Metadata") ||
                         categoryLabel(it.category) == category) &&
@@ -96,7 +109,7 @@ fun AtlasScreen(
                 else "Cari ${section.lowercase()}",
             )
             ChoiceRow(
-                listOf("Hero", "Item", "Emblem", "Spell"),
+                listOf("Hero", "Item", "Counter", "Emblem", "Spell"),
                 section,
                 {
                     section = it
@@ -105,7 +118,10 @@ fun AtlasScreen(
                 },
             )
             if (section == "Hero") ChoiceRow(listOf("Semua") + lanes, lane, { lane = it })
-            else if (categories.size > 2) ChoiceRow(categories, category, { category = it })
+            else if (section == "Counter") {
+                ChoiceRow(threats, threat, { threat = it })
+                Caption("Item situasional berdasarkan efeknya")
+            } else if (categories.size > 2) ChoiceRow(categories, category, { category = it })
             Caption(
                 if (section == "Hero") "${heroes.size} hero${if(saved) " favorit" else ""}"
                 else "${gear.size} ${section.lowercase()}"
@@ -142,13 +158,21 @@ fun AtlasScreen(
                         Modifier.clickable { onHero(hero.id) },
                         verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        Artwork(
-                            hero.portrait.ifBlank { hero.icon },
-                            null,
-                            Modifier.fillMaxWidth().aspectRatio(.82f),
-                            round = 18.dp,
-                            fallbackUrl = hero.icon,
-                        )
+                        Box {
+                            Artwork(
+                                hero.portrait.ifBlank { hero.icon },
+                                null,
+                                Modifier.fillMaxWidth().aspectRatio(.82f),
+                                round = 18.dp,
+                                fallbackUrl = hero.icon,
+                            )
+                            FilledTonalIconButton(
+                                { onAdd(hero.id, null) },
+                                Modifier.align(Alignment.BottomEnd).size(48.dp),
+                            ) {
+                                Icon(Icons.Outlined.Add, "Rancang ${hero.name}")
+                            }
+                        }
                         Text(
                             hero.name,
                             style = MaterialTheme.typography.titleMedium,
