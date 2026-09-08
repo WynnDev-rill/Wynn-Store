@@ -40,9 +40,9 @@ jobs:
         run: |
           mkdir -p build evidence
           godot --headless --editor --import --path . 2>&1 | tee evidence/import.log
-          if rg 'SCRIPT ERROR|Parse Error|Failed to load script' evidence/import.log; then exit 1; fi
+          python3 tools/check_log.py evidence/import.log
           godot --headless --path . --quit-after 30 2>&1 | tee evidence/startup.log
-          if rg 'SCRIPT ERROR|Parse Error|ERROR:' evidence/startup.log; then exit 1; fi
+          python3 tools/check_log.py evidence/startup.log
       - name: Configure Android export
         run: |
           mkdir -p ~/.config/godot
@@ -66,6 +66,7 @@ jobs:
           LIBGL_ALWAYS_SOFTWARE: '1'
         run: |
           xvfb-run -a -s '-screen 0 1280x720x24' timeout 1000 godot --path . --audio-driver Dummy -- --qa 2>&1 | tee evidence/playthrough.log
+          python3 tools/check_log.py evidence/playthrough.log
           python3 -c "import json; assert json.load(open('evidence/playthrough.json'))['passed']"
       - name: Upload build and evidence
         if: always()

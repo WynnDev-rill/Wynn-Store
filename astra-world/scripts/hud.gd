@@ -125,6 +125,8 @@ func _input(event):
    joy_pos=scaled(event.position); game.player.move_touch=(joy_pos-joy_origin).limit_length(52)/52
   elif event.index==look_id: game.player.look(event.relative*Vector2(1280/size.x,720/size.y))
  elif event is InputEventMouseButton:
+  if event.button_index==MOUSE_BUTTON_LEFT and not event.pressed and jump_id==-2:
+   jump_id=-1; game.player.jumping_touch=false
   if event.button_index==MOUSE_BUTTON_RIGHT: mouse_down=event.pressed
   if event.button_index==MOUSE_BUTTON_LEFT and event.pressed:
    if _press(scaled(event.position),-2): get_viewport().set_input_as_handled()

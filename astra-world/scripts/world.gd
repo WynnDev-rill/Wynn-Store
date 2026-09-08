@@ -46,7 +46,7 @@ func _lighting():
  e.background_mode=Environment.BG_SKY
  var sky=Sky.new(); var sm=ShaderMaterial.new(); sm.shader=load("res://shaders/sky.gdshader"); sky.sky_material=sm; e.sky=sky
  e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR; e.ambient_light_color=Color("b6d1c7"); e.ambient_light_energy=0.63
- e.reflected_light_source=Environment.REFLECTED_SOURCE_SKY
+ e.reflected_light_source=Environment.REFLECTION_SOURCE_SKY
  e.tonemap_mode=Environment.TONE_MAPPER_FILMIC
  e.fog_enabled=true; e.fog_light_color=Color("9ec9c4"); e.fog_density=0.0022
  sun=DirectionalLight3D.new(); sun.rotation_degrees=Vector3(-48,-32,0); sun.light_color=Color("ffe1b1"); sun.light_energy=1.5
