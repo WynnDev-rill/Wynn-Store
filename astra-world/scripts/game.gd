@@ -25,6 +25,10 @@ var elapsed=0.0
 var title_camera:Camera3D
 var qa_mode=false
 
+func _exit_tree():
+ var art=preload("res://scripts/art.gd")
+ art.meshes.clear(); art.materials.clear()
+
 func _ready():
  _inputs()
  state=State.new()

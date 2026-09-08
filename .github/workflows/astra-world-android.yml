@@ -41,7 +41,7 @@ jobs:
           mkdir -p build evidence
           godot --headless --editor --import --path . 2>&1 | tee evidence/import.log
           python3 tools/check_log.py evidence/import.log
-          godot --headless --path . --quit-after 30 2>&1 | tee evidence/startup.log
+          godot --headless --verbose --path . --quit-after 30 2>&1 | tee evidence/startup.log
           python3 tools/check_log.py evidence/startup.log
       - name: Configure Android export
         run: |
@@ -53,6 +53,7 @@ jobs:
           export/android/java_sdk_path = "$JAVA_HOME"
           EOF
       - name: Export release APK
+        id: export
         working-directory: astra-world
         run: |
           godot --headless --path . --export-release Android build/Astra-World-unsigned.apk 2>&1 | tee evidence/export.log
@@ -60,7 +61,10 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging build/Astra-World-unsigned.apk > evidence/package.txt
           cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" build/apksigner.jar
           git rev-parse HEAD > evidence/source-commit.txt
+          keytool -genkeypair -keystore /tmp/astra-qa.jks -storepass android -keypass android -alias qa -keyalg RSA -keysize 2048 -validity 30 -dname 'CN=Astra CI QA' -noprompt
+          java -jar build/apksigner.jar sign --ks /tmp/astra-qa.jks --ks-key-alias qa --ks-pass pass:android --out build/Astra-World-test.apk build/Astra-World-unsigned.apk
       - name: Rendered input playthrough
+        id: playthrough
         working-directory: astra-world
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
@@ -68,6 +72,22 @@ jobs:
           xvfb-run -a -s '-screen 0 1280x720x24' timeout 1000 godot --path . --audio-driver Dummy -- --qa 2>&1 | tee evidence/playthrough.log
           python3 tools/check_log.py evidence/playthrough.log
           python3 -c "import json; assert json.load(open('evidence/playthrough.json'))['passed']"
+      - name: Enable Android virtualization
+        if: ${{ !cancelled() && steps.export.outcome == 'success' }}
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Installed APK touch and lifecycle verification
+        if: ${{ !cancelled() && steps.export.outcome == 'success' }}
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: cd astra-world && python3 tests/android_smoke.py
       - name: Upload build and evidence
         if: always()
         uses: actions/upload-artifact@v4

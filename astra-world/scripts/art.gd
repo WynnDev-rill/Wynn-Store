@@ -1,3 +1,4 @@
+@static_unload
 extends RefCounted
 ## Original mesh kit. Shared primitives are sculpted into authored silhouettes,
 ## then baked to material/mesh MultiMeshes by the world builder.
