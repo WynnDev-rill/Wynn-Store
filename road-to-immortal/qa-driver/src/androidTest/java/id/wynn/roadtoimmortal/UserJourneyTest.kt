@@ -78,19 +78,32 @@ class UserJourneyTest {
                     runCatching { row.scrollUntil(Direction.RIGHT, Until.findObject(selector)) }
                 }
         }
-        val n = device.wait(Until.findObject(selector), 12_000)
-        assertNotNull("Missing text: $text", n)
-        n!!.click()
+        clickFresh(selector)
         device.waitForIdle()
         SystemClock.sleep(180)
     }
 
     private fun desc(text: String) {
-        val n = device.wait(Until.findObject(By.desc(text).pkg(pkg)), 12_000)
-        assertNotNull("Missing description: $text", n)
-        n!!.click()
+        clickFresh(By.desc(text).pkg(pkg))
         device.waitForIdle()
         SystemClock.sleep(180)
+    }
+
+    private fun clickFresh(selector: BySelector) {
+        // Compose may replace a semantics node while an item moves or artwork loads.
+        // Retry only stale lookups, never a failed assertion or completed action.
+        repeat(5) {
+            val target = device.wait(Until.findObject(selector), 5000)
+            assertNotNull("Missing clickable control: $selector", target)
+            try {
+                target!!.click()
+                return
+            } catch (_: StaleObjectException) {
+                device.waitForIdle()
+                SystemClock.sleep(150)
+            }
+        }
+        fail("Control never stabilized: $selector")
     }
 
     private fun shot(name: String) {
@@ -304,6 +317,7 @@ class UserJourneyTest {
     fun tierPoolReorderMoveRestartAndParty() {
         tap("Tier List")
         tap("Gold")
+        shot("18a-tier-overview")
         search("Miya")
         reveal("Miya")
         shot("18-tier-gold")
@@ -372,14 +386,9 @@ class UserJourneyTest {
                 )
             if (button == null)
                 device.findObject(By.scrollable(true).pkg(pkg))?.scroll(Direction.DOWN, .5f)
-            val available =
-                device.wait(
-                    Until.findObject(By.desc(Pattern.compile("Tambahkan .+ ke EXP")).enabled(true)),
-                    5000,
-                )
-            assertNotNull("Available hero must be addable", available)
-            available!!.click()
+            clickFresh(By.desc(Pattern.compile("Tambahkan .+ ke EXP")).pkg(pkg).enabled(true))
             device.waitForIdle()
+            SystemClock.sleep(350)
         }
         reveal("Pool penuh")
         reveal("Hapus atau pindahkan satu hero untuk mengganti pilihan.")
