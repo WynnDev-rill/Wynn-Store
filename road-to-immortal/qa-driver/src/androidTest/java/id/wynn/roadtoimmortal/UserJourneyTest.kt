@@ -67,10 +67,13 @@ class UserJourneyTest {
         // Search text and a result can have the same name. Select the actual label.
         val selector =
             By.text(text).pkg(pkg).clazz(Pattern.compile("(?!android\\.widget\\.EditText$).*"))
-        if (!device.hasObject(selector)) {
+        if (!device.wait(Until.hasObject(selector), 1500)) {
             device
                 .findObjects(By.scrollable(true).pkg(pkg))
-                .filter { it.visibleBounds.width() > it.visibleBounds.height() }
+                .filter {
+                    runCatching { it.visibleBounds.width() > it.visibleBounds.height() }
+                        .getOrDefault(false)
+                }
                 .forEach { row ->
                     runCatching { row.scrollUntil(Direction.RIGHT, Until.findObject(selector)) }
                 }
@@ -113,12 +116,24 @@ class UserJourneyTest {
     }
 
     private fun reveal(text: String) {
-        if (!device.hasObject(By.text(text))) {
-            device
-                .findObject(By.scrollable(true).pkg(pkg))
-                ?.scrollUntil(Direction.DOWN, Until.findObject(By.text(text)))
+        fun visible() =
+            runCatching {
+                    device.findObject(By.text(text).pkg(pkg))?.visibleBounds?.let {
+                        it.height() >= 20 && it.width() >= 20
+                    } == true
+                }
+                .getOrDefault(false)
+        repeat(30) {
+            if (visible()) return
+            val column =
+                device.findObjects(By.scrollable(true).pkg(pkg)).firstOrNull {
+                    runCatching { it.visibleBounds.height() > it.visibleBounds.width() }
+                        .getOrDefault(false)
+                }
+            runCatching { column?.scroll(Direction.DOWN, .4f) }
+            device.waitForIdle()
         }
-        assertTrue("Cannot reveal $text", device.wait(Until.hasObject(By.text(text)), 5000))
+        assertTrue("Cannot reveal readable text: $text", visible())
     }
 
     private fun awaitNetwork(available: Boolean) {
@@ -311,6 +326,9 @@ class UserJourneyTest {
         tap("Mid")
         assertTrue(device.wait(Until.hasObject(By.text("Mid · 1/10 hero")), 5000))
         shot("20-pool-moved")
+        desc("Layla")
+        back()
+        assertTrue(device.wait(Until.hasObject(By.text("Mid · 1/10 hero")), 5000))
         assertTrue(
             device
                 .executeShellCommand("pm install -r /data/local/tmp/rti-update.apk")
@@ -364,6 +382,7 @@ class UserJourneyTest {
             device.waitForIdle()
         }
         reveal("Pool penuh")
+        reveal("Hapus atau pindahkan satu hero untuk mengganti pilihan.")
         shot("24-pool-capacity")
         assertTrue(
             device.wait(

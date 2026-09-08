@@ -33,6 +33,7 @@ fun PartyScreen(
     var enemy by rememberSaveable { mutableStateOf<Int?>(null) }
     var picking by rememberSaveable { mutableStateOf<String?>(null) }
     var info by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(seed) { if (seed != null && enemy == seed) enemy = null }
     val size =
         when (mode) {
             "Trio" -> 3

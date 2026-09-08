@@ -173,14 +173,16 @@ fun ImmortalRoot(vm: MainViewModel) {
                             }
                         }
                     poolScreen ->
-                        PoolScreen(
-                            catalog,
-                            prefs.pools,
-                            poolStartLane,
-                            vm::pool,
-                            openHero,
-                            { poolScreen = false },
-                        )
+                        holder.SaveableStateProvider("pool") {
+                            PoolScreen(
+                                catalog,
+                                prefs.pools,
+                                poolStartLane,
+                                vm::pool,
+                                openHero,
+                                { poolScreen = false },
+                            )
+                        }
                     else ->
                         AnimatedContent(
                             tab,
@@ -200,6 +202,7 @@ fun ImmortalRoot(vm: MainViewModel) {
                                             { settings = true },
                                             { sources = true },
                                             { lane ->
+                                                holder.removeState("pool")
                                                 poolStartLane = lane
                                                 poolScreen = true
                                             },
