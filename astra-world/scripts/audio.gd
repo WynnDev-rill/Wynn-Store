@@ -7,6 +7,17 @@ var mode=""
 var tracks={}
 var sounds={}
 
+func _exit_tree():
+ # Release Ogg playback before the audio server and resource cache shut down.
+ # Stopping alone leaves the stream assigned to the player.
+ for p in [music,ambience]+voices:
+  if is_instance_valid(p):
+   p.stop()
+   p.stream=null
+ voices.clear()
+ tracks.clear()
+ sounds.clear()
+
 func setup(g):
  game=g
  for id in ["aeralis","combat","home"]: tracks[id]=load("res://assets/audio/"+id+".ogg")
