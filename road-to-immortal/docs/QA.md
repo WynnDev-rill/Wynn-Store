@@ -1,5 +1,7 @@
 # Verifikasi Road to Immortal 1.0.1
 
+Laporan versi terbaru: [Verifikasi 1.1.0](QA-1.1.0.md). Di bawah ini adalah arsip hasil 1.0.1.
+
 Run yang diperiksa: [GitHub Actions 34064341346](https://github.com/WynnDev-rill/Wynn-Store/actions/runs/34064341346), selesai sukses pada 6 September 2026, 22:40 UTC (7 September, 05:40 WIB).
 
 ## Identitas APK
