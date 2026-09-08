@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="432" height="432" viewBox="0 0 432 432">
+ <defs><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0c1"/><stop offset=".45" stop-color="#d6b46e"/><stop offset="1" stop-color="#8f7649"/></linearGradient><linearGradient id="jade" x2="1" y2="1"><stop stop-color="#d5fff2"/><stop offset=".5" stop-color="#74d7c3"/><stop offset="1" stop-color="#318d88"/></linearGradient></defs>
+ <path d="M216 354C192 319 116 297 103 241C84 164 172 122 169 69C205 126 113 181 133 237C147 279 207 301 216 332C237 300 300 281 302 229C305 193 278 159 278 133C332 183 347 235 307 280C276 313 237 322 216 354Z" fill="url(#gold)"/>
+ <path d="M216 78L233 108L216 139L199 108Z" fill="url(#jade)" stroke="#d5f9df" stroke-width="2"/>
+ <path d="M216 90V126M200 108L216 114L232 108" fill="none" stroke="#edfff1" opacity=".6"/>
+ <circle cx="216" cy="157" r="11" fill="none" stroke="#dfc18a" stroke-width="5"/>
+ <path d="M184 207Q184 176 216 176Q248 176 248 207Q249 234 261 250Q216 277 171 250Q183 233 184 207Z" fill="#eee3bd" stroke="#d6b46e" stroke-width="3"/>
+ <path d="M202 188Q194 207 194 231Q193 248 180 251M216 178Q245 203 232 252" fill="none" stroke="#c3a569" stroke-width="2"/>
+ <path d="M216 251V275" stroke="#d6b46e" stroke-width="4"/>
+ <path d="M216 270Q244 304 216 315Q188 304 216 270Z" fill="url(#jade)" stroke="#bdf7d8" stroke-width="2"/>
+ <path d="M146 258Q163 281 190 296M292 269Q270 294 244 305" fill="none" stroke="#fff0c1" stroke-width="2" opacity=".7"/>
+</svg>

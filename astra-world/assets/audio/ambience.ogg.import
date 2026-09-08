@@ -1,0 +1,7 @@
+[remap]
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+
+[params]
+loop=true
+loop_offset=0

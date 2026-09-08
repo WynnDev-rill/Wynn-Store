@@ -1,0 +1,78 @@
+name: Astra World Android
+on:
+  workflow_dispatch:
+  push:
+    branches: [astra-world]
+    paths: ['astra-world/**', '.github/workflows/astra-world-android.yml']
+permissions:
+  contents: read
+concurrency:
+  group: astra-world-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install pinned Godot and render dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri mesa-utils xdotool
+          mkdir -p /tmp/astra-toolchain ~/.local/share/godot/export_templates/4.6.1.stable
+          cd /tmp/astra-toolchain
+          curl -fL --retry 3 -o godot.zip https://github.com/godotengine/godot-builds/releases/download/4.6.1-stable/Godot_v4.6.1-stable_linux.x86_64.zip
+          echo "cecd0cb6b55e931318a9d7237dc4197d69ea914966787a454808523626e2789f  godot.zip" | sha256sum -c -
+          unzip -q godot.zip
+          chmod +x Godot_v4.6.1-stable_linux.x86_64
+          sudo ln -s "$PWD/Godot_v4.6.1-stable_linux.x86_64" /usr/local/bin/godot
+          curl -fL --retry 3 -o templates.tpz https://github.com/godotengine/godot-builds/releases/download/4.6.1-stable/Godot_v4.6.1-stable_export_templates.tpz
+          echo "e6d372afd4fdfaae9571eb5e3568afcd96ce6db9a569244034154faf0ac69875  templates.tpz" | sha256sum -c -
+          unzip -j -q templates.tpz templates/android_release.apk templates/android_debug.apk -d ~/.local/share/godot/export_templates/4.6.1.stable
+          sdkmanager 'build-tools;35.0.0' 'platforms;android-35'
+      - name: Import and validate source
+        working-directory: astra-world
+        run: |
+          mkdir -p build evidence
+          godot --headless --editor --import --path . 2>&1 | tee evidence/import.log
+          if rg 'SCRIPT ERROR|Parse Error|Failed to load script' evidence/import.log; then exit 1; fi
+          godot --headless --path . --quit-after 30 2>&1 | tee evidence/startup.log
+          if rg 'SCRIPT ERROR|Parse Error|ERROR:' evidence/startup.log; then exit 1; fi
+      - name: Configure Android export
+        run: |
+          mkdir -p ~/.config/godot
+          cat > ~/.config/godot/editor_settings-4.6.tres <<EOF
+          [gd_resource type="EditorSettings" format=3]
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOF
+      - name: Export release APK
+        working-directory: astra-world
+        run: |
+          godot --headless --path . --export-release Android build/Astra-World-unsigned.apk 2>&1 | tee evidence/export.log
+          test -s build/Astra-World-unsigned.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging build/Astra-World-unsigned.apk > evidence/package.txt
+          cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" build/apksigner.jar
+          git rev-parse HEAD > evidence/source-commit.txt
+      - name: Rendered input playthrough
+        working-directory: astra-world
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          xvfb-run -a -s '-screen 0 1280x720x24' timeout 1000 godot --path . --audio-driver Dummy -- --qa 2>&1 | tee evidence/playthrough.log
+          python3 -c "import json; assert json.load(open('evidence/playthrough.json'))['passed']"
+      - name: Upload build and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Astra-World-build
+          path: |
+            astra-world/build/
+            astra-world/evidence/
+          retention-days: 14

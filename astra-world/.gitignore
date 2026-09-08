@@ -1,0 +1,10 @@
+.godot/
+build/
+*.keystore
+*.jks
+export_credentials.cfg
+evidence/*.png
+evidence/*.wav
+evidence/*.mp4
+evidence/*.log
+__pycache__/
