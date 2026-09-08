@@ -58,6 +58,7 @@ func clear():
 
 func close():
  clear(); blocking=false; page=""; hud.release_all(); game.audio.set_mode("aeralis" if game.playing else "home")
+ print("ASTRA_UI page=world" if game.playing else "ASTRA_UI page=title")
 
 func _process(dt):
  hurt_flash=maxf(0,hurt_flash-dt)
@@ -70,6 +71,7 @@ func toast(t:String):
 
 func open(which:String):
  clear(); blocking=true; page=which; hud.release_all()
+ print("ASTRA_UI page="+which)
  var shade=ColorRect.new(); shade.color=Color(0.025,0.075,0.09,0.82 if which!="title" else 0.23); panel_root.add_child(shade); shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
  if which=="title": _title(); return
  if which=="dialogue": _dialogue_view(); return

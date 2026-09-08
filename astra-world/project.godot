@@ -34,7 +34,7 @@ driver/enable_input=false
 
 [input_devices]
 pointing/emulate_touch_from_mouse=false
-pointing/emulate_mouse_from_touch=false
+pointing/emulate_mouse_from_touch=true
 
 [gui]
 theme/default_font_multichannel_signed_distance_field=true

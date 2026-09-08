@@ -35,7 +35,7 @@ func press(action:String):
 func click_text(t:String) -> bool:
  for b in game.ui.panel_root.find_children("*","Button",true,false):
   if b.text==t and b.is_visible_in_tree() and not b.disabled:
-   var event=InputEventMouseButton.new(); event.position=b.get_global_rect().get_center(); event.button_index=MOUSE_BUTTON_LEFT; event.pressed=true; Input.parse_input_event(event)
+   var event=InputEventScreenTouch.new(); event.index=0; event.position=b.get_global_rect().get_center(); event.pressed=true; Input.parse_input_event(event)
    await tick(0.08); event=event.duplicate(); event.pressed=false; Input.parse_input_event(event); await tick(0.18); return true
  return false
 
@@ -159,4 +159,4 @@ func finish():
  stop_move(); frame_times.sort()
  var result={"passed":not failed,"duration_seconds":(Time.get_ticks_msec()-started)/1000.0,"steps":steps,"frames":frame_times.size(),"renderer":RenderingServer.get_video_adapter_name(),"p50_frame_ms":frame_times[int(frame_times.size()*0.5)]*1000 if frame_times.size()>0 else 0,"p95_frame_ms":frame_times[int(frame_times.size()*0.95)]*1000 if frame_times.size()>0 else 0,"note":"Software-rendered CI measurement; not a physical Android FPS claim."}
  var f=FileAccess.open("res://evidence/playthrough.json",FileAccess.WRITE); f.store_string(JSON.stringify(result,"  ")); f.close()
- get_tree().quit(1 if failed else 0)
+ game.quit_cleanly(1 if failed else 0)

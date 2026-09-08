@@ -41,7 +41,7 @@ jobs:
           mkdir -p build evidence
           godot --headless --editor --import --path . 2>&1 | tee evidence/import.log
           python3 tools/check_log.py evidence/import.log
-          godot --headless --verbose --path . --quit-after 30 2>&1 | tee evidence/startup.log
+          timeout 60 godot --headless --verbose --path . -- --startup-check 2>&1 | tee evidence/startup.log
           python3 tools/check_log.py evidence/startup.log
       - name: Configure Android export
         run: |
@@ -97,3 +97,10 @@ jobs:
             astra-world/build/
             astra-world/evidence/
           retention-days: 14
+      - name: Upload pinned editor for local diagnosis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Astra-World-editor
+          path: /tmp/astra-toolchain/godot.zip
+          retention-days: 3

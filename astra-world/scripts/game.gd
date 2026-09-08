@@ -24,12 +24,14 @@ var puzzle_sequence:Array=[]
 var elapsed=0.0
 var title_camera:Camera3D
 var qa_mode=false
+var shutting_down=false
 
 func _exit_tree():
  var art=preload("res://scripts/art.gd")
  art.meshes.clear(); art.materials.clear()
 
 func _ready():
+ get_tree().auto_accept_quit=false
  _inputs()
  state=State.new()
  qa_mode="--qa" in OS.get_cmdline_user_args()
@@ -46,6 +48,20 @@ func _ready():
  print("ASTRA_READY trees=%d static_parts=%d batches=%d"%[world.trees_count,world.static_mesh_count,world.batches.size()])
  if qa_mode:
   var qa=load("res://tests/playthrough.gd").new(); qa.game=self; add_child(qa)
+ elif "--startup-check" in OS.get_cmdline_user_args():
+  await get_tree().create_timer(1.0).timeout
+  quit_cleanly()
+
+func quit_cleanly(code:int=0):
+ if shutting_down: return
+ shutting_down=true
+ if playing: save()
+ playing=false; ui.blocking=true; ui.hud.release_all()
+ audio.shutdown()
+ # The audio mixer releases stopped playback references on its next cycle.
+ # Quitting on the same frame races that cleanup in headless and desktop runs.
+ await get_tree().create_timer(0.3).timeout
+ get_tree().quit(code)
 
 func _inputs():
  var keys={"forward":KEY_W,"back":KEY_S,"left":KEY_A,"right":KEY_D,"jump":KEY_SPACE,"sprint":KEY_SHIFT,"attack":KEY_J,"skill":KEY_Q,"dodge":KEY_K,"interact":KEY_E,"heal":KEY_H,"map":KEY_M,"inventory":KEY_I,"pause":KEY_ESCAPE}
@@ -65,6 +81,7 @@ func _spawn_enemies():
   var e=Enemy.new(); add_child(e); e.setup(self,spec[0],world.p(spec[1],0.1),spec[2]); enemies.append(e)
 
 func _process(dt):
+ if shutting_down: return
  elapsed+=dt
  if not playing:
   if title_camera:
@@ -95,7 +112,7 @@ func _notification(what):
   if playing and not ui.blocking: ui.open("pause")
   elif playing: ui.close()
  if what==NOTIFICATION_WM_CLOSE_REQUEST:
-  if playing: save()
+  quit_cleanly()
 
 func _place_player(pos:Vector2):
  player.position=world.p(pos,0.7); player.velocity=Vector3.ZERO; player.camera_snap()

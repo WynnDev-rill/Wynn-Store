@@ -8,6 +8,9 @@ var tracks={}
 var sounds={}
 
 func _exit_tree():
+ shutdown()
+
+func shutdown():
  # Release Ogg playback before the audio server and resource cache shut down.
  # Stopping alone leaves the stream assigned to the player.
  for p in [music,ambience]+voices:

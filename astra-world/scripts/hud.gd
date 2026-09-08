@@ -109,6 +109,9 @@ func _draw():
 
 func _input(event):
  if game==null or not game.playing or game.ui.blocking: return
+ # Standard menu Controls need emulated mouse input. The gameplay HUD already
+ # handles each real touch pointer itself, so never process its mouse copy.
+ if event.device==InputEvent.DEVICE_ID_EMULATION: return
  if event is InputEventScreenTouch:
   var pos=scaled(event.position)
   if event.pressed:
