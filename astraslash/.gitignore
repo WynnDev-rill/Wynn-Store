@@ -1,0 +1,9 @@
+.godot/
+dist/
+*.keystore
+*.jks
+*.tmp
+*.log
+__pycache__/
+evidence/raw/
+
