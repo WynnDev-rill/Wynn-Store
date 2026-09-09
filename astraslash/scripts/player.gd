@@ -113,7 +113,6 @@ func strike():
 	if launch:velocity.y=8.5;ground=false;jumps=maxi(1,jumps)
 	if not ground and has("air_blade"):g.shoot(position+Vector3.UP,Vector3(facing*19,0,0),16,true,true)
 	if state=="attack" and combo==3:
-		if has("vampire"):hp=minf(max_hp,hp+3)
 		if has("echo"):
 			var p=position+Vector3(facing*1.2,1.1,0);g.after(.17,func():g.area(p,2.6,damage*.6,2,false);g.fx.slash(p,color,facing,1.8))
 func skill():

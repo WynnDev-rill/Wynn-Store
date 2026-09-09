@@ -75,7 +75,7 @@ func build(game,index,boss=false):
 	groups.clear()
 	var env=WorldEnvironment.new();environment=Environment.new();env.environment=environment;add_child(env)
 	environment.background_mode=Environment.BG_SKY;environment.sky=Sky.new();var sky_mat=ShaderMaterial.new();sky_mat.shader=load("res://shaders/sky.gdshader");sky_mat.set_shader_parameter("horizon",z.sky.lightened(.18));sky_mat.set_shader_parameter("zenith",z.sky.darkened(.63));environment.sky.sky_material=sky_mat
-	environment.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;environment.ambient_light_color=accent.lightened(.45);environment.ambient_light_energy=.48;environment.reflected_light_source=Environment.REFLECTED_LIGHT_SOURCE_SKY
+	environment.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;environment.ambient_light_color=accent.lightened(.45);environment.ambient_light_energy=.48;environment.reflected_light_source=Environment.REFLECTION_SOURCE_SKY
 	environment.tonemap_mode=Environment.TONE_MAPPER_FILMIC;environment.tonemap_exposure=1.05;environment.fog_enabled=true;environment.fog_light_color=z.sky.lightened(.16);environment.fog_density=.006
 	environment.glow_enabled=true;environment.glow_intensity=.7;environment.glow_strength=.9
 	sun=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-42,-28,-12);sun.light_color=Color("ffe1b1");sun.light_energy=1.55;sun.directional_shadow_max_distance=42;add_child(sun)

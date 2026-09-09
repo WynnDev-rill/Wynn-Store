@@ -13,7 +13,7 @@ const RELICS = {
 "air_blade":["SAYAP TAJAM","Serangan udara melepaskan gelombang penembus.","UDARA"],
 "orbit":["BULAN KEMBAR","Dua satelit mengorbit dan melukai musuh yang mendekat.","ORBIT"],
 "frost":["MUSIM DIAM","Launcher membekukan musuh biasa; boss melambat.","KENDALI"],
-"vampire":["JANJI MERAH","Hit kombo ketiga memulihkan 3 Vitalitas.","PULIH"],
+"vampire":["JANJI MERAH","Setiap tiga hit memulihkan 3 Vitalitas.","PULIH"],
 "perfect":["DETIK ABADI","Perfect dodge memulihkan 8 Vitalitas dan mengisi ulang skill.","DODGE"],
 "meteor":["HUJAN KECIL","Skill aktif memanggil tiga meteor tambahan.","SKILL"],
 "gravity":["JANTUNG GRAVITASI","Skill aktif menarik musuh biasa sebelum menghantam.","KENDALI"],
@@ -24,7 +24,7 @@ const RELICS = {
 "volatile":["SISA SUPERNOVA","Musuh yang mati meledak dan mencederai musuh di sekitarnya.","LEDAKAN"],
 "revive":["API KEDUA","Sekali per run, bangkit dari pukulan fatal dengan 45% Vitalitas.","HIDUP"],
 "tempo":["IRAMA TANPA AKHIR","Setiap hit mempercepat isi ulang skill. Kombo 20 hit memberi satu pemulihan.","TEMPO"],
-"overdrive":["SETELAH FAJAR","Setelah ultimate, serangan 35% lebih cepat selama 8 detik.","ULTIMATE"}]
+"overdrive":["SETELAH FAJAR","Setelah ultimate, serangan 35% lebih cepat selama 8 detik.","ULTIMATE"]}
 const META = {"vitality":["TENUN TUBUH","+12 Vitalitas awal",45,5],"surge":["SUMBU BINTANG","+10 energi awal",50,4],"keepsake":["BEKAL PULANG","+1 pemulihan awal",80,2]}
 const SETTINGS = {"preset":2,"scale":0.85,"fps":60,"shadows":true,"post":true,"effects":1.0,"music":0.60,"sfx":0.80,"shake":0.65,"touch":true,"numbers":true}
 static func level_for(node):return mini(int(node)/3,2)

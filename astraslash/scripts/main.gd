@@ -125,6 +125,7 @@ func meteor(x,damage,friendly):
 func on_hit(e,damage,heavy=false):
 	if mode!="run":return
 	combo+=1;best_combo=maxi(combo,best_combo);combo_timer=3.4;player.energy=minf(100,player.energy+3.6);impact(.047 if heavy else .026,.11 if heavy else .045);sound.play("hit",.8 if heavy else 1.15,.5)
+	if player.has("vampire") and combo%3==0:player.hp=minf(player.max_hp,player.hp+3)
 	if player.has("tempo"):
 		player.skill_cd=maxf(0,player.skill_cd-.18)
 		if combo%20==0:player.potions=mini(5,player.potions+1);toast("IRAMA · +1 PEMULIHAN",1.4)
@@ -266,7 +267,7 @@ func _process(real_dt):
 	elif mode=="hub" and player:player.rig.pose(dt,"idle",0,0,true,1)
 	if fx:fx.tick(dt)
 	if player:
-		if mode=="hub":camera.size=5.8;camera.position=Vector3(14,2.7,10);camera.look_at(Vector3(14,1.15,0))
+		if mode=="hub":camera.size=4.9;camera.position=Vector3(14,2.65,10);camera.look_at(Vector3(14,1.35,0));player.rig.rotation.y=.22
 		else:
 			cam_x=lerpf(cam_x,clampf(player.position.x+player.facing*.8,10.5,33.5),1-exp(-dt*5.5));var focus=Vector3(cam_x,2.4+clampf(player.position.y*.18,0,.8),0)
 			camera.size=lerpf(camera.size,9.8 if player.state=="ult" else 10.8,1-exp(-dt*5));camera.position=focus+Vector3(randf_range(-1,1)*shake*settings.shake,2.7+randf_range(-1,1)*shake*settings.shake,13);camera.look_at(focus)

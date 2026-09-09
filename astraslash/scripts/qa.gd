@@ -8,6 +8,9 @@ func setup(game):
 	g=game
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--qa-dir="):directory=arg.trim_prefix("--qa-dir=")
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--autoplay="):
+			var bot=load("res://tests/autoplay.gd").new();add_child(bot);bot.setup(g,arg.trim_prefix("--autoplay="),directory)
 func _process(dt):
 	if directory=="":return
 	timer+=dt

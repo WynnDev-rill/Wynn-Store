@@ -35,7 +35,7 @@ func back(callback):button("‹  KEMBALI",Vector2(34,27),Vector2(154,43),callbac
 func title():
 	reset();var image=TextureRect.new();image.texture=load("res://assets/art/title.png");image.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;image.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_COVERED;image.size=size;image.mouse_filter=Control.MOUSE_FILTER_IGNORE;screen.add_child(image)
 	var grad=Gradient.new();grad.colors=PackedColorArray([Color(.02,.04,.075,.96),Color(.02,.04,.075,.76),Color(.02,.04,.075,0)]);grad.offsets=PackedFloat32Array([0,.36,.86]);var tex=GradientTexture2D.new();tex.gradient=grad;tex.fill_from=Vector2(0,0);tex.fill_to=Vector2(1,0);var veil=TextureRect.new();veil.texture=tex;veil.size=size;veil.mouse_filter=Control.MOUSE_FILTER_IGNORE;screen.add_child(veil)
-	var icon=TextureRect.new();icon.texture=load("res://assets/art/icon_foreground.png");icon.position=Vector2(48,24);icon.size=Vector2(112,112);icon.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;screen.add_child(icon)
+	var icon=TextureRect.new();icon.texture=load("res://assets/art/icon_foreground.png");icon.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;icon.position=Vector2(48,24);icon.size=Vector2(112,112);screen.add_child(icon)
 	eyebrow("MALAM ORBIT PECAH",Vector2(67,size.y*.24))
 	text("ASTRA",Vector2(61,size.y*.285),Vector2(450,120),102,white,true);text("SLASH",Vector2(61,size.y*.415),Vector2(450,120),102,cyan,true)
 	text("Beri esok sebuah tempat.",Vector2(68,size.y*.585),Vector2(420,36),23,white)
