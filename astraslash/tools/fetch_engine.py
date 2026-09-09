@@ -20,7 +20,7 @@ def parts(url,start,length,label):
  def get(span):
   a,b=span;p=cache/f'{label}-{a}'
   if not p.exists() or p.stat().st_size!=b-a+1:
-   data=fetch(url,a,b)[0];temp=p.with_suffix('.tmp');temp.write_bytes(data);temp.replace(p)
+   data=fetch(url,a,b)[0];temp=pathlib.Path(str(p)+'.tmp');temp.write_bytes(data);temp.replace(p)
   return p.read_bytes()
  with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
   return b''.join(pool.map(get,spans))
