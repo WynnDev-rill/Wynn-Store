@@ -19,7 +19,7 @@ func reset():
 func panel(p,s,color=Color("0c1726"),border=Color("31455a")):
 	var n=Panel.new();n.position=p;n.size=s;var style=StyleBoxFlat.new();style.bg_color=color;style.border_color=border;style.set_border_width_all(1);style.set_corner_radius_all(5);n.add_theme_stylebox_override("panel",style);screen.add_child(n);n.mouse_filter=Control.MOUSE_FILTER_IGNORE;return n
 func text(value,p,s,fs=22,color=Color("f3f0e5"),heading=false):
-	var l=Label.new();l.text=value;l.position=p;l.size=s;l.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;l.add_theme_font_override("font",bold if heading else font);l.add_theme_font_size_override("font_size",fs);l.add_theme_color_override("font_color",color);l.mouse_filter=Control.MOUSE_FILTER_IGNORE;screen.add_child(l);return l
+	var l=Label.new();l.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;l.text=value;l.position=p;l.add_theme_font_override("font",bold if heading else font);l.add_theme_font_size_override("font_size",fs);l.add_theme_color_override("font_color",color);l.size=s;l.mouse_filter=Control.MOUSE_FILTER_IGNORE;screen.add_child(l);return l
 func button(value,p,s,callback,primary=false,disabled=false):
 	var b=Button.new();b.text=value;b.position=p;b.size=s;b.disabled=disabled;b.add_theme_font_override("font",bold);b.add_theme_font_size_override("font_size",23);b.add_theme_color_override("font_color",Color("09222c") if primary else white);b.add_theme_color_override("font_hover_color",Color("09222c") if primary else Color.WHITE)
 	for state in ["normal","hover","pressed","disabled","focus"]:

@@ -24,10 +24,10 @@ jobs:
   android:
     runs-on: ubuntu-24.04
     timeout-minutes: 35
-    env:
-      GODOT: ${{ runner.temp }}/astraslash-engine/godot
     steps:
       - uses: actions/checkout@v4
+      - name: Configure engine path
+        run: echo "GODOT=$RUNNER_TEMP/astraslash-engine/godot" >> "$GITHUB_ENV"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
