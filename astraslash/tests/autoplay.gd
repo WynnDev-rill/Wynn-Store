@@ -14,7 +14,9 @@ var log=[]
 var last_node=-1
 var path=""
 var clicks=0
-func setup(game,id,out):g=game;hero=id;path=out
+func setup(game,id,out):
+	g=game;hero=id;path=out
+	if "--fast-qa" in OS.get_cmdline_user_args() and DisplayServer.get_name()=="headless":Engine.max_fps=0
 func key(code,pressed):
 	if held.get(code,false)==pressed:return
 	held[code]=pressed;var e=InputEventKey.new();e.physical_keycode=code;e.pressed=pressed;Input.parse_input_event(e)

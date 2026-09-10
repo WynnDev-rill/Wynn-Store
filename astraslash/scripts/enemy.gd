@@ -32,7 +32,9 @@ func tick(dt):
 	clock+=dt;stun=maxf(0,stun-dt);cooldown-=dt;timer+=dt
 	if boss and phase==1 and hp<max_hp*.5:
 		phase=2;stun=1.15;state="idle";cooldown=1.6;g.fx.death(position+Vector3.UP*1.5,Color("ff9777"),true);g.sound.play("ultimate",.8,.65);g.toast("ORBIT RETAK  ·  FASE II",2.2);g.impact(.08,.19)
-	var dx=g.player.position.x-position.x;facing=1 if dx>0 else -1
+	var dx=g.player.position.x-position.x
+	# A telegraphed attack commits to its direction so crossing behind it works.
+	if state=="idle":facing=1 if dx>0 else -1
 	if stun<=0:
 		if state=="windup":
 			velocity.x=0

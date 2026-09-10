@@ -7,5 +7,7 @@ void fragment(){
  float x=clamp(.17+uv.x*.66+travel,.001,.999);
  float y=(float(zone)+clamp(uv.y,.015,.975))/3.;
  vec3 c=texture(atlas,vec2(x,y)).rgb;
- COLOR=vec4(c*vec3(.78,.83,.91),1.);
+ // Keep the painted scenery behind the silhouettes and red attack telegraphs.
+ float depth=mix(.76,.52,smoothstep(.25,.95,uv.y));
+ COLOR=vec4(c*vec3(.75,.82,.94)*depth,1.);
 }

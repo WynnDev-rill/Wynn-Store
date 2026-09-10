@@ -1,0 +1,82 @@
+name: AstraSlash Android
+on:
+  workflow_dispatch:
+  push:
+    branches: ['feat/astraslash']
+    paths:
+      - 'astraslash/scripts/**'
+      - 'astraslash/scenes/**'
+      - 'astraslash/assets/**'
+      - 'astraslash/shaders/**'
+      - 'astraslash/tools/**'
+      - 'astraslash/tests/**'
+      - 'astraslash/project.godot'
+      - 'astraslash/export_presets.cfg'
+      - '.github/workflows/astraslash-android.yml'
+  pull_request:
+    paths: ['astraslash/**', '.github/workflows/astraslash-android.yml']
+permissions:
+  contents: read
+concurrency:
+  group: astraslash-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      GODOT: ${{ runner.temp }}/astraslash-engine/godot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install pinned SDK build tools
+        run: sdkmanager 'build-tools;35.0.1' 'platform-tools' 'platforms;android-35'
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/astraslash-engine
+          key: astraslash-godot-4.6.1-linux-v1
+      - name: Restore official Godot and templates
+        run: python3 astraslash/tools/fetch_engine.py "$RUNNER_TEMP/astraslash-engine"
+      - name: Import and regression checks
+        run: |
+          "$GODOT" --headless --path astraslash --editor --import --quit
+          "$GODOT" --headless --path astraslash --script tests/regression.gd
+      - name: Complete both character runs using ordinary input events
+        run: python3 astraslash/tools/verify_playthroughs.py
+      - name: Build a release-mode APK for installation testing
+        run: |
+          keytool -genkeypair -noprompt -keystore "$RUNNER_TEMP/ci-test.keystore" -alias ci-test -storepass ci-test-only -keypass ci-test-only -keyalg RSA -keysize 2048 -validity 30 -dname 'CN=AstraSlash CI Test'
+          export GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$RUNNER_TEMP/ci-test.keystore"
+          export GODOT_ANDROID_KEYSTORE_RELEASE_USER=ci-test
+          export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=ci-test-only
+          python3 astraslash/tools/build.py
+          mv astraslash/dist/AstraSlash.apk astraslash/dist/AstraSlash-ci.apk
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          python3 -m pip install Pillow
+      - name: Install and exercise Android screens
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -feature Vulkan
+          script: python3 astraslash/tools/verify_android.py astraslash/dist/AstraSlash-ci.apk
+      - name: Preserve build and test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AstraSlash-CI-evidence
+          path: |
+            astraslash/evidence/
+            astraslash/dist/AstraSlash-ci.apk
+          retention-days: 30

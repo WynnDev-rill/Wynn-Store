@@ -33,7 +33,8 @@ func _draw():
 	if g.message_timer>0:
 		var width=bold.get_string_size(g.message,HORIZONTAL_ALIGNMENT_LEFT,-1,29).x;draw_style_box(style(Color(.025,.045,.075,.78),Color(.4,.6,.68,.4)),Rect2(s.x/2-width/2-20,158,width+40,47));label(g.message,Vector2(s.x/2-width/2,192),29,paper,true)
 	if g.node==0 and g.elapsed<24:
-		label("J  SERANG    K  BERAT    SPASI  LOMPAT    SHIFT  DODGE    L  SKILL",Vector2(s.x*.27,s.y-26),16,muted,true)
+		var hint="GESER UNTUK BERGERAK   ·   TAHAN SERANG UNTUK KOMBO   ·   ATAS + BERAT UNTUK LAUNCHER" if OS.has_feature("android") else "J  SERANG    K  BERAT    SPASI  LOMPAT    SHIFT  DODGE    L  SKILL"
+		label(hint,Vector2(s.x*.23,s.y-26),16,muted,true)
 	if not g.settings.touch:return
 	var origin=g.inputs.joy_origin if g.inputs.joy_id>=0 else Vector2(128,s.y-125)
 	draw_circle(origin,64,Color(.025,.055,.085,.38));draw_arc(origin,64,0,TAU,64,Color(.55,.78,.85,.32),1.4,true);draw_arc(origin,50,-.4,.4,10,Color(.62,.89,.94,.6),2,true);draw_arc(origin,50,PI-.4,PI+.4,10,Color(.62,.89,.94,.6),2,true);draw_circle(origin+g.inputs.axis*47,22,Color(.58,.84,.88,.28));draw_arc(origin+g.inputs.axis*47,22,0,TAU,32,Color(.65,.88,.9,.48),1,true)

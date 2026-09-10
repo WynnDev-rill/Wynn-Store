@@ -30,3 +30,8 @@ func tick(dt):
 	music[active].volume_db=linear_to_db(maxf(.0001,g.settings.music*fade*.58))
 	music[1-active].volume_db=linear_to_db(maxf(.0001,g.settings.music*(1-fade)*.58))
 	if fade>=1:music[1-active].stop()
+func shutdown():
+	for voice in voices+music:
+		if is_instance_valid(voice):voice.stop();voice.stream=null
+	tracks.clear();effects.clear()
+func _exit_tree():shutdown()

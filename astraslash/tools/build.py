@@ -18,7 +18,7 @@ if not a.desktop:
 artifact=dist/('AstraSlash.x86_64' if a.desktop else 'AstraSlash.apk');logpath=ev/('build-linux.txt' if a.desktop else 'build-android.txt')
 with logpath.open('w') as log:
  for args in [['--editor','--import','--quit'],['--export-release','Linux' if a.desktop else 'Android',str(artifact)]]:
-  r=subprocess.run([godot,'--headless','--path',str(root)]+args,env=env,stdout=log,stderr=log)
+  r=subprocess.run([godot,'--headless','--path',str(root)]+args,env=env,stdout=log,stderr=log,timeout=300)
   if r.returncode:raise SystemExit('Build failed; see '+str(logpath))
 if not artifact.exists() or 'SCRIPT ERROR:' in logpath.read_text():raise SystemExit('Build failed validation')
 m={'engine':version,'artifact':artifact.name,'bytes':artifact.stat().st_size,'sha256':hashlib.sha256(artifact.read_bytes()).hexdigest()}

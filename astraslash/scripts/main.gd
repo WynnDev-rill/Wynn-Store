@@ -49,7 +49,9 @@ var dialogue=[]
 var dialogue_index=0
 var dialogue_done=Callable()
 var qa=null
+var settings_save_timer=0.0
 func _ready():
+	get_tree().auto_accept_quit=false
 	randomize();save=Save.new();settings=save.profile.settings;inputs.resize(get_viewport().get_visible_rect().size)
 	sound=Sound.new();add_child(sound);sound.setup(self)
 	camera=Camera3D.new();camera.projection=Camera3D.PROJECTION_ORTHOGONAL;camera.size=10.8;camera.far=180;add_child(camera);camera.current=true
@@ -80,6 +82,7 @@ func buy_meta(id):
 	if level>=D.META[id][3] or save.profile.shards<price:return
 	save.profile.shards-=price;save.profile.meta[id]=level+1;save.flush();sound.play("loot");hub()
 func new_run():
+	if mode not in ["hub","defeat","victory","confirm"]:return
 	seed_value=randi();node=0;wave=0;relics=[];offers=[];route="quiet";shards=0;kills=0;elapsed=0;combo=0;best_combo=0;save.profile.run={}
 	story([["REI","Dulu, cincin itu mengangkat kota kita. Sekarang ia menelan setiap fajar."],["KAEL","Ada tiga simpul yang mengikatnya. Putuskan semua, dan malam ini akan menjadi malam terakhir."],["REI","Kita tidak sedang mengembalikan kemarin. Kita sedang memberi esok sebuah tempat."]],func():enter_room(0))
 func enter_room(index):
@@ -159,11 +162,12 @@ func room_complete():
 		story([["ORVAN","Jika fajar kembali... siapa yang akan mengingat mereka?"],["KAEL","Kami. Dan orang-orang yang belum sempat mereka temui."],["REI","Lihat ke timur, Orvan. Mereka tidak meminta kita berhenti."],["NARASI","Cincin terakhir terbuka. Untuk pertama kalinya sejak Orbit Pecah, bayangan kota bergerak.\nDan bersama cahaya, datang sesuatu yang belum mereka kenal: sebuah hari baru."]],func():victory());return
 	offers=D.choices(seed_value,node,relics,route=="forge" and node%3==1);set_mode("upgrade");ui.upgrade();sound.play("loot");snapshot()
 func choose_relic(id):
-	if id not in offers:return
+	if mode!="upgrade" or id not in offers:return
 	relics.append(id);sound.play("loot");offers=[]
 	if node%3==0:set_mode("route");ui.route();snapshot()
 	else:enter_room(node+1)
 func choose_route(id):
+	if mode!="route" or id not in ["quiet","forge"]:return
 	route=id
 	if id=="quiet":player.hp=minf(player.max_hp,player.hp+player.max_hp*.25);player.potions=mini(5,player.potions+1)
 	else:shards+=25
@@ -174,6 +178,7 @@ func toast(text,seconds=2.0):message=text;message_timer=seconds
 func story(lines,done):
 	dialogue=lines;dialogue_index=0;dialogue_done=done;set_mode("dialog");ui.dialog()
 func next_dialog():
+	if mode!="dialog" or not dialogue_done.is_valid():return
 	dialogue_index+=1;sound.play("ui",1,.4)
 	if dialogue_index>=dialogue.size():
 		var cb=dialogue_done;dialogue_done=Callable();if cb.is_valid():cb.call()
@@ -184,6 +189,18 @@ func pause():
 	if mode=="run":snapshot();set_mode("pause");ui.pause()
 	elif mode=="pause":set_mode("run");ui.hud()
 func settings_screen():previous_mode=mode;set_mode("settings");ui.settings_screen()
+func restart_prompt():
+	if save.profile.run.is_empty():new_run();return
+	set_mode("confirm");ui.confirm_new_run()
+func back_request():
+	match mode:
+		"run","pause":pause()
+		"settings":settings_back()
+		"hub","credits":title()
+		"licenses":ui.credits()
+		"guide":ui.guide_back()
+		"confirm":hub()
+		"title":save.flush();get_tree().quit()
 func settings_back():
 	save.flush();set_mode(previous_mode)
 	match mode:
@@ -232,10 +249,14 @@ func _input(event):
 	inputs.event(event)
 	if event is InputEventKey and event.pressed and event.physical_keycode==KEY_F12 and OS.has_feature("editor"):capture()
 func _notification(what):
-	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT,NOTIFICATION_APPLICATION_PAUSED] and mode=="run":pause()
-	if what==NOTIFICATION_WM_GO_BACK_REQUEST:
+	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT,NOTIFICATION_APPLICATION_PAUSED]:
 		if mode=="run":pause()
-		elif mode=="settings":settings_back()
+		if save:save.flush()
+	if what==NOTIFICATION_WM_GO_BACK_REQUEST:back_request()
+	if what==NOTIFICATION_WM_CLOSE_REQUEST:
+		snapshot()
+		if save:save.flush()
+		get_tree().quit()
 func capture(path="res://evidence/gameplay.png"):
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(path)
@@ -243,7 +264,10 @@ func _process(real_dt):
 	var dt=minf(real_dt,.05);inputs.tick(dt);sound.tick(dt);message_timer=maxf(0,message_timer-dt);flash=move_toward(flash,0,dt*2.5);shake=move_toward(shake,0,dt*.7)
 	post.material.set_shader_parameter("pulse",flash)
 	if get_viewport().get_visible_rect().size!=inputs.viewport:inputs.resize(get_viewport().get_visible_rect().size)
-	if inputs.take("pause"):pause()
+	if inputs.take("pause"):back_request()
+	if mode=="settings":
+		settings_save_timer+=real_dt
+		if settings_save_timer>=1.0:settings_save_timer=0;save.flush()
 	if world:world.tick(dt)
 	if mode=="run":
 		elapsed+=real_dt;autosave+=dt;combo_timer-=dt

@@ -10,6 +10,7 @@ var white=Color("f3f0e5")
 var cyan=Color("77e8ed")
 var muted=Color("a7b6c9")
 var size=Vector2(1280,720)
+var guide_origin="hub"
 func setup(game):
 	g=game;layer=2;root=Control.new();add_child(root);root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);root.mouse_filter=Control.MOUSE_FILTER_IGNORE
 func reset():
@@ -41,14 +42,17 @@ func title():
 	text("Beri esok sebuah tempat.",Vector2(68,size.y*.585),Vector2(420,36),23,white)
 	button("MASUK KE OBSERVATORIUM  →",Vector2(67,size.y-.29*size.y),Vector2(355,57),g.hub,true)
 	button("PENGATURAN",Vector2(67,size.y-118),Vector2(171,44),g.settings_screen);button("KREDIT",Vector2(251,size.y-118),Vector2(171,44),credits)
-	text("WYNNDEV  /  1.0.0",Vector2(67,size.y-39),Vector2(400,24),14,muted,true)
+	text("WYNNDEV  /  "+str(ProjectSettings.get_setting("application/config/version")),Vector2(67,size.y-39),Vector2(400,24),14,muted,true)
 func hub():
 	reset();panel(Vector2(size.x*.53,0),Vector2(size.x*.47,size.y),Color(.035,.065,.105,.93),Color.TRANSPARENT);var x=size.x*.57;var w=size.x*.39;var h=D.HEROES[g.save.profile.selected]
 	back(g.title);eyebrow("OBSERVATORIUM  /  PANGKALAN",Vector2(x,34));text("✦  "+str(g.save.profile.shards)+"  SERPIHAN",Vector2(x+270,34),Vector2(260,26),18,Color("e4c98c"),true)
 	button("01  REI",Vector2(x,92),Vector2(w/2-7,44),func():g.select_hero("rei"),g.save.profile.selected=="rei");button("02  KAEL",Vector2(x+w/2+7,92),Vector2(w/2-7,44),func():g.select_hero("kael"),g.save.profile.selected=="kael")
 	text(h.name,Vector2(x,146),Vector2(w,81),68,white,true);eyebrow(h.title.to_upper(),Vector2(x,223));text(h.desc,Vector2(x,271),Vector2(w,100),21,muted)
 	panel(Vector2(x,392),Vector2(w,91));text(h.skill+"\n"+h.ult,Vector2(x+16,408),Vector2(w-30,65),18,white,true)
-	button("MULAI PERJALANAN  →" if g.save.profile.run.is_empty() else "LANJUTKAN PERJALANAN  →",Vector2(x,size.y-125),Vector2(w,58),g.new_run if g.save.profile.run.is_empty() else g.resume_run,true)
+	var ongoing=g.save.profile.run
+	var start_label="MULAI PERJALANAN  →" if ongoing.is_empty() else "LANJUTKAN "+str(ongoing.hero).to_upper()+"  ·  SIMPUL "+str(int(ongoing.node)+1)+"  →"
+	button(start_label,Vector2(x,size.y-125),Vector2(w,58),g.new_run if ongoing.is_empty() else g.resume_run,true)
+	if not ongoing.is_empty():button("PERJALANAN BARU DENGAN "+h.name,Vector2(x,size.y-184),Vector2(w,43),g.restart_prompt)
 	button("PANDUAN",Vector2(x,size.y-57),Vector2(w/2-6,36),guide);button("PENGATURAN",Vector2(x+w/2+6,size.y-57),Vector2(w/2-6,36),g.settings_screen)
 	eyebrow("TENUNAN PERMANEN",Vector2(34,size.y-150));var i=0
 	for id in D.META:
@@ -79,10 +83,21 @@ func pause():
 	if g.relics.is_empty():text("Resonansi pertamamu menunggu di ujung lintasan.",Vector2(x,270),Vector2(size.x-x-60,80),22,muted)
 	for i in range(g.relics.size()):
 		var d=D.RELICS[g.relics[i]];var w=(size.x-x-70)/2;var p=Vector2(x+(i%2)*(w+15),269+(i/2)*91);panel(p,Vector2(w,77));text(d[0],p+Vector2(13,10),Vector2(w-26,26),22,white,true);text(d[2],p+Vector2(13,43),Vector2(w-26,22),14,cyan,true)
+func confirm_new_run():
+	reset();shade(.97);eyebrow("PERJALANAN BARU",Vector2(65,140));text("MULAI TENUNAN BARU?",Vector2(60,191),Vector2(size.x-120,85),60,white,true)
+	text("Perjalanan yang sedang tersimpan akan diganti. Tenunan permanen dan serpihan di pangkalan tetap tersimpan.",Vector2(65,305),Vector2(size.x-160,105),26,muted)
+	button("MULAI PERJALANAN BARU",Vector2(65,465),Vector2(375,58),g.new_run,true);button("KEMBALI",Vector2(462,465),Vector2(240,58),g.hub)
+func guide_back():
+	g.set_mode(guide_origin)
+	if guide_origin=="pause":pause()
+	else:hub()
 func guide():
-	var return_to=g.mode;g.set_mode("guide");reset();shade(.96);back(func():g.set_mode(return_to);g.ui.pause() if return_to=="pause" else g.ui.hub());eyebrow("CATATAN PETARUNG",Vector2(55,105));text("GERAK ADALAH SENJATA",Vector2(53,145),Vector2(1000,76),57,white,true)
+	guide_origin=g.mode;g.set_mode("guide");reset();shade(.96);back(guide_back);eyebrow("CATATAN PETARUNG",Vector2(55,105));text("GERAK ADALAH SENJATA",Vector2(53,145),Vector2(1000,76),57,white,true)
 	var rows=[["KOMBO","Ketuk atau tahan serang. Tiga pukulan; hit terakhir membuka pertahanan.","J  /  X"],["UDARA","Lompat dua kali. Arah atas + berat meluncurkan musuh. Berat di udara menghantam tanah.","SPASI · W+K"],["DODGE","Dodge dapat membatalkan serangan. Hindari pukulan tepat pada awal dodge untuk perfect dodge.","SHIFT  /  B"],["SKILL & ULTIMATE","Skill pulih setiap 6,5 detik. Hit mengisi energi ultimate; lepaskan saat 100.","L · U  /  RB · LB"],["PULIH","Gunakan persediaan untuk memulihkan 38% Vitalitas. Sisa hitungan terlihat di HUD.","H  /  D-PAD ↑"],["BACA MUSUH","Merah menandai serangan. Lompati gelombang tanah; berat membongkar perisai.","A · D / STIK KIRI"]]
 	var w=(size.x-135)/2
+	if OS.has_feature("android"):
+		var gestures=["TAHAN SERANG","ATAS + BERAT","DODGE","SKILL · ULTIMATE","TOMBOL +","STIK KIRI"]
+		for i in range(rows.size()):rows[i][2]=gestures[i]
 	for i in range(rows.size()):
 		var row=rows[i];var p=Vector2(55+(i%2)*(w+25),246+(i/2)*142);eyebrow(row[0]+"   /   "+row[2],p);text(row[1],p+Vector2(0,35),Vector2(w-15,88),20,muted)
 func settings_screen():
@@ -113,6 +128,13 @@ func credits():
 	reset();g.set_mode("credits");shade(.98);back(g.title);eyebrow("ASTRASLASH  /  MALAM ORBIT PECAH",Vector2(55,106));text("UNTUK HARI YANG BELUM ADA",Vector2(53,148),Vector2(size.x-106,76),52,white,true)
 	text("DUNIA, GAMEPLAY & PRODUKSI\nWynnDev · dibuat bersama Codex\n\nKARAKTER, LINGKUNGAN & EFEK\nDesain original AstraSlash · pipeline Blender dan Godot\n\nMUSIK & SUARA\nKomposisi dan sintesis original AstraSlash",Vector2(55,276),Vector2(size.x*.5-65,342),23,white)
 	text("TEKNOLOGI & LISENSI\nGodot Engine — MIT\nBlender — GPL, digunakan sebagai alat produksi\nBarlow / Barlow Condensed — Jeremy Tribby, SIL OFL\nIlustrasi judul — OpenAI Image Generation\n\nTanpa iklan. Tanpa pembelian di dalam game.\nTerima kasih telah memberi esok sebuah tempat.",Vector2(size.x*.53,276),Vector2(size.x*.43,330),22,muted)
+	button("LISENSI LENGKAP",Vector2(size.x*.53,size.y-77),Vector2(240,43),licenses)
+func licenses():
+	reset();g.set_mode("licenses");shade(.98);back(credits)
+	var scroll=ScrollContainer.new();scroll.position=Vector2(55,102);scroll.size=Vector2(size.x-110,size.y-130);screen.add_child(scroll)
+	var label=RichTextLabel.new();label.custom_minimum_size.x=size.x-135;label.fit_content=true;label.scroll_active=false;label.selection_enabled=true;label.add_theme_font_override("normal_font",font);label.add_theme_font_size_override("normal_font_size",18);scroll.add_child(label)
+	for path in ["res://assets/licenses/Godot.txt","res://assets/licenses/Godot-third-party.txt","res://assets/fonts/Barlow-OFL.txt","res://assets/fonts/BarlowCondensed-OFL.txt"]:
+		label.append_text(path.get_file()+"\n\n"+FileAccess.get_file_as_string(path)+"\n\n")
 static func time_text(seconds):return "%02d:%02d" % [int(seconds)/60,int(seconds)%60]
 func tick(dt):
 	if hud_view and is_instance_valid(hud_view):hud_view.queue_redraw()

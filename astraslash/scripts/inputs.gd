@@ -47,5 +47,7 @@ func event(e):
 				joy_id=e.index;joy_origin=e.position;axis=Vector2.ZERO
 		else:
 			if e.index==joy_id:joy_id=-1;axis=Vector2.ZERO
-			if fingers.has(e.index):held.erase(fingers[e.index]);fingers.erase(e.index)
+			if fingers.has(e.index):
+				var action=fingers[e.index];fingers.erase(e.index)
+				if action not in fingers.values():held.erase(action)
 	if e is InputEventScreenDrag and e.index==joy_id:axis=((e.position-joy_origin)/64).limit_length()
