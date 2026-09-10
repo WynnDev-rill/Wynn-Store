@@ -28,16 +28,22 @@ def adb_try(*args):
     return subprocess.run(['adb', *args], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=90, check=False)
 
 
-def capture(name):
+def rendered(image):
+    return max(ImageStat.Stat(image).stddev) > 18
+
+
+def capture(name, allow_blank=False, record=True):
     global width, height
     image = Image.open(io.BytesIO(adb('exec-out', 'screencap', '-p'))).convert('RGB')
     width, height = image.size
     image.save(OUT / (name + '.png'))
     assert width > height, 'Game did not enter landscape'
-    assert max(ImageStat.Stat(image).stddev) > 18, 'Blank rendered screen'
     pid = adb('shell', 'pidof', PACKAGE).decode().strip()
     assert pid, 'Game process is no longer alive'
-    events.append({'screen': name, 'width': width, 'height': height, 'process': pid})
+    if not allow_blank:
+        assert rendered(image), 'Blank rendered screen'
+    if record:
+        events.append({'screen': name, 'width': width, 'height': height, 'process': pid})
     return image
 
 
@@ -91,15 +97,20 @@ def launch():
     # best-effort; the UI-based dismissal below remains the compatibility path.
     adb_try('shell', 'settings', 'put', 'secure', 'immersive_mode_confirmations', 'confirmed')
     dismiss_android_education()
-    # Software Vulkan can need longer to compile shaders on a cold launch.
-    deadline = time.monotonic() + 60
-    while True:
+    # Software Vulkan can show legitimate black frames while its first shaders
+    # compile. Treat those as a loading state and only require a rendered title
+    # once the launch deadline is reached.
+    deadline = time.monotonic() + 75
+    attempt = 0
+    while time.monotonic() < deadline:
         dismiss_android_education()
-        title = capture('launch-wait')
-        if cyan_at(title, 85, 530):
-            break
-        assert time.monotonic() < deadline, 'Title primary action missing after launch'
+        attempt += 1
+        title = capture('launch-wait', allow_blank=True, record=False)
+        if rendered(title) and cyan_at(title, 85, 530):
+            events.append({'screen': 'launch-ready', 'attempt': attempt, 'width': width, 'height': height})
+            return
         time.sleep(2)
+    raise AssertionError('Title primary action missing after launch/shader warm-up')
 
 
 try:
