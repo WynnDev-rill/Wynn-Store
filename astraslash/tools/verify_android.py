@@ -19,8 +19,14 @@ PACKAGE = 'id.wynn.astraslash'
 events = []
 width, height = 1280, 720
 
+
 def adb(*args):
     return subprocess.check_output(['adb', *args], timeout=90)
+
+
+def adb_try(*args):
+    return subprocess.run(['adb', *args], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=90, check=False)
+
 
 def capture(name):
     global width, height
@@ -34,43 +40,74 @@ def capture(name):
     events.append({'screen': name, 'width': width, 'height': height, 'process': pid})
     return image
 
+
 def tap(x, y, wait=2):
     adb('shell', 'input', 'tap', str(round(x / 1280 * width)), str(round(y / 720 * height)))
     time.sleep(wait)
+
 
 def cyan_at(image, x, y):
     # Sample inside the cyan primary button, away from its label.
     r, g, b = image.getpixel((round(x / 1280 * width), round(y / 720 * height)))
     return g > 125 and b > 125 and g > r * 1.25
 
+
+def dismiss_android_education():
+    """Dismiss Android's one-time immersive/fullscreen education when present.
+
+    API 35 exposes this window from package ``android`` rather than
+    ``com.android.systemui`` on some emulator images, so key off the stable
+    android:id/ok resource and visible label instead of a package name.
+    """
+    dump = adb_try('shell', 'uiautomator', 'dump', '/sdcard/astraslash-window.xml')
+    if dump.returncode != 0:
+        return False
+    read = adb_try('shell', 'cat', '/sdcard/astraslash-window.xml')
+    if read.returncode != 0:
+        return False
+    xml = read.stdout.decode(errors='replace')
+    (OUT / 'launch-window.xml').write_text(xml)
+    try:
+        root = ET.fromstring(xml)
+    except ET.ParseError:
+        return False
+    for node in root.iter('node'):
+        text = node.get('text', '').strip().lower()
+        resource_id = node.get('resource-id', '')
+        if resource_id == 'android:id/ok' or text in {'got it', 'ok'}:
+            bounds = list(map(int, re.findall(r'-?\d+', node.get('bounds', ''))))
+            if len(bounds) == 4 and node.get('clickable') == 'true':
+                adb('shell', 'input', 'tap', str((bounds[0] + bounds[2]) // 2), str((bounds[1] + bounds[3]) // 2))
+                time.sleep(1)
+                events.append({'system_dialog': 'fullscreen education', 'action': node.get('text', 'OK')})
+                return True
+    return False
+
+
 def launch():
     adb('shell', 'monkey', '-p', PACKAGE, '-c', 'android.intent.category.LAUNCHER', '1')
-    time.sleep(8)
-    # A fresh Android device shows its own fullscreen education over the game.
-    # Dismiss that real system button, just as a first-time player would.
-    adb('shell', 'uiautomator', 'dump', '/sdcard/astraslash-window.xml')
-    xml = adb('shell', 'cat', '/sdcard/astraslash-window.xml').decode()
-    (OUT / 'launch-window.xml').write_text(xml)
-    for node in ET.fromstring(xml).iter('node'):
-        if node.get('package') == 'com.android.systemui' and node.get('text', '').lower() == 'got it':
-            bounds = list(map(int, re.findall(r'\d+', node.get('bounds', ''))))
-            if len(bounds) == 4:
-                adb('shell', 'input', 'tap', str((bounds[0] + bounds[2]) // 2), str((bounds[1] + bounds[3]) // 2))
-                events.append({'system_dialog': 'fullscreen education', 'action': 'Got it'})
+    time.sleep(5)
+    # Ask Android not to show the immersive-mode education. This setting is
+    # best-effort; the UI-based dismissal below remains the compatibility path.
+    adb_try('shell', 'settings', 'put', 'secure', 'immersive_mode_confirmations', 'confirmed')
+    dismiss_android_education()
     # Software Vulkan can need longer to compile shaders on a cold launch.
     deadline = time.monotonic() + 60
     while True:
+        dismiss_android_education()
         title = capture('launch-wait')
         if cyan_at(title, 85, 530):
             break
         assert time.monotonic() < deadline, 'Title primary action missing after launch'
         time.sleep(2)
 
+
 try:
     adb('wait-for-device')
     adb('shell', 'settings', 'put', 'system', 'accelerometer_rotation', '0')
     adb('shell', 'settings', 'put', 'system', 'user_rotation', '1')
     adb('shell', 'wm', 'size', '720x1280')
+    adb_try('shell', 'settings', 'put', 'secure', 'immersive_mode_confirmations', 'confirmed')
     adb('logcat', '-c')
     install = adb('install', '-r', str(Path(sys.argv[1]).resolve())).decode()
     assert 'Success' in install, install
@@ -118,7 +155,8 @@ try:
     capture('13-resumed-pause')
     events.append({'result': 'pass', 'apk': Path(sys.argv[1]).name})
 finally:
-    logs = adb('logcat', '-d').decode(errors='replace')
+    log_result = adb_try('logcat', '-d')
+    logs = log_result.stdout.decode(errors='replace')
     (OUT / 'logcat.txt').write_text(logs)
     (OUT / 'journey.json').write_text(json.dumps(events, indent=2) + '\n')
     fatal = re.findall(r'.*(?:FATAL EXCEPTION|SCRIPT ERROR:|Fatal signal).*', logs)
