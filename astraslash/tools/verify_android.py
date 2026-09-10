@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 import time
+import xml.etree.ElementTree as ET
 from PIL import Image, ImageStat
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -44,7 +45,26 @@ def cyan_at(image, x, y):
 
 def launch():
     adb('shell', 'monkey', '-p', PACKAGE, '-c', 'android.intent.category.LAUNCHER', '1')
-    time.sleep(12)
+    time.sleep(8)
+    # A fresh Android device shows its own fullscreen education over the game.
+    # Dismiss that real system button, just as a first-time player would.
+    adb('shell', 'uiautomator', 'dump', '/sdcard/astraslash-window.xml')
+    xml = adb('shell', 'cat', '/sdcard/astraslash-window.xml').decode()
+    (OUT / 'launch-window.xml').write_text(xml)
+    for node in ET.fromstring(xml).iter('node'):
+        if node.get('package') == 'com.android.systemui' and node.get('text', '').lower() == 'got it':
+            bounds = list(map(int, re.findall(r'\d+', node.get('bounds', ''))))
+            if len(bounds) == 4:
+                adb('shell', 'input', 'tap', str((bounds[0] + bounds[2]) // 2), str((bounds[1] + bounds[3]) // 2))
+                events.append({'system_dialog': 'fullscreen education', 'action': 'Got it'})
+    # Software Vulkan can need longer to compile shaders on a cold launch.
+    deadline = time.monotonic() + 60
+    while True:
+        title = capture('launch-wait')
+        if cyan_at(title, 85, 530):
+            break
+        assert time.monotonic() < deadline, 'Title primary action missing after launch'
+        time.sleep(2)
 
 try:
     adb('wait-for-device')
