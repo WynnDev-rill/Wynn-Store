@@ -16,6 +16,7 @@ window/size/window_height_override=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=0
+window/frame_pacing/android/enable_frame_pacing=false
 [input_devices]
 pointing/emulate_touch_from_mouse=true
 [rendering]
