@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" role="img" aria-labelledby="title desc">
+<title id="title">PUBG</title><desc id="desc">Local cover artwork for PUBG</desc>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#302714"/><stop offset="1" stop-color="#07080d"/></linearGradient><radialGradient id="glow"><stop stop-color="#f3b51b" stop-opacity=".55"/><stop offset="1" stop-color="#f3b51b" stop-opacity="0"/></radialGradient></defs>
+<rect width="960" height="720" fill="url(#bg)"/><circle cx="700" cy="180" r="330" fill="url(#glow)"/>
+<rect x="180" y="105" width="600" height="360" rx="22" fill="none" stroke="#f3b51b" stroke-width="18"/><path d="M275 390l95-155 110 115 92-180 145 220z" fill="#584719"/><path d="M480 130c62 0 112 36 112 80v55H368v-55c0-44 50-80 112-80z" fill="#f3b51b" opacity=".85"/>
+<rect x="0" y="505" width="960" height="215" fill="#050609" opacity=".82"/>
+<text x="480" y="598" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="58" font-weight="900" letter-spacing="4">PUBG</text>
+<text x="480" y="650" text-anchor="middle" fill="#f3b51b" font-family="Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="7">MOBILE</text>
+</svg>
