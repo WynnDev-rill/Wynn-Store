@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-20T11:32:03Z",
-  "sha256": "dafc6b713690b42acfb5a7cfa25e50c6b4340a7e69bf0544c658e2d1e7c04d52",
+  "generatedAt": "2026-09-20T16:12:48Z",
+  "sha256": "c5529736bf79ceedf0892f0ffdcc44b46da7d3abfa9168c7c7d631bc682a0426",
   "heroes": 133,
   "items": 187,
   "metaScopes": 6,
@@ -38,8 +38,8 @@
     },
     {
       "name": "hub-items",
-      "status": "ok",
-      "bytes": 626879
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "meta-all-0",
@@ -108,668 +108,668 @@
     },
     {
       "name": "build-9-roam",
-      "status": "ok",
-      "bytes": 3726
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-109-jungle",
-      "status": "ok",
-      "bytes": 6532
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-64-exp",
-      "status": "ok",
-      "bytes": 3489
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-4-exp",
-      "status": "ok",
-      "bytes": 3866
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-28-jungle",
-      "status": "ok",
-      "bytes": 6604
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-7-jungle",
-      "status": "ok",
-      "bytes": 6555
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-55-roam",
-      "status": "ok",
-      "bytes": 3679
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-45-exp",
-      "status": "ok",
-      "bytes": 4799
-    },
-    {
-      "name": "build-93-roam",
-      "status": "ok",
-      "bytes": 3701
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-120-exp",
-      "status": "ok",
-      "bytes": 4125
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-93-roam",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-108-jungle",
-      "status": "ok",
-      "bytes": 6573
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-36-mid",
-      "status": "ok",
-      "bytes": 3460
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-77-roam",
-      "status": "ok",
-      "bytes": 3483
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-2-jungle",
-      "status": "ok",
-      "bytes": 6603
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-11-jungle",
-      "status": "ok",
-      "bytes": 6548
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-99-exp",
-      "status": "ok",
-      "bytes": 3541
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-87-jungle",
-      "status": "ok",
-      "bytes": 6604
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-105-gold",
-      "status": "ok",
-      "bytes": 3484
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-70-roam",
-      "status": "ok",
-      "bytes": 4062
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-97-exp",
-      "status": "ok",
-      "bytes": 4189
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-100-gold",
-      "status": "ok",
-      "bytes": 3516
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-12-gold",
-      "status": "ok",
-      "bytes": 4039
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-92-roam",
-      "status": "ok",
-      "bytes": 4078
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-91-mid",
-      "status": "ok",
-      "bytes": 3387
-    },
-    {
-      "name": "build-124-roam",
-      "status": "ok",
-      "bytes": 3502
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-61-mid",
-      "status": "ok",
-      "bytes": 3458
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-124-roam",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-26-exp",
-      "status": "ok",
-      "bytes": 3482
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-123-exp",
-      "status": "ok",
-      "bytes": 3945
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-65-gold",
-      "status": "ok",
-      "bytes": 3407
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-13-gold",
-      "status": "ok",
-      "bytes": 3492
-    },
-    {
-      "name": "build-33-mid",
-      "status": "ok",
-      "bytes": 3465
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-48-roam",
-      "status": "ok",
-      "bytes": 4062
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-111-exp",
-      "status": "ok",
-      "bytes": 5225
+      "name": "build-33-mid",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-85-exp",
-      "status": "ok",
-      "bytes": 3895
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-81-exp",
-      "status": "ok",
-      "bytes": 3543
+      "name": "build-111-exp",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-34-roam",
-      "status": "ok",
-      "bytes": 4071
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-17-jungle",
-      "status": "ok",
-      "bytes": 6549
+      "name": "build-81-exp",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-15-mid",
-      "status": "ok",
-      "bytes": 3489
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-17-jungle",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-76-mid",
-      "status": "ok",
-      "bytes": 3676
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-112-roam",
-      "status": "ok",
-      "bytes": 3875
-    },
-    {
-      "name": "build-117-jungle",
-      "status": "ok",
-      "bytes": 6547
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-10-roam",
-      "status": "ok",
-      "bytes": 3505
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-41-roam",
-      "status": "ok",
-      "bytes": 4065
+      "name": "build-117-jungle",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-22-exp",
-      "status": "ok",
-      "bytes": 3922
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-41-roam",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-104-roam",
-      "status": "ok",
-      "bytes": 4406
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-23-mid",
-      "status": "ok",
-      "bytes": 3507
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-79-gold",
-      "status": "ok",
-      "bytes": 3489
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-44-roam",
-      "status": "ok",
-      "bytes": 3546
-    },
-    {
-      "name": "build-56-jungle",
-      "status": "ok",
-      "bytes": 6549
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-80-exp",
-      "status": "ok",
-      "bytes": 3465
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-69-jungle",
-      "status": "ok",
-      "bytes": 6545
+      "name": "build-56-jungle",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-60-gold",
-      "status": "ok",
-      "bytes": 2973
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-42-jungle",
-      "status": "ok",
-      "bytes": 6547
+      "name": "build-69-jungle",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-73-gold",
-      "status": "ok",
-      "bytes": 3515
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-21-jungle",
-      "status": "ok",
-      "bytes": 6545
+      "name": "build-42-jungle",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-51-jungle",
-      "status": "ok",
-      "bytes": 6548
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-133-jungle",
-      "status": "ok",
-      "bytes": 6553
+      "name": "build-21-jungle",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-35-roam",
-      "status": "ok",
-      "bytes": 3933
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-49-roam",
-      "status": "ok",
-      "bytes": 4090
+      "name": "build-133-jungle",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-43-gold",
-      "status": "ok",
-      "bytes": 3373
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-49-roam",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-121-gold",
-      "status": "ok",
-      "bytes": 3485
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-54-exp",
-      "status": "ok",
-      "bytes": 3711
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-32-roam",
-      "status": "ok",
-      "bytes": 3722
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-118-jungle",
-      "status": "ok",
-      "bytes": 6520
-    },
-    {
-      "name": "build-75-mid",
-      "status": "ok",
-      "bytes": 4067
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-116-jungle",
-      "status": "ok",
-      "bytes": 6532
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-25-mid",
-      "status": "ok",
-      "bytes": 4861
+      "name": "build-75-mid",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-62-roam",
-      "status": "ok",
-      "bytes": 3483
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-8-jungle",
-      "status": "ok",
-      "bytes": 6520
+      "name": "build-25-mid",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-128-roam",
-      "status": "ok",
-      "bytes": 3544
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-8-jungle",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-40-gold",
-      "status": "ok",
-      "bytes": 4118
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-98-roam",
-      "status": "ok",
-      "bytes": 3748
-    },
-    {
-      "name": "build-71-mid",
-      "status": "ok",
-      "bytes": 3488
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-78-roam",
-      "status": "ok",
-      "bytes": 3546
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-71-mid",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-47-jungle",
-      "status": "ok",
-      "bytes": 6554
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-37-exp",
-      "status": "ok",
-      "bytes": 3570
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-18-gold",
-      "status": "ok",
-      "bytes": 3486
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-67-jungle",
-      "status": "ok",
-      "bytes": 6551
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-53-gold",
-      "status": "ok",
-      "bytes": 3484
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-84-jungle",
-      "status": "ok",
-      "bytes": 6542
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-127-exp",
-      "status": "ok",
-      "bytes": 3742
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-20-roam",
-      "status": "ok",
-      "bytes": 3720
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-68-mid",
-      "status": "ok",
-      "bytes": 3486
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-96-mid",
-      "status": "ok",
-      "bytes": 3456
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-86-mid",
-      "status": "ok",
-      "bytes": 4402
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-132-roam",
-      "status": "ok",
-      "bytes": 3870
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-58-jungle",
-      "status": "ok",
-      "bytes": 6632
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-88-exp",
-      "status": "ok",
-      "bytes": 3689
-    },
-    {
-      "name": "build-102-roam",
-      "status": "ok",
-      "bytes": 3878
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-114-gold",
-      "status": "ok",
-      "bytes": 5202
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-102-roam",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-19-roam",
-      "status": "ok",
-      "bytes": 3874
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-74-exp",
-      "status": "ok",
-      "bytes": 3516
-    },
-    {
-      "name": "build-1-gold",
-      "status": "ok",
-      "bytes": 5141
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-31-gold",
-      "status": "ok",
-      "bytes": 4066
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-5-mid",
-      "status": "ok",
-      "bytes": 4828
+      "name": "build-1-gold",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-24-jungle",
-      "status": "ok",
-      "bytes": 6557
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-5-mid",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-107-gold",
-      "status": "ok",
-      "bytes": 3745
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-122-jungle",
-      "status": "ok",
-      "bytes": 6547
-    },
-    {
-      "name": "build-130-gold",
-      "status": "ok",
-      "bytes": 3518
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-119-mid",
-      "status": "ok",
-      "bytes": 3941
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-103-exp",
-      "status": "ok",
-      "bytes": 3516
+      "name": "build-130-gold",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-46-mid",
-      "status": "ok",
-      "bytes": 3478
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-103-exp",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-52-mid",
-      "status": "ok",
-      "bytes": 4373
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-106-exp",
-      "status": "ok",
-      "bytes": 3812
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-94-jungle",
-      "status": "ok",
-      "bytes": 6560
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-14-roam",
-      "status": "ok",
-      "bytes": 4067
-    },
-    {
-      "name": "build-39-jungle",
-      "status": "ok",
-      "bytes": 6548
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-29-exp",
-      "status": "ok",
-      "bytes": 3563
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-39-jungle",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-3-jungle",
-      "status": "ok",
-      "bytes": 6547
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-63-mid",
-      "status": "ok",
-      "bytes": 3457
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-90-exp",
-      "status": "ok",
-      "bytes": 4072
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-131-exp",
-      "status": "ok",
-      "bytes": 3557
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-27-exp",
-      "status": "ok",
-      "bytes": 4092
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-126-jungle",
-      "status": "ok",
-      "bytes": 6549
-    },
-    {
-      "name": "build-72-exp",
-      "status": "ok",
-      "bytes": 3946
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-82-exp",
-      "status": "ok",
-      "bytes": 3567
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-6-roam",
-      "status": "ok",
-      "bytes": 3547
+      "name": "build-72-exp",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-59-exp",
-      "status": "ok",
-      "bytes": 4007
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-6-roam",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-66-mid",
-      "status": "ok",
-      "bytes": 4375
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-110-mid",
-      "status": "ok",
-      "bytes": 3464
-    },
-    {
-      "name": "build-57-mid",
-      "status": "ok",
-      "bytes": 3478
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-38-mid",
-      "status": "ok",
-      "bytes": 3473
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
-      "name": "build-89-gold",
-      "status": "ok",
-      "bytes": 5159
+      "name": "build-57-mid",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-83-exp",
-      "status": "ok",
-      "bytes": 3560
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-89-gold",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-115-mid",
-      "status": "ok",
-      "bytes": 3459
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-30-jungle",
-      "status": "ok",
-      "bytes": 6552
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-113-jungle",
-      "status": "ok",
-      "bytes": 6539
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-95-exp",
-      "status": "ok",
-      "bytes": 4168
-    },
-    {
-      "name": "build-101-mid",
-      "status": "ok",
-      "bytes": 3456
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-129-mid",
-      "status": "ok",
-      "bytes": 3460
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
+    },
+    {
+      "name": "build-101-mid",
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-50-mid",
-      "status": "ok",
-      "bytes": 4834
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-125-mid",
-      "status": "ok",
-      "bytes": 3515
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     },
     {
       "name": "build-16-exp",
-      "status": "ok",
-      "bytes": 5169
+      "status": "cached",
+      "checkedAt": "2026-09-20T11:32:03Z"
     }
   ]
 }
