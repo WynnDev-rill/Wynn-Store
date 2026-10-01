@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" role="img" aria-labelledby="title desc">
+<title id="title">MOBILE LEGENDS</title><desc id="desc">Local cover artwork for MOBILE LEGENDS</desc>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#172a62"/><stop offset="1" stop-color="#07080d"/></linearGradient><radialGradient id="glow"><stop stop-color="#e9b949" stop-opacity=".55"/><stop offset="1" stop-color="#e9b949" stop-opacity="0"/></radialGradient></defs>
+<rect width="960" height="720" fill="url(#bg)"/><circle cx="700" cy="180" r="330" fill="url(#glow)"/>
+<path d="M160 190l190-80 120 75 155-80 175 85-160 105 105 155-240-55-230 65 85-165z" fill="none" stroke="#f4d06f" stroke-width="18"/><circle cx="480" cy="300" r="110" fill="#3156b8" opacity=".8"/><path d="M410 330l70-145 70 145-70-38z" fill="#fff" opacity=".9"/>
+<rect x="0" y="505" width="960" height="215" fill="#050609" opacity=".82"/>
+<text x="480" y="598" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="58" font-weight="900" letter-spacing="4">MOBILE LEGENDS</text>
+<text x="480" y="650" text-anchor="middle" fill="#e9b949" font-family="Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="7">BANG BANG</text>
+</svg>

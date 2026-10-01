@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" role="img" aria-labelledby="title desc">
+<title id="title">WUTHERING WAVES</title><desc id="desc">Local cover artwork for WUTHERING WAVES</desc>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0b292b"/><stop offset="1" stop-color="#07080d"/></linearGradient><radialGradient id="glow"><stop stop-color="#56e0d2" stop-opacity=".55"/><stop offset="1" stop-color="#56e0d2" stop-opacity="0"/></radialGradient></defs>
+<rect width="960" height="720" fill="url(#bg)"/><circle cx="700" cy="180" r="330" fill="url(#glow)"/>
+<path d="M105 305c115-185 215-185 300 0s185 185 300 0 145-145 195-105" fill="none" stroke="#60e9dd" stroke-width="20"/><path d="M80 390c150-110 260-90 350 25s210 125 450-35" fill="none" stroke="#287e83" stroke-width="34"/><circle cx="480" cy="265" r="105" fill="none" stroke="#d2fffb" stroke-width="11"/><path d="M480 160c-70 65-70 145 0 210 70-65 70-145 0-210z" fill="#42bdb7"/>
+<rect x="0" y="505" width="960" height="215" fill="#050609" opacity=".82"/>
+<text x="480" y="598" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="58" font-weight="900" letter-spacing="4">WUTHERING WAVES</text>
+<text x="480" y="650" text-anchor="middle" fill="#56e0d2" font-family="Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="7">RESONATE WITH THE WORLD</text>
+</svg>

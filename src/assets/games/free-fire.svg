@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" role="img" aria-labelledby="title desc">
+<title id="title">FREE FIRE</title><desc id="desc">Local cover artwork for FREE FIRE</desc>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#24110b"/><stop offset="1" stop-color="#07080d"/></linearGradient><radialGradient id="glow"><stop stop-color="#ff7a18" stop-opacity=".55"/><stop offset="1" stop-color="#ff7a18" stop-opacity="0"/></radialGradient></defs>
+<rect width="960" height="720" fill="url(#bg)"/><circle cx="700" cy="180" r="330" fill="url(#glow)"/>
+<circle cx="700" cy="195" r="170" fill="#ff531f" opacity=".55"/><path d="M150 520l250-310 82 110 90-150 235 350z" fill="#351a11" stroke="#ff8a25" stroke-width="12"/><path d="M460 80l55 190-55 60-28-210z" fill="#ffd166"/>
+<rect x="0" y="505" width="960" height="215" fill="#050609" opacity=".82"/>
+<text x="480" y="598" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="58" font-weight="900" letter-spacing="4">FREE FIRE</text>
+<text x="480" y="650" text-anchor="middle" fill="#ff7a18" font-family="Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="7">BATTLE IN STYLE</text>
+</svg>
