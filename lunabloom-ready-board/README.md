@@ -21,7 +21,7 @@ A one-page, anonymous Mobile Legends availability board. Deploys independently f
 ## Availability and limits
 Vercel Hobby includes limited Blob operations (2,000 advanced writes and 10,000 simple reads per month, subject to plan changes). Client saves are debounced to reduce writes; aggregate GET responses are globally cached to reduce read costs. Service becomes temporarily unavailable if its free quota is exhausted.
 
-The state is stored in a single private JSON blob with ETag conditional writes and retries to protect against concurrent overwrites. The server returns only aggregated counts and the current browser's chosen slots, never other browsers' identities.
+The state is stored in a single private JSON blob with ETag conditional writes and retries to protect against concurrent overwrites. Private reads set useCache:false to obtain strong read-after-write consistency on Vercel Blob >=2.6.1. The server returns only aggregated counts and the current browser's chosen slots, never other browsers' identities.
 
 ## Run tests
 node --test tests/*.test.mjs
