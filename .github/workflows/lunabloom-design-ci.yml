@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: '22'
       - name: Test schedule behavior
-        run: node --test lunabloom-ready-board/tests/core.test.mjs
+        run: node --test lunabloom-ready-board/tests/*.test.mjs
       - name: Install official UI UX Pro Max skill for Codex
         working-directory: lunabloom-ready-board
         run: npx --yes ui-ux-pro-max-cli init --ai codex
