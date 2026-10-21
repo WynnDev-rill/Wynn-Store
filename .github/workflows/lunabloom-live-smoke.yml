@@ -1,0 +1,36 @@
+name: Lunabloom live storage smoke test
+on:
+  push:
+    paths:
+      - '.github/workflows/lunabloom-live-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-live-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      BASE: https://lunabloom-ready-board.vercel.app
+    steps:
+      - name: Test anonymous save, read and delete through production API
+        shell: bash
+        run: |
+          set -euo pipefail
+          cookie="$RUNNER_TEMP/lunabloom-cookies"
+          common=(-fsS --retry 2 --retry-delay 2 -b "$cookie" -c "$cookie")
+          curl "${common[@]}" "$BASE/api/me" > "$RUNNER_TEMP/before.json"
+          node -e "const j=require(process.argv[1]);if(!Array.isArray(j.slots))process.exit(1)" "$RUNNER_TEMP/before.json"
+          cleanup() {
+            curl -fsS -b "$cookie" -c "$cookie" -H "Origin: $BASE" -H "Content-Type: application/json" -d '{"slots":[]}' "$BASE/api/slots" >/dev/null || true
+          }
+          trap cleanup EXIT
+          curl "${common[@]}" -H "Origin: $BASE" -H "Content-Type: application/json" -d '{"slots":[47]}' "$BASE/api/slots" > "$RUNNER_TEMP/write.json"
+          node -e "const j=require(process.argv[1]);if(JSON.stringify(j.slots)!=='[47]'||!j.rows.some(x=>x.slot===47&&x.members>=1))process.exit(1)" "$RUNNER_TEMP/write.json"
+          curl "${common[@]}" "$BASE/api/me" > "$RUNNER_TEMP/after.json"
+          node -e "const j=require(process.argv[1]);if(JSON.stringify(j.slots)!=='[47]')process.exit(1)" "$RUNNER_TEMP/after.json"
+          cleanup
+          trap - EXIT
+          curl "${common[@]}" "$BASE/api/me" > "$RUNNER_TEMP/removed.json"
+          node -e "const j=require(process.argv[1]);if(JSON.stringify(j.slots)!=='[]')process.exit(1)" "$RUNNER_TEMP/removed.json"
+          echo "PASS: live save/read/delete with cookie persistence and no remaining test vote"
