@@ -1,0 +1,36 @@
+name: Lunabloom design and QA
+on:
+  push:
+    paths:
+      - 'lunabloom-ready-board/**'
+      - '.github/workflows/lunabloom-design-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: lunabloom-design-skill
+  cancel-in-progress: false
+jobs:
+  ui-qa-and-skill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test schedule behavior
+        run: node --test lunabloom-ready-board/tests/core.test.mjs
+      - name: Install official UI UX Pro Max skill for Codex
+        working-directory: lunabloom-ready-board
+        run: npx --yes ui-ux-pro-max-cli init --ai codex
+      - name: Persist project-local design skill
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lunabloom-ready-board/.agents/skills/ lunabloom-ready-board/.codex/skills/ 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore(lunabloom): install official UI UX Pro Max design skill'
+            git push
+          fi
