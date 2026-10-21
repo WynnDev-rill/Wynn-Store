@@ -51,30 +51,33 @@ const path=require('node:path');
    assert.equal(await page.locator('.whatsapp-contact').getAttribute('href'),
      'https://wa.me/6287769436511?text=Halo%20Wynn%2C%20saya%20ingin%20melaporkan%20bug%20atau%20memberi%20saran%20untuk%20Lunabloom%20Ready%20Board.');
    await page.locator('[data-slot="0"]').click();
+   assert.equal(await page.locator('#save-dialog').isVisible(),true,'modal appears on the same tap');
    assert.equal(await page.locator('[data-slot="0"] .more-count').innerText(),'1 member','optimistic count appears on tap');
-   assert.equal(await page.locator('#save-dialog').isVisible(),false,'rapid taps remain possible during batching');
    assert.equal(await page.locator('.selection-empty').count(),0,'chosen times replace empty hint');
    assert.equal(await page.locator('[data-slot="0"] .member-dot.filled').count(),1,'grey turns green on vote');
-   await page.locator('#save-dialog').waitFor({state:'visible',timeout:5500});
    assert.match(await page.locator('#save-dialog-title').innerText(),/Menyimpan/);
    assert.equal(await page.locator('.time-card:not([disabled])').count(),0,'cannot tap while save is committing');
    await page.locator('#save-dialog').waitFor({state:'hidden',timeout:5500});
    assert.equal(writeCount,1,'single tap makes one write');
    assert.equal(await page.locator('[data-slot="0"] .more-count').innerText(),'1 member');
    await page.locator('[data-slot="0"]').click();
+   assert.equal(await page.locator('#save-dialog').isVisible(),true,'removal also shows immediate modal');
    assert.equal(await page.locator('[data-slot="0"] .more-count').innerText(),'0 member','tapping again updates instant count');
-   await page.waitForTimeout(3700);
+   await page.locator('#save-dialog').waitFor({state:'hidden',timeout:5500});
    assert.equal(chosen.length,0);
    assert.equal(await page.locator('.selection-label').innerText(),'Pilihanmu','label persists when cleared');
    assert.equal(await page.locator('.selection-empty').innerText(),'Belum memilih jam');
-   for(const i of [1,2,3,4,5])await page.locator('[data-slot="'+i+'"]').click();
+   for(const i of [1,2,3,4,5]){
+     await page.locator('[data-slot="'+i+'"]').click();
+     assert.equal(await page.locator('#save-dialog').isVisible(),true,'every tap opens the save modal immediately');
+     await page.locator('#save-dialog').waitFor({state:'hidden',timeout:5500});
+   }
    assert.equal(await page.locator('#quota-count').innerText(),'5');
    assert.equal(await page.locator('[data-slot="1"] .more-count').innerText(),'1 member');
    assert.equal(await page.locator('[data-slot="6"] .more-count').innerText(),'0 member');
    await page.locator('[data-slot="6"]').click();
    assert.equal(await page.locator('#quota-count').innerText(),'5','sixth tap rejected');
-   await page.waitForTimeout(3700);
-   assert.equal(writeCount,3,'five fast slot taps grouped into one write');
+   assert.equal(writeCount,7,'one save for each confirmed tap');
    await page.locator('[data-filter="siang"]').click();
    assert.equal(await page.locator('.time-card').count(),8,'Siang shows only its own daypart');
    await page.locator('[data-filter="siang"]').click();
@@ -88,7 +91,7 @@ const path=require('node:path');
    assert.deepEqual(jsErrors,[],'no browser script errors');
    fs.mkdirSync('qa-screenshots',{recursive:true});
    await page.screenshot({path:'qa-screenshots/lunabloom-'+width+'.png',fullPage:true});
-   console.log('PASS viewport '+width+'px; Wynn footer, persistent choices, full-screen saving and batching');
+   console.log('PASS viewport '+width+'px; Wynn footer, instant modal on each tap and safe storage');
    await page.close();
   }
  }finally{await browser.close();}

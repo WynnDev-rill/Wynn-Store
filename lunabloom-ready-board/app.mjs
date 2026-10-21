@@ -10,7 +10,7 @@ let saveTimer = null;
 let refreshTimer = null;
 let toastTimer = null;
 let refreshing = false;
-const SAVE_DELAY = 2300; // group quick taps into one storage operation
+const SAVE_DELAY = 120; // send almost immediately; the full-screen modal blocks extra taps
 const REFRESH_INTERVAL = 120000; // one shared read every two minutes while visible
 
 function toast(message) {
@@ -27,7 +27,7 @@ function updateOverlay() {
   const retry = $('save-retry');
   const failed = state.mode === 'error';
   const loading = state.mode === 'loading';
-  const saving = state.busy;
+  const saving = state.busy || state.pending; // show the modal on the same tap, not after the save timer
   const visible = failed || loading || saving;
 
   dialog.classList.toggle('is-error', failed);
@@ -181,6 +181,7 @@ async function save() {
   if(sameSlots(desired,state.confirmed)){render();return;}
   if(serviceDay()!==state.day){await start();toast('Jadwal sudah berganti hari. Silakan pilih lagi.');return;}
   state.busy=true;render();
+  const saveStarted=Date.now();
   let reloadAfter=false;
   try {
     const saved=await api('slots',{
@@ -206,6 +207,9 @@ async function save() {
       state.counts=daySlotCounts(board.rows);
     } catch(error){console.warn('Sinkron ulang gagal',error);state.mode='error';}
   } finally {
+    // Avoid a jarring flash for very fast responses; never extend a slow request.
+    const remaining=450-(Date.now()-saveStarted);
+    if(remaining>0) await new Promise(resolve=>setTimeout(resolve,remaining));
     state.busy=false;
     if(reloadAfter) {clearSave();void start();}
     else render();

@@ -15,7 +15,7 @@ test('member totals and dots are adaptive; no redundant friendly labels',()=>{
  assert.doesNotMatch(html,/data-filter="all"/);
 });
 test('API writes are grouped and board polling limited',()=>{
- assert.match(script,/SAVE_DELAY = 2300/);
+ assert.match(script,/SAVE_DELAY = 120/);
  assert.match(script,/REFRESH_INTERVAL = 120000/);
  assert.match(script,/day:state\.day,slots:desired/);
 });
@@ -63,4 +63,12 @@ test('contact and Wynn credit replace old footer and redundant warning',()=>{
  assert.match(html,/class="whatsapp-icon"/);
  assert.doesNotMatch(html,/class="info-note"/);
  assert.doesNotMatch(html,/Made for/);
+});
+
+test('loading animation opens synchronously on a slot tap and blocks repeat input',()=>{
+ assert.match(script,/const saving = state\.busy \|\| state\.pending/);
+ assert.match(script,/state\.pending=!sameSlots\(state\.selected,state\.confirmed\);/);
+ assert.match(script,/if\(state\.pending\)saveTimer=setTimeout\(save,SAVE_DELAY\);/);
+ assert.match(script,/dialog\.showModal\(\)/);
+ assert.match(script,/450-\(Date\.now\(\)-saveStarted\)/);
 });
