@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7faf7" />
+  <meta name="description" content="Papan jadwal mabar anonim Lunabloom. Pilih jam mainmu dan temukan waktu paling ramai bersama." />
+  <title>Lunabloom — Ready Board</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="./config.js"></script>
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="topbar" aria-label="Navigasi utama">
+      <a href="./" class="brand" aria-label="Lunabloom, ke awal">
+        <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none"><path d="M27.7 6.2a14.8 14.8 0 1 0 6.1 21.6 13.2 13.2 0 0 1-6.1-21.6Z" fill="currentColor"/><path d="M28 22c-5.3-1-8-4-9-9-1.3 5-4 8-9 9 5.1 1 7.7 4 9 9 1-5.1 3.8-8 9-9Z" fill="#fff"/></svg></span>
+        <span class="brand-name">Lunabloom<span class="brand-dot">.</span></span>
+      </a>
+      <button id="rules-trigger" class="top-link" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg><span>Aturan & bantuan</span></button>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <span class="eyebrow"><span class="eyebrow-line"></span> READY TO PLAY, TOGETHER <span class="eyebrow-line"></span></span>
+        <h1 id="page-title">Jadwal mabar, <em>tanpa ribet.</em></h1>
+        <p class="hero-desc">Tandai jam kamu mungkin bisa main. Lihat kapan teman-temanmu juga tersedia — semuanya anonim.</p>
+        <div class="hero-meta"><span class="date-label" id="date-label">Memuat tanggal...</span><span class="meta-separator">·</span><span>Reset setiap 05.00 WIB</span></div>
+      </section>
+
+      <section class="interaction-card" aria-labelledby="choose-title">
+        <div class="interaction-heading">
+          <div><p class="section-kicker">01 / PILIH JAM</p><h2 id="choose-title">Kapan kamu bisa main?</h2><p class="muted">Ketuk jam untuk memilih. Ketuk lagi jika ingin membatalkan.</p></div>
+          <div class="quota-box" aria-live="polite"><span id="quota-count">0</span><span class="quota-total">/ 5</span><small>pilihan</small></div>
+        </div>
+        <div class="selection-strip" id="selection-strip" aria-live="polite"><span class="muted"><svg class="inline-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v6l4 2M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z"/></svg> Belum memilih jam. Kamu bisa pilih maksimal 5 slot.</span></div>
+      </section>
+
+      <section class="board-section" aria-labelledby="board-title">
+        <div class="section-header">
+          <div><p class="section-kicker">02 / JADWAL BERSAMA</p><h2 id="board-title">Ketersediaan member</h2><p class="muted">Setiap titik hijau adalah satu member yang berencana main.</p></div>
+          <div id="connection-pill" class="connection-pill" role="status"><span class="status-dot"></span><span>Menyiapkan...</span></div>
+        </div>
+        <div id="peak-banner" class="peak-banner" hidden>
+          <span class="peak-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 8 4.7 4 4.3-7 4.3 7L21 8l-2 11H5L3 8Z"/></svg></span>
+          <span><span class="peak-label">WAKTU PALING RAMAI</span><strong id="peak-text">—</strong></span>
+          <span class="peak-count" id="peak-count">—</span>
+        </div>
+        <div class="filters" role="group" aria-label="Filter waktu">
+          <button class="filter active" type="button" data-filter="all" aria-pressed="true">Semua</button>
+          <button class="filter" type="button" data-filter="pagi" aria-pressed="false"><span aria-hidden="true">☀</span> Pagi</button>
+          <button class="filter" type="button" data-filter="siang" aria-pressed="false"><span aria-hidden="true">☼</span> Siang</button>
+          <button class="filter" type="button" data-filter="sore" aria-pressed="false"><span aria-hidden="true">◕</span> Sore</button>
+          <button class="filter" type="button" data-filter="malam" aria-pressed="false"><span aria-hidden="true">☾</span> Malam</button>
+          <button class="filter" type="button" data-filter="dini" aria-pressed="false"><span aria-hidden="true">✧</span> Dini hari</button>
+        </div>
+        <div id="board-content" class="board-content" aria-live="off"></div>
+        <div class="board-footer"><span><span class="legend-dot"></span> 1 titik = 1 member</span><span>Lebih dari 5 ditulis sebagai <strong>+N</strong></span></div>
+      </section>
+      <section class="info-note" aria-label="Informasi jadwal"><span class="info-icon" aria-hidden="true">i</span><p>Ini adalah <strong>perkiraan waktu bermain</strong>, bukan janji pasti online. Pilih jam yang realistis supaya lebih mudah mengajak mabar.</p></section>
+    </main>
+    <footer class="footer"><span>Made for <strong>Lunabloom</strong> · Mobile Legends community</span><span>Simple by design. Play together.</span></footer>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <dialog id="rules-dialog" class="rules-dialog" aria-labelledby="rules-title">
+    <div class="dialog-heading"><span class="dialog-mark">✦</span><button type="button" id="rules-close" class="close-btn" aria-label="Tutup aturan">×</button></div>
+    <p class="section-kicker">SEBELUM MEMILIH</p><h2 id="rules-title">Aturan singkat</h2><p class="dialog-lead">Biar papannya tetap berguna untuk semua teman mabar.</p>
+    <ol class="rules-list"><li><strong>Tidak perlu daftar akun.</strong> Pengunjung memakai identitas anonim otomatis.</li><li><strong>Maksimal 5 jam pilihan</strong> (slot 30 menit) setiap member. Ketuk lagi untuk membatalkan.</li><li><strong>Jangan spam.</strong> Pilih jam yang benar-benar mungkin kamu gunakan untuk bermain.</li><li><strong>Reset 05.00 WIB.</strong> Jadwal hari baru dimulai pukul 05.00, termasuk dini hari setelah tengah malam.</li><li><strong>Hanya perkiraan.</strong> Titik hijau berarti berencana main, bukan kepastian hadir.</li></ol>
+    <p class="dialog-footnote">Pilihan anonim disimpan melalui identitas sesi perangkat. Menghapus data browser atau memakai perangkat lain bisa menghasilkan identitas baru.</p>
+    <button type="button" id="rules-understood" class="primary-btn">Mengerti, ayo mabar <span aria-hidden="true">↗</span></button>
+  </dialog>
+</body>
+</html>
