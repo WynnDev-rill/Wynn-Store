@@ -56,6 +56,7 @@ const path=require('node:path');
    assert.equal(await page.locator('.selection-empty').count(),0,'chosen times replace empty hint');
    assert.equal(await page.locator('[data-slot="0"] .member-dot.filled').count(),1,'grey turns green on vote');
    assert.match(await page.locator('#save-dialog-title').innerText(),/Menyimpan/);
+   await page.locator('.time-card[disabled]').first().waitFor({state:'attached',timeout:2000});
    assert.equal(await page.locator('.time-card:not([disabled])').count(),0,'cannot tap while save is committing');
    await page.locator('#save-dialog').waitFor({state:'hidden',timeout:5500});
    assert.equal(writeCount,1,'single tap makes one write');
