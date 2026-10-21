@@ -167,12 +167,13 @@ async function save() {
   if(sameSlots(desired,state.confirmed)){render();return;}
   if(serviceDay()!==state.day){await start();toast('Jadwal sudah berganti hari. Silakan pilih lagi.');return;}
   state.busy=true;render();
+  let reloadAfter=false;
   try {
     const saved=await api('slots',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({day:state.day,slots:desired}),keepalive:true
     });
-    if(saved.day!==state.day){await start();toast('Jadwal sudah berganti hari. Silakan pilih lagi.');return;}
+    if(saved.day!==state.day){reloadAfter=true;toast('Jadwal sudah berganti hari. Silakan pilih lagi.');return;}
     state.confirmed = saved.slots.map(Number).sort((a,b)=>a-b);
     state.selected = [...state.confirmed];
     state.counts = daySlotCounts(saved.rows);
@@ -180,7 +181,7 @@ async function save() {
   } catch(e) {
     console.error('Tidak bisa menyimpan pilihan',e);
     const err=String(e.message||'');
-    if(err==='day_changed') toast('Jadwal sudah berganti hari. Silakan pilih lagi.');
+    if(err==='day_changed') {reloadAfter=true;toast('Jadwal sudah berganti hari. Silakan pilih lagi.');}
     else if(err==='board_full') toast('Papan penuh: maksimal 35 member.');
     else if(err==='board_busy') toast('Papan sedang sibuk. Coba lagi.');
     else toast('Gagal menyimpan, perubahan dibatalkan.');
@@ -192,7 +193,8 @@ async function save() {
     } catch(error){console.warn('Sinkron ulang gagal',error);state.mode='error';}
   } finally {
     state.busy=false;
-    render();
+    if(reloadAfter) {clearSave();void start();}
+    else render();
   }
 }
 function onToggle(index) {
