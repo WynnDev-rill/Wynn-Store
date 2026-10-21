@@ -1,42 +1,44 @@
 # Lunabloom Ready Board
 
-Minimalis, mobile-first, real-time Mobile Legends planning board. It lives independently at `Wynn-Store/lunabloom-ready-board/`, without modifying existing projects.
+A one-page, anonymous Mobile Legends availability board. Deploys independently from the existing Wynn-Store apps.
 
-## Features
-- One page and one-click toggles; **maximum 5 half-hour slots per member**.
-- 24-hour service day 05:00–04:30 **Asia/Jakarta**; server-enforced rollover every morning at 05:00.
-- At most **35 anonymous participants per day**. Display 5 green dots at most, then `+N lainnya`.
-- Adaptive 2/3/4/6 column grid; five time-of-day filters; 12-hour friendly labels below 24-hour time.
-- Realtime counts from Supabase aggregate table, poll-on-refocus, anonymous device tokens, transactional anti-duplication.
-- No profile, email/password form, chat, or yellow 'maybe' markers.
+## Live deployment
+- GitHub repository: Wynn-Store, folder: lunabloom-ready-board/
+- Vercel project: lunabloom-ready-board (root directory: lunabloom-ready-board)
+- **Storage**: a dedicated Vercel Private Blob store, attached to this Vercel project. No Supabase required.
+- Backend: same-origin Node serverless functions in api/, never expose Vercel storage credentials to the browser.
+- Refresh: shared board is CDN cached up to ~60–75 seconds; personal slot changes appear immediately after the server confirms the save.
 
-## Run locally
-`python3 -m http.server 8000` then open `http://localhost:8000/lunabloom-ready-board/` if launched at the monorepo root, or `http://localhost:8000/` if launched here. No npm dependencies needed for the site itself.
+## Rules
+- 48 half-hour choices beginning at 05:00 WIB and ending at 04:30 the following morning.
+- Maximum 5 selected slots per anonymous browser.
+- Up to 35 participating anonymous browsers per service day.
+- A user may replace or remove previously chosen slots.
+- Automatically resets logically at 05:00 WIB; old member data is replaced on the next update.
+- Green only: max 5 dots per time card, then +N under the dots.
+- Participants identified by a secure, HttpOnly, SameSite cookie. We store a SHA-256 hash of the random UUID in a private Blob. **Without accounts, people can circumvent per-person limits by clearing cookies or switching browsers.**
 
-## Backend provisioning
-1. Create a **dedicated Supabase project** (do not attach to unrelated existing production apps).
-2. Run `supabase/schema.sql` once using Supabase SQL editor / migration. The DB stores random visitor UUIDs but only publishes time-slot aggregates.
-3. No Auth provider configuration is necessary. The app creates a random browser-local UUID. This is not proof of a unique human: people can still use another device/browser to evade casual limits.
-4. Fill `config.js` with **project URL and publishable key** from Supabase. These are public browser values, not the service-role key.
-5. Host folder as static site: build command empty, output directory `.`. Vercel root directory `lunabloom-ready-board`, no framework, no build command.
-6. Test with two separate browsers or devices; check counts and slot changes appear in both.
+## Availability and limits
+Vercel Hobby includes limited Blob operations (2,000 advanced writes and 10,000 simple reads per month, subject to plan changes). Client saves are debounced to reduce writes; aggregate GET responses are globally cached to reduce read costs. Service becomes temporarily unavailable if its free quota is exhausted.
 
-**Security**: SQL functions enforce 5 slots, 35 distinct participants per day, and advisory locks to prevent simultaneous overbooking. Direct selection records have RLS enabled and no client policies. Only aggregate counts are included in the Realtime publication. A malicious user can create a new browser-local UUID on a different browser/device. Anonymous boards cannot reliably guarantee unique humans without login or a group-issued identifier.
+The state is stored in a single private JSON blob with ETag conditional writes and retries to protect against concurrent overwrites. The server returns only aggregated counts and the current browser's chosen slots, never other browsers' identities.
 
-**Reset**: Uses logical service-day filtering based on database time in Asia/Jakarta, not browser local clocks. Old data is deleted after seven days when writes occur.
+## Run tests
+node --test tests/*.test.mjs
 
-## What happens before the backend is configured?
-The site displays an honest **Mode pratinjau** banner. Clicks are local-only and demo sample counts are shown for visual evaluation. It is *not* a live group board until `config.js` is populated and Supabase tables/auth are provisioned.
+## Local development
+npm install
+vercel dev
 
-## QA
-`node --test tests/core.test.mjs` and test manually with 375px and 1440px viewports, 2 devices, 05:00 WIB reset edge case.
+Vercel Blob requires the project's private BLOB_READ_WRITE_TOKEN environment variable for local use. Production gets this from the linked Vercel storage integration.
+
+## Architecture
+GET /api/board - shared aggregate only, CDN cache ~60 seconds
+GET /api/me - browser's slots using server-managed anonymous cookie; uncached
+POST /api/slots - atomic whole-selection replacement, max 5 slots, max 35 contributors, ETag concurrency checks
 
 ## UI/UX Pro Max
-Project design rules: `design-system/MASTER.md`. To install the latest official **UI UX Pro Max** Codex project skill in this folder (when npm is available):
+The official Codex design skill is installed under .agents/skills, with project rules in design-system/MASTER.md.
 
-```
-cd lunabloom-ready-board
-npx --yes ui-ux-pro-max-cli init --ai codex
-```
-
-Official project: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill. The skill is a *design-time agent resource*; it is not a runtime website dependency.
+## Legacy
+The supabase/schema.sql migration and previous demo fallback are retained for reference but are not required for the new Vercel Blob live configuration.

@@ -1,6 +1,3 @@
-// Supabase URL and publishable key are PUBLIC browser credentials, not secrets.
-// The service-role key must NEVER be placed here. Fill these after provisioning.
-window.LUNABLOOM_CONFIG = {
-  supabaseUrl: '',
-  supabasePublishableKey: '',
-};
+// This project uses a same-origin Vercel API with private Blob storage.
+// Storage credentials remain server-side; do not place tokens in this file.
+window.LUNABLOOM_CONFIG = { apiMode: true };
