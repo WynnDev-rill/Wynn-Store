@@ -55,3 +55,9 @@ The supabase/schema.sql migration and previous demo fallback are retained for re
 - Removed the separate 01 / Pilih Jam panel. The compact 0/5 choice counter and selected-time chips now live in the main Jadwal Bersama panel.
 - No idle sync badge. A transient spinner shows initial loading or pending/saving requests. Connection errors remain visible until recovered.
 - Every card always displays 5 neutral grey placeholder dots; member-count dots change to green as members join. The numeric count is the full count (0–35).
+
+## Wynn contact and saving-overlay update
+- The Pilihanmu row remains visible even when no slots are selected, with the neutral message “Belum memilih jam”.
+- The former advisory below the schedule has been removed. The footer now credits “Made by Wynn” and links to the bug/suggestions WhatsApp contact (a pre-filled chat).
+- An accessible full-screen native `<dialog>` appears during initial loading and during active storage writes, blocking accidental repeat taps. The 2.3-second debounce phase remains interactive to batch several selections into one write; no artificial waiting is added.
+- A network-connection failure remains actionable via the full-screen “Coba lagi” button. Dialog cannot be dismissed while the save is in progress.

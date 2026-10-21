@@ -20,22 +20,30 @@ function toast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => node.classList.remove('show'), 3800);
 }
-function updateStatus() {
-  const indicator = $('save-indicator');
-  const label = $('save-text');
-  if (state.mode === 'error') {
-    indicator.hidden = false;
-    indicator.classList.add('is-error');
-    label.textContent = 'Koneksi bermasalah. Muat ulang untuk mencoba lagi.';
-  } else if (state.mode !== 'live' || state.busy || state.pending) {
-    indicator.hidden = false;
-    indicator.classList.remove('is-error');
-    label.textContent = state.busy || state.pending ? 'Menyimpan pilihan…' : 'Memuat jadwal…';
-  } else {
-    indicator.hidden = true;
-    indicator.classList.remove('is-error');
-    label.textContent = '';
+function updateOverlay() {
+  const dialog = $('save-dialog');
+  const title = $('save-dialog-title');
+  const description = $('save-dialog-description');
+  const retry = $('save-retry');
+  const failed = state.mode === 'error';
+  const loading = state.mode === 'loading';
+  const saving = state.busy;
+  const visible = failed || loading || saving;
+
+  dialog.classList.toggle('is-error', failed);
+  retry.hidden = !failed;
+  if (failed) {
+    title.textContent = 'Koneksi terganggu';
+    description.textContent = 'Pilihan belum bisa dimuat. Periksa internetmu, lalu coba lagi.';
+  } else if (saving) {
+    title.textContent = 'Menyimpan pilihanmu';
+    description.textContent = 'Jadwal sedang diperbarui. Tunggu sebentar, ya.';
+  } else if (loading) {
+    title.textContent = 'Menyiapkan jadwal';
+    description.textContent = 'Sebentar, sedang memuat pilihan member.';
   }
+  if (visible && !dialog.open) dialog.showModal();
+  else if (!visible && dialog.open) dialog.close();
 }
 async function api(path, options = {}) {
   const controller = new AbortController();
@@ -58,12 +66,17 @@ function renderSelections() {
   $('quota-count').textContent = String(state.selected.length);
   const el = $('selection-strip');
   el.replaceChildren();
-  el.hidden = state.selected.length === 0;
-  if (!state.selected.length) return;
   const label = document.createElement('span');
   label.className = 'selection-label';
   label.textContent = 'Pilihanmu';
   el.append(label);
+  if (!state.selected.length) {
+    const hint = document.createElement('span');
+    hint.className = 'selection-empty';
+    hint.textContent = 'Belum memilih jam';
+    el.append(hint);
+    return;
+  }
   for (const i of state.selected) {
     const chip = document.createElement('span');
     chip.className = 'selected-chip';
@@ -109,7 +122,7 @@ function render() {
   renderSelections();
   const counts = renderedCounts();
   renderBoard(counts,renderPeak(counts));
-  updateStatus();
+  updateOverlay();
 }
 function setFilter(id) {
   if (state.filter === id) return;
@@ -218,6 +231,8 @@ function prepareRules(){
   dialog.addEventListener('click',(e)=>{if(e.target===dialog)close()});
 }
 prepareRules();
+$('save-dialog').addEventListener('cancel', (event) => event.preventDefault());
+$('save-retry').addEventListener('click', () => { if (!state.busy) void start(); });
 document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>setFilter(btn.dataset.filter)));
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden'){
