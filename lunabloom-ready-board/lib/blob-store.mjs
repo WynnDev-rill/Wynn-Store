@@ -1,7 +1,7 @@
 import { get, put } from '@vercel/blob';
 import { createHash, randomUUID } from 'node:crypto';
 import { serviceDay, normalize, totals, change } from './board-model.mjs';
-const PATH = 'lunabloom/board-current.json';
+const PATH = 'lunabloom/board-v2.json';
 const COOKIE = 'lunabloom_board_id';
 function cookieValue(req) {
   const cookie = String(req.headers.cookie || '').split(';').map(x => x.trim()).find(x => x.startsWith(COOKIE+'='));
@@ -17,7 +17,7 @@ export function visitor(req, res) {
 }
 export async function load() {
   const day = serviceDay();
-  const result = await get(PATH, {access:'private'});
+  const result = await get(PATH, {access:'private', useCache:false});
   if (!result) return {day,etag:null,state:normalize(null,day)};
   if (result.statusCode !== 200 || !result.stream) throw new Error('blob_read_unavailable');
   const data = await new Response(result.stream).json();
