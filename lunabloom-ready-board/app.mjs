@@ -6,7 +6,7 @@ const config=window.LUNABLOOM_CONFIG||{};
 const demoMode=!(config.supabaseUrl&&config.supabasePublishableKey);
 let toastTimeout=null;
 let refreshTimeout=null;
-let auth=null;
+let visitorId=null;
 
 function toast(message){const node=$('toast');node.textContent=message;node.classList.add('show');if(toastTimeout)clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>node.classList.remove('show'),3400)}
 function setStatus(kind,text){const pill=$('connection-pill');pill.className=`connection-pill ${kind}`;pill.querySelector('span:last-child').textContent=text}
@@ -34,15 +34,15 @@ async function onToggle(index){if(state.busy)return;if(state.mode==='error'){toa
  const result=toggleSlot(state.selected,index);if(!result.ok){toast(result.reason==='limit'?'Maksimal 5 jam. Batalkan pilihan lama untuk menggantinya.':'Jam tidak valid.');return}
  if(state.mode==='demo'){state.selected=result.slots;localStorage.setItem(demoKey(),JSON.stringify(state.selected));render();return}
  if(state.mode!=='live'){toast('Sedang menghubungkan jadwal…');return}
- state.busy=true;paintBoard();try{const {data,error}=await state.backend.rpc('lunabloom_set_slots',{p_slots:result.slots});if(error)throw error;state.selected=Array.isArray(data)?data.map(Number):result.slots;await reloadCounts();render()}
- catch(err){console.error('Gagal menyimpan pilihan',err);let msg='Gagal menyimpan. Coba lagi.';const s=(err.message||'').toLowerCase();if(s.includes('board_full'))msg='Papan penuh (35 member). Coba lagi besok.';else if(s.includes('max_five'))msg='Maksimal 5 pilihan.';else if(s.includes('jwt')||s.includes('auth'))msg='Sesi anonim bermasalah. Muat ulang halaman.';toast(msg)}finally{state.busy=false;paintBoard()}
+ state.busy=true;paintBoard();try{const {data,error}=await state.backend.rpc('lunabloom_set_slots',{p_slots:result.slots,p_visitor_id:visitorId});if(error)throw error;state.selected=Array.isArray(data)?data.map(Number):result.slots;await reloadCounts();render()}
+ catch(err){console.error('Gagal menyimpan pilihan',err);let msg='Gagal menyimpan. Coba lagi.';const s=(err.message||'').toLowerCase();if(s.includes('board_full'))msg='Papan penuh (35 member). Coba lagi besok.';else if(s.includes('max_five'))msg='Maksimal 5 pilihan.';else if(s.includes('jwt')||s.includes('auth'))msg='Sesi browser bermasalah. Muat ulang halaman.';toast(msg)}finally{state.busy=false;paintBoard()}
 }
 async function reloadCounts(){const {data,error}=await state.backend.rpc('lunabloom_board');if(error)throw error;state.counts=daySlotCounts(data);paintPeak();paintBoard()}
-async function reloadMine(){const {data,error}=await state.backend.rpc('lunabloom_my_slots');if(error)throw error;state.selected=Array.isArray(data)?data.map(Number).sort((a,b)=>a-b):[];buildSelections()}
+async function reloadMine(){const {data,error}=await state.backend.rpc('lunabloom_my_slots',{p_visitor_id:visitorId});if(error)throw error;state.selected=Array.isArray(data)?data.map(Number).sort((a,b)=>a-b):[];buildSelections()}
 function scheduleReload(){if(refreshTimeout)clearTimeout(refreshTimeout);refreshTimeout=setTimeout(()=>{if(state.mode==='live')reloadCounts().catch(e=>{console.warn('Pembaruan terganggu',e);setStatus('error','Menghubungkan ulang')})},450)}
 async function startLive(){try{setStatus('','Menghubungkan…');const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2.81.1?bundle');
- const client=createClient(config.supabaseUrl,config.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false},realtime:{params:{eventsPerSecond:5}}});state.backend=client;
- let {data:{session},error:sessionError}=await client.auth.getSession();if(sessionError)throw sessionError;if(!session){const result=await client.auth.signInAnonymously();if(result.error)throw result.error;session=result.data.session}if(!session)throw new Error('Tidak bisa memulai sesi anonim');auth=session.user;
+ const client=createClient(config.supabaseUrl,config.supabasePublishableKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},realtime:{params:{eventsPerSecond:5}}});state.backend=client;
+ visitorId=localStorage.getItem('lunabloom:visitor');if(!visitorId||!/^[a-f0-9-]{36}$/i.test(visitorId)){visitorId=crypto.randomUUID();localStorage.setItem('lunabloom:visitor',visitorId)}
  await Promise.all([reloadCounts(),reloadMine()]);state.mode='live';setStatus('online','Tersinkron');render();
  client.channel('lunabloom-counts').on('postgres_changes',{event:'*',schema:'public',table:'lunabloom_slot_totals'},scheduleReload).subscribe((status)=>{if(status==='SUBSCRIBED')setStatus('online','Real-time aktif');else if(['CHANNEL_ERROR','TIMED_OUT'].includes(status))setStatus('error','Menyambungkan ulang')});
  }catch(error){console.error('Gagal terhubung ke Lunabloom',error);state.mode='error';setStatus('error','Koneksi gagal');toast('Gagal terhubung. Coba buka ulang halaman.');render()}}
