@@ -9,10 +9,10 @@ $$;
 
 create table if not exists public.lunabloom_selections (
   service_day date not null,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  visitor_id uuid not null,
   slot smallint not null check (slot between 0 and 47),
   created_at timestamptz not null default now(),
-  primary key(service_day, user_id, slot)
+  primary key(service_day, visitor_id, slot)
 );
 create index if not exists lunabloom_selections_day_slot_idx on public.lunabloom_selections(service_day,slot);
 
@@ -65,23 +65,23 @@ language sql stable security definer set search_path = '' as $$
   order by t.slot;
 $$;
 
-create or replace function public.lunabloom_my_slots()
+create or replace function public.lunabloom_my_slots(p_visitor_id uuid)
 returns smallint[] language sql stable security definer set search_path = '' as $$
   select coalesce(array_agg(s.slot order by s.slot),array[]::smallint[])
   from public.lunabloom_selections s
-  where s.service_day=public.lunabloom_service_day() and s.user_id=auth.uid();
+  where s.service_day=public.lunabloom_service_day() and s.visitor_id=p_visitor_id;
 $$;
 
-create or replace function public.lunabloom_set_slots(p_slots integer[])
+create or replace function public.lunabloom_set_slots(p_slots integer[], p_visitor_id uuid)
 returns smallint[] language plpgsql security definer set search_path = '' as $$
 declare
-  user_uuid uuid := auth.uid();
+  user_uuid uuid := p_visitor_id;
   today date := public.lunabloom_service_day();
   normalized smallint[];
   distinct_count integer;
   active_count integer;
 begin
-  if user_uuid is null then raise exception 'auth_required' using errcode='P0001'; end if;
+  if user_uuid is null then raise exception 'visitor_required' using errcode='P0001'; end if;
   if p_slots is null or cardinality(p_slots)>5 then
     raise exception 'max_five' using errcode='P0001';
   end if;
@@ -99,17 +99,17 @@ begin
   perform pg_advisory_xact_lock(hashtext('lunabloom-'||today::text));
   if cardinality(normalized)>0 and not exists (
     select 1 from public.lunabloom_selections
-    where service_day=today and user_id=user_uuid
+    where service_day=today and visitor_id=user_uuid
   ) then
-    select count(distinct user_id) into active_count
+    select count(distinct visitor_id) into active_count
     from public.lunabloom_selections where service_day=today;
     if active_count>=35 then raise exception 'board_full' using errcode='P0001'; end if;
   end if;
 
   delete from public.lunabloom_selections s
-   where s.service_day=today and s.user_id=user_uuid
+   where s.service_day=today and s.visitor_id=user_uuid
    and not (s.slot=any(normalized));
-  insert into public.lunabloom_selections(service_day,user_id,slot)
+  insert into public.lunabloom_selections(service_day,visitor_id,slot)
    select today,user_uuid,x from unnest(normalized) x
    on conflict do nothing;
 
@@ -121,11 +121,11 @@ end;
 $$;
 
 revoke all on function public.lunabloom_board() from public;
-revoke all on function public.lunabloom_my_slots() from public;
-revoke all on function public.lunabloom_set_slots(integer[]) from public;
+revoke all on function public.lunabloom_my_slots(uuid) from public;
+revoke all on function public.lunabloom_set_slots(integer[],uuid) from public;
 grant execute on function public.lunabloom_board() to anon,authenticated;
-grant execute on function public.lunabloom_my_slots() to authenticated;
-grant execute on function public.lunabloom_set_slots(integer[]) to authenticated;
+grant execute on function public.lunabloom_my_slots(uuid) to anon,authenticated;
+grant execute on function public.lunabloom_set_slots(integer[],uuid) to anon,authenticated;
 grant execute on function public.lunabloom_service_day() to anon,authenticated;
 
 -- Public aggregate only; NEVER add lunabloom_selections to realtime publication.
