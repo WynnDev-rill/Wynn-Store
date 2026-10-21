@@ -36,10 +36,10 @@
             <div class="quota-box" aria-label="Jumlah pilihan" aria-live="polite"><span id="quota-count">0</span><span class="quota-total">/ 5</span><small>dipilih</small></div>
           </div>
         </div>
-        <div id="save-indicator" class="save-indicator" role="status" aria-live="polite" hidden>
-          <span class="save-spinner" aria-hidden="true"></span><span id="save-text">Menyimpan pilihan…</span>
+        <div class="selection-strip" id="selection-strip" aria-live="polite">
+          <span class="selection-label">Pilihanmu</span>
+          <span class="selection-empty">Belum memilih jam</span>
         </div>
-        <div class="selection-strip" id="selection-strip" aria-live="polite" hidden></div>
         <div id="peak-banner" class="peak-banner" hidden>
           <span class="peak-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 8 4.7 4 4.3-7 4.3 7L21 8l-2 11H5L3 8Z"/></svg></span>
           <span><span class="peak-label">WAKTU PALING RAMAI</span><strong id="peak-text">—</strong></span>
@@ -55,11 +55,34 @@
         <div id="board-content" class="board-content" aria-live="off"></div>
         <div class="board-footer"><span><span class="legend-dot"></span> Hijau = member tersedia</span><span><span class="legend-dot empty"></span> Abu-abu = slot belum terisi</span></div>
       </section>
-      <section class="info-note" aria-label="Informasi jadwal"><span class="info-icon" aria-hidden="true">i</span><p>Ini adalah <strong>perkiraan waktu bermain</strong>, bukan janji pasti online. Pilih jam yang realistis supaya lebih mudah mengajak mabar.</p></section>
     </main>
-    <footer class="footer"><span>Made for <strong>Lunabloom</strong> · Mobile Legends community</span><span>Simple by design. Play together.</span></footer>
+    <footer class="footer">
+      <span class="footer-credit">Made by <strong>Wynn</strong></span>
+      <a class="whatsapp-contact" href="https://wa.me/6287769436511?text=Halo%20Wynn%2C%20saya%20ingin%20melaporkan%20bug%20atau%20memberi%20saran%20untuk%20Lunabloom%20Ready%20Board." target="_blank" rel="noopener noreferrer" aria-label="Hubungi Wynn lewat WhatsApp untuk melaporkan bug atau memberi saran">
+        <svg class="whatsapp-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <path d="M16 3.8a12.2 12.2 0 0 0-10.4 18.6L4 28l5.7-1.5A12.2 12.2 0 1 0 16 3.8Z" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="m11.15 10.5-.76.65c-.58.5-.65 1.38-.38 2.16 1.45 4.28 4.51 7.08 8.65 8.41.87.28 1.82.18 2.42-.49l.65-.73c.4-.45.31-1.13-.21-1.43l-2.62-1.41a1 1 0 0 0-1.2.19l-.95.98a10.9 10.9 0 0 1-4.58-4.53l.92-.85a1 1 0 0 0 .23-1.22l-1.23-2.5a.96.96 0 0 0-.94-.54Z" fill="currentColor"/>
+        </svg>
+        <span><strong>Bug atau saran?</strong><small>Hubungi Wynn via WhatsApp</small></span>
+        <svg viewBox="0 0 24 24" class="footer-arrow" fill="none" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+      </a>
+    </footer>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <dialog id="save-dialog" class="save-dialog" aria-labelledby="save-dialog-title" aria-describedby="save-dialog-description">
+    <div class="save-modal-content">
+      <div class="save-moon" aria-hidden="true">
+        <span class="save-aura"></span>
+        <span class="save-orbit orbit-outer"></span>
+        <span class="save-orbit orbit-inner"></span>
+        <svg viewBox="0 0 48 48" fill="none"><path d="M31.5 7A19 19 0 1 0 40 35.9a17 17 0 0 1-8.5-28.9Z" fill="currentColor"/><path d="m34.5 19.2 1.8 3.5 3.6 1.8-3.6 1.8-1.8 3.6-1.8-3.6-3.5-1.8 3.5-1.8 1.8-3.5Z" fill="#D7EEDC"/></svg>
+      </div>
+      <h2 id="save-dialog-title">Menyimpan pilihanmu</h2>
+      <p id="save-dialog-description">Sebentar ya, jadwal sedang diperbarui.</p>
+      <button id="save-retry" class="save-retry" type="button" hidden>Coba lagi</button>
+      <span class="save-brand-note">LUNABLOOM · READY BOARD</span>
+    </div>
+  </dialog>
   <dialog id="rules-dialog" class="rules-dialog" aria-labelledby="rules-title">
     <div class="dialog-heading"><span class="dialog-mark">✦</span><button type="button" id="rules-close" class="close-btn" aria-label="Tutup aturan">×</button></div>
     <p class="section-kicker">SEBELUM MEMILIH</p><h2 id="rules-title">Aturan singkat</h2><p class="dialog-lead">Biar papannya tetap berguna untuk semua teman mabar.</p>
