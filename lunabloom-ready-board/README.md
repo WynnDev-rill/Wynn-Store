@@ -61,3 +61,8 @@ The supabase/schema.sql migration and previous demo fallback are retained for re
 - The former advisory below the schedule has been removed. The footer now credits “Made by Wynn” and links to the bug/suggestions WhatsApp contact (a pre-filled chat).
 - An accessible full-screen native `<dialog>` appears during initial loading and during active storage writes, blocking accidental repeat taps. The 2.3-second debounce phase remains interactive to batch several selections into one write; no artificial waiting is added.
 - A network-connection failure remains actionable via the full-screen “Coba lagi” button. Dialog cannot be dismissed while the save is in progress.
+
+## Instant feedback improvement
+- The full-screen modal now appears immediately on every valid slot tap, rather than after the 2.3-second debounce; POST begins after a short 120ms scheduling interval.
+- Choices are locked until the save succeeds or fails. A 450ms minimum visible duration applies only to faster requests, so the animation does not flash.
+- **Quota tradeoff:** unlike the earlier multi-tap batching version, saving each selected slot separately may increase Vercel Blob writes (e.g. selecting five slots = five writes). Watch the monthly Hobby operations limit, especially when most of the 35 members use the board daily.
