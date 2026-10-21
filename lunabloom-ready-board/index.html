@@ -29,33 +29,31 @@
         <div class="hero-meta"><span class="date-label" id="date-label">Memuat tanggal...</span><span class="meta-separator">·</span><span>Reset setiap 05.00 WIB</span></div>
       </section>
 
-      <section class="interaction-card" aria-labelledby="choose-title">
-        <div class="interaction-heading">
-          <div><p class="section-kicker">01 / PILIH JAM</p><h2 id="choose-title">Kapan kamu bisa main?</h2><p class="muted">Ketuk jam untuk memilih. Ketuk lagi untuk membatalkan. Maksimal 5 pilihan.</p></div>
-          <div class="quota-box" aria-live="polite"><span id="quota-count">0</span><span class="quota-total">/ 5</span><small>pilihan</small></div>
-        </div>
-        <div class="selection-strip" id="selection-strip" aria-live="polite"><span class="muted"><svg class="inline-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v6l4 2M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z"/></svg> Belum memilih jam. Kamu bisa pilih maksimal 5 slot.</span></div>
-      </section>
-
       <section class="board-section" aria-labelledby="board-title">
         <div class="section-header">
-          <div><p class="section-kicker">02 / JADWAL BERSAMA</p><h2 id="board-title">Ketersediaan member</h2><p class="muted">Titik hijau menampilkan maksimal 5 orang, angka menunjukkan total member.</p></div>
-          <div id="connection-pill" class="connection-pill" role="status"><span class="status-dot"></span><span>Menyiapkan...</span></div>
+          <div class="board-heading"><p class="section-kicker">JADWAL BERSAMA</p><h2 id="board-title">Ketersediaan member</h2><p class="muted">Ketuk jam untuk memilih atau membatalkan. Maksimal 5 slot.</p></div>
+          <div class="board-head-actions">
+            <div class="quota-box" aria-label="Jumlah pilihan" aria-live="polite"><span id="quota-count">0</span><span class="quota-total">/ 5</span><small>dipilih</small></div>
+          </div>
         </div>
+        <div id="save-indicator" class="save-indicator" role="status" aria-live="polite" hidden>
+          <span class="save-spinner" aria-hidden="true"></span><span id="save-text">Menyimpan pilihan…</span>
+        </div>
+        <div class="selection-strip" id="selection-strip" aria-live="polite" hidden></div>
         <div id="peak-banner" class="peak-banner" hidden>
           <span class="peak-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 8 4.7 4 4.3-7 4.3 7L21 8l-2 11H5L3 8Z"/></svg></span>
           <span><span class="peak-label">WAKTU PALING RAMAI</span><strong id="peak-text">—</strong></span>
           <span class="peak-count" id="peak-count">—</span>
         </div>
         <div class="filters" role="group" aria-label="Filter waktu">
-          <button class="filter" type="button" data-filter="pagi" aria-pressed="false"><span aria-hidden="true">☀</span> Pagi</button>
+          <button class="filter active" type="button" data-filter="pagi" aria-pressed="true"><span aria-hidden="true">☀</span> Pagi</button>
           <button class="filter" type="button" data-filter="siang" aria-pressed="false"><span aria-hidden="true">☼</span> Siang</button>
           <button class="filter" type="button" data-filter="sore" aria-pressed="false"><span aria-hidden="true">◕</span> Sore</button>
           <button class="filter" type="button" data-filter="malam" aria-pressed="false"><span aria-hidden="true">☾</span> Malam</button>
           <button class="filter" type="button" data-filter="dini" aria-pressed="false"><span aria-hidden="true">✧</span> Dini hari</button>
         </div>
         <div id="board-content" class="board-content" aria-live="off"></div>
-        <div class="board-footer"><span><span class="legend-dot"></span> 1 titik = 1 member</span><span>Angka menunjukkan <strong>total member</strong></span></div>
+        <div class="board-footer"><span><span class="legend-dot"></span> Hijau = member tersedia</span><span><span class="legend-dot empty"></span> Abu-abu = slot belum terisi</span></div>
       </section>
       <section class="info-note" aria-label="Informasi jadwal"><span class="info-icon" aria-hidden="true">i</span><p>Ini adalah <strong>perkiraan waktu bermain</strong>, bukan janji pasti online. Pilih jam yang realistis supaya lebih mudah mengajak mabar.</p></section>
     </main>

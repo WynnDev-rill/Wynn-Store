@@ -49,3 +49,9 @@ The supabase/schema.sql migration and previous demo fallback are retained for re
 - Pending selections include their service day; after 05:00 WIB, stale writes are rejected rather than counted toward a new day.
 - The default view shows all five time categories; tapping a category filters it, tapping it again restores all.
 - Data store migration to Cloudflare D1 should be done only after validating Cloudflare permissions and data migration, not by changing the production site blindly.
+
+## Compact daypart UI update
+- The initial active category is always Pagi. A category stays selected when tapped again; at most one of five dayparts renders, avoiding 48 slots on mobile.
+- Removed the separate 01 / Pilih Jam panel. The compact 0/5 choice counter and selected-time chips now live in the main Jadwal Bersama panel.
+- No idle sync badge. A transient spinner shows initial loading or pending/saving requests. Connection errors remain visible until recovered.
+- Every card always displays 5 neutral grey placeholder dots; member-count dots change to green as members join. The numeric count is the full count (0–35).

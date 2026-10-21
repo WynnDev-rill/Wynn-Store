@@ -4,7 +4,7 @@ import { sameSlots, displayCounts, dotCount, memberLabel } from './lib/view-mode
 const $ = id => document.getElementById(id);
 const state = {
   day: null, selected: [], confirmed: [], counts: Array(SLOT_COUNT).fill(0),
-  filter: null, mode: 'loading', busy: false, pending: false, lastSave: 0,
+  filter: 'pagi', mode: 'loading', busy: false, pending: false, lastSave: 0,
 };
 let saveTimer = null;
 let refreshTimer = null;
@@ -20,17 +20,22 @@ function toast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => node.classList.remove('show'), 3800);
 }
-function status(kind, label) {
-  const el = $('connection-pill');
-  el.className = 'connection-pill '+kind;
-  el.querySelector('span:last-child').textContent = label;
-}
 function updateStatus() {
-  if (state.mode === 'error') status('error','Koneksi terganggu');
-  else if (state.mode !== 'live') status('','Menghubungkan…');
-  else if (state.busy) status('pending','Menyimpan…');
-  else if (state.pending) status('pending','Menunggu simpan…');
-  else status('online','Tersinkron · ±2 menit');
+  const indicator = $('save-indicator');
+  const label = $('save-text');
+  if (state.mode === 'error') {
+    indicator.hidden = false;
+    indicator.classList.add('is-error');
+    label.textContent = 'Koneksi bermasalah. Muat ulang untuk mencoba lagi.';
+  } else if (state.mode !== 'live' || state.busy || state.pending) {
+    indicator.hidden = false;
+    indicator.classList.remove('is-error');
+    label.textContent = state.busy || state.pending ? 'Menyimpan pilihan…' : 'Memuat jadwal…';
+  } else {
+    indicator.hidden = true;
+    indicator.classList.remove('is-error');
+    label.textContent = '';
+  }
 }
 async function api(path, options = {}) {
   const controller = new AbortController();
@@ -53,23 +58,18 @@ function renderSelections() {
   $('quota-count').textContent = String(state.selected.length);
   const el = $('selection-strip');
   el.replaceChildren();
-  if (!state.selected.length) {
-    const p = document.createElement('span');
-    p.className = 'muted';
-    p.textContent = 'Belum memilih jam. Kamu bisa pilih maksimal 5 slot.';
-    el.append(p);
-    return;
-  }
+  el.hidden = state.selected.length === 0;
+  if (!state.selected.length) return;
+  const label = document.createElement('span');
+  label.className = 'selection-label';
+  label.textContent = 'Pilihanmu';
+  el.append(label);
   for (const i of state.selected) {
     const chip = document.createElement('span');
     chip.className = 'selected-chip';
     chip.textContent = '✓ '+slotLabel(i);
     el.append(chip);
   }
-  const hint = document.createElement('span');
-  hint.className = 'selection-tip';
-  hint.textContent = state.pending ? 'Menyimpan pilihan sebentar lagi…' : 'Ketuk lagi untuk membatalkan';
-  el.append(hint);
 }
 function renderPeak(counts) {
   const peak = peakSlot(counts);
@@ -83,9 +83,9 @@ function renderPeak(counts) {
 }
 function cardMarkup(i, count, peakIndex) {
   const chosen = state.selected.includes(i);
-  const dots = Array.from({length:dotCount(count)}, () => '<span class="member-dot" aria-hidden="true"></span>').join('');
+  const dots = Array.from({length:5}, (_,index) => '<span class="member-dot'+(index < dotCount(count) ? ' filled' : '')+'" aria-hidden="true"></span>').join('');
   return '<button type="button" class="time-card'+(chosen?' selected':'')+(i===peakIndex?' peak':'')+
-    '" data-slot="'+i+'" aria-pressed="'+chosen+
+    (count > 0 ? ' has-members' : '')+'" data-slot="'+i+'" aria-pressed="'+chosen+
     '" aria-label="'+slotLabel(i)+', '+memberLabel(count)+', '+(chosen?'dipilih':'belum dipilih')+'"'+(state.busy||state.mode!=='live'?' disabled':'')+'>'+
     '<span class="time-top"><span class="time-main">'+slotLabel(i)+'</span>'+
     (chosen?'<span class="time-check" aria-hidden="true">✓</span>':'')+
@@ -94,7 +94,7 @@ function cardMarkup(i, count, peakIndex) {
 function renderBoard(counts,peakIndex) {
   const el = $('board-content');
   const focusSlot = document.activeElement?.dataset?.slot;
-  const shown = state.filter ? DAYPARTS.filter(x=>x.id===state.filter) : DAYPARTS;
+  const shown = DAYPARTS.filter(x=>x.id===state.filter);
   el.innerHTML = shown.map(group => '<section class="daypart" aria-labelledby="daypart-'+group.id+'">'+
     '<h3 class="daypart-heading" id="daypart-'+group.id+'"><span class="symbol" aria-hidden="true">'+
     group.icon+'</span>'+group.name+'<small>· '+slotLabel(group.start)+'–'+slotLabel(group.end)+'</small></h3>'+
@@ -112,7 +112,8 @@ function render() {
   updateStatus();
 }
 function setFilter(id) {
-  state.filter = state.filter === id ? null : id;
+  if (state.filter === id) return;
+  state.filter = id;
   document.querySelectorAll('[data-filter]').forEach(btn=>{
     const active = btn.dataset.filter===state.filter;
     btn.classList.toggle('active',active);
@@ -153,7 +154,7 @@ async function refreshBoard() {
     if(board.day !== state.day) { refreshing=false; await start();return; }
     state.counts = daySlotCounts(board.rows);
     render();
-  } catch(e){console.warn('Pembaruan jadwal tertunda',e);status('error','Menyambung ulang');}
+  } catch(e){console.warn('Pembaruan jadwal tertunda',e);toast('Pembaruan jadwal tertunda. Periksa koneksimu.');}
   finally { refreshing=false; }
 }
 function refreshSoon() {

@@ -6,3 +6,41 @@
 .connection-pill.pending .status-dot{background:#d0aa46;box-shadow:0 0 0 3px #f7eccc}
 .time-card .dots-wrap:empty{min-height:12px}
 @media (prefers-reduced-motion: no-preference){.time-card.selected .time-check{animation:lunabloom-check-in .16s ease-out}@keyframes lunabloom-check-in{from{transform:scale(.65);opacity:.5}to{transform:scale(1);opacity:1}}}
+
+/* Lunabloom compact board: one task, one visible daypart. */
+.board-section{margin-top:0;padding-top:28px}
+.section-header{align-items:flex-start}
+.board-heading{min-width:0;flex:1}
+.board-heading .muted{max-width:520px}
+.board-head-actions{display:flex;align-items:center;gap:10px;flex:none}
+.board-head-actions .quota-box{min-width:78px;border:1px solid #e0eee4;padding:7px 12px 8px}
+.board-head-actions .quota-box #quota-count{font-size:23px}
+.board-head-actions .quota-box small{font-size:10px}
+.board-section .selection-strip{border-top:0;background:#f5faf6;margin:17px 0 0;padding:10px 12px;border-radius:12px;min-height:0}
+.selection-strip[hidden],.save-indicator[hidden]{display:none!important}
+.selection-label{font:700 11px 'Manrope',sans-serif;color:#64836f;margin-right:4px}
+.board-section .selected-chip{padding:5px 9px}
+.save-indicator{display:flex;align-items:center;gap:8px;width:max-content;max-width:100%;margin:12px 0 0;padding:8px 11px;border-radius:10px;background:#f3f9f4;font:700 11px 'DM Sans',sans-serif;color:#48825f}
+.save-spinner{width:13px;height:13px;flex:none;border:2px solid #cee8d5;border-top-color:#36985b;border-radius:50%;animation:lunabloom-spin .85s linear infinite}
+.save-indicator.is-error{color:#b34d43;background:#fff1ee}
+.save-indicator.is-error .save-spinner{animation:none;border-color:#d9857a;background:#fff}
+@keyframes lunabloom-spin{to{transform:rotate(360deg)}}
+.dots-wrap{min-height:12px;gap:5px}
+.member-dot{background:#e1e6e3;transition:background-color .18s ease;flex:none}
+.member-dot.filled{background:#40af70}
+.time-card .more-count{color:#8e9b92;font-size:11px}
+.time-card.has-members .more-count{color:#378c56}
+.board-footer .legend-dot.empty{background:#dce4df}
+.filters{padding-top:21px}
+@media(max-width:560px){
+  .hero{padding-top:28px;padding-bottom:27px}
+  .board-section{padding:20px 14px 17px}
+  .board-heading .muted{max-width:none;font-size:12px}
+  .board-head-actions .quota-box{min-width:68px;padding:6px 8px}
+  .board-head-actions .quota-box #quota-count{font-size:21px}
+  .board-section .selection-strip{margin-top:13px}
+  .member-dot{width:9px;height:9px}
+  .dots-wrap{gap:4px}
+}
+@media(max-width:350px){.member-dot{width:8px;height:8px}}
+@media(prefers-reduced-motion:reduce){.save-spinner{animation:none;border-top-color:#36985b}}
