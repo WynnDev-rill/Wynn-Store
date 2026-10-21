@@ -3,10 +3,12 @@ import {MAX_SLOTS,SLOT_COUNT,DAYPARTS,slotLabel,slotFriendly,slotDaypart,service
 const $=(id)=>document.getElementById(id);
 const state={day:serviceDay(),selected:[],counts:Array(SLOT_COUNT).fill(0),filter:'all',mode:'loading',busy:false,backend:null,lastToast:0};
 const config=window.LUNABLOOM_CONFIG||{};
-const demoMode=!(config.supabaseUrl&&config.supabasePublishableKey);
+const apiMode=config.apiMode===true;
+const demoMode=!apiMode&&!(config.supabaseUrl&&config.supabasePublishableKey);
 let toastTimeout=null;
 let refreshTimeout=null;
 let visitorId=null;
+let pendingSave=null;
 
 function toast(message){const node=$('toast');node.textContent=message;node.classList.add('show');if(toastTimeout)clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>node.classList.remove('show'),3400)}
 function setStatus(kind,text){const pill=$('connection-pill');pill.className=`connection-pill ${kind}`;pill.querySelector('span:last-child').textContent=text}
@@ -30,17 +32,61 @@ function paintBoard(){const container=$('board-content');const counts=fullCounts
 }
 function render(){paintDate();buildSelections();paintPeak();paintBoard()}
 function setFilter(filter){state.filter=filter;document.querySelectorAll('[data-filter]').forEach(btn=>{const chosen=btn.dataset.filter===filter;btn.classList.toggle('active',chosen);btn.setAttribute('aria-pressed',String(chosen))});paintBoard()}
-async function onToggle(index){if(state.busy)return;if(state.mode==='error'){toast('Belum tersambung. Coba muat ulang halaman.');return}
- const result=toggleSlot(state.selected,index);if(!result.ok){toast(result.reason==='limit'?'Maksimal 5 jam. Batalkan pilihan lama untuk menggantinya.':'Jam tidak valid.');return}
+async function onToggle(index){
+ if(state.busy)return;
+ if(state.mode==='error'){toast('Belum tersambung. Coba muat ulang halaman.');return}
+ const result=toggleSlot(state.selected,index);
+ if(!result.ok){toast(result.reason==='limit'?'Maksimal 5 jam. Batalkan pilihan lama untuk menggantinya.':'Jam tidak valid.');return}
  if(state.mode==='demo'){state.selected=result.slots;localStorage.setItem(demoKey(),JSON.stringify(state.selected));render();return}
  if(state.mode!=='live'){toast('Sedang menghubungkan jadwal…');return}
- state.busy=true;paintBoard();try{const {data,error}=await state.backend.rpc('lunabloom_set_slots',{p_slots:result.slots,p_visitor_id:visitorId});if(error)throw error;state.selected=Array.isArray(data)?data.map(Number):result.slots;await reloadCounts();render()}
- catch(err){console.error('Gagal menyimpan pilihan',err);let msg='Gagal menyimpan. Coba lagi.';const s=(err.message||'').toLowerCase();if(s.includes('board_full'))msg='Papan penuh (35 member). Coba lagi besok.';else if(s.includes('max_five'))msg='Maksimal 5 pilihan.';else if(s.includes('jwt')||s.includes('auth'))msg='Sesi browser bermasalah. Muat ulang halaman.';toast(msg)}finally{state.busy=false;paintBoard()}
+ if(apiMode) {
+   state.selected=result.slots;render();
+   clearTimeout(pendingSave);pendingSave=setTimeout(()=>saveToApi(),1500);
+   return;
+ }
+ state.busy=true;paintBoard();
+ try{const {data,error}=await state.backend.rpc('lunabloom_set_slots',{p_slots:result.slots,p_visitor_id:visitorId});if(error)throw error;state.selected=Array.isArray(data)?data.map(Number):result.slots;await reloadCounts();render()}
+ catch(err){console.error('Gagal menyimpan pilihan',err);toast('Gagal menyimpan. Coba lagi.')}finally{state.busy=false;paintBoard()}
+}
+async function saveToApi(){
+ pendingSave=null;state.busy=true;paintBoard();const desired=[...state.selected];
+ try {
+   const {data,error}=await state.backend.rpc('lunabloom_set_slots',{p_slots:desired});
+   if(error)throw error;
+   state.selected=data.slots.map(Number);state.counts=daySlotCounts(data.rows);render();
+   setStatus('online','Tersinkron');
+ } catch(err){
+   console.error('Gagal menyimpan pilihan',err);
+   const msg=String(err.message||'');
+   toast(msg.includes('board_full')?'Papan penuh: maksimal 35 peserta.':msg.includes('board_busy')?'Jadwal sedang sibuk, coba lagi.':'Pilihan belum tersimpan. Coba lagi.');
+   try{await reloadMine();await reloadCounts()}catch(e){console.warn(e)}
+   render();
+ }finally{state.busy=false;paintBoard()}
 }
 async function reloadCounts(){const {data,error}=await state.backend.rpc('lunabloom_board');if(error)throw error;state.counts=daySlotCounts(data);paintPeak();paintBoard()}
 async function reloadMine(){const {data,error}=await state.backend.rpc('lunabloom_my_slots',{p_visitor_id:visitorId});if(error)throw error;state.selected=Array.isArray(data)?data.map(Number).sort((a,b)=>a-b):[];buildSelections()}
 function scheduleReload(){if(refreshTimeout)clearTimeout(refreshTimeout);refreshTimeout=setTimeout(()=>{if(state.mode==='live')reloadCounts().catch(e=>{console.warn('Pembaruan terganggu',e);setStatus('error','Menghubungkan ulang')})},450)}
-async function startLive(){try{setStatus('','Menghubungkan…');const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2.81.1?bundle');
+async function useApi(){
+ const rpc=async(name,args={})=>{
+   const route=name==='lunabloom_board'?'board':name==='lunabloom_my_slots'?'me':'slots';
+   const res=await fetch('./api/'+route,{
+     method:route==='slots'?'POST':'GET',credentials:'same-origin',
+     ...(route==='slots'?{headers:{'Content-Type':'application/json'},body:JSON.stringify({slots:args.p_slots})}:{})
+   });
+   const payload=await res.json().catch(()=>({error:'invalid_response'}));
+   if(!res.ok) return {data:null,error:new Error(payload.error||'connection_failed')};
+   if(route==='board')return {data:payload.rows,error:null};
+   if(route==='me')return {data:payload.slots,error:null};
+   return {data:payload,error:null};
+ };
+ state.backend={rpc};
+ await Promise.all([reloadCounts(),reloadMine()]);
+ state.mode='live';
+ setStatus('online','Live · ±1 menit');
+ render();
+ setInterval(()=>{if(state.mode==='live'&&document.visibilityState==='visible'&&!state.busy&&!pendingSave)scheduleReload()},60000);
+}
+async function startLive(){try{setStatus('','Menghubungkan…');if(apiMode){await useApi();return;}const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2.81.1?bundle');
  const client=createClient(config.supabaseUrl,config.supabasePublishableKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},realtime:{params:{eventsPerSecond:5}}});state.backend=client;
  visitorId=localStorage.getItem('lunabloom:visitor');if(!visitorId||!/^[a-f0-9-]{36}$/i.test(visitorId)){visitorId=crypto.randomUUID();localStorage.setItem('lunabloom:visitor',visitorId)}
  await Promise.all([reloadCounts(),reloadMine()]);state.mode='live';setStatus('online','Tersinkron');render();
@@ -48,5 +94,5 @@ async function startLive(){try{setStatus('','Menghubungkan…');const {createCli
  }catch(error){console.error('Gagal terhubung ke Lunabloom',error);state.mode='error';setStatus('error','Koneksi gagal');toast('Gagal terhubung. Coba buka ulang halaman.');render()}}
 function startDemo(){state.mode='demo';state.counts=demoCounts();state.selected=readDemo();setStatus('demo','Mode pratinjau');const n=document.createElement('div');n.className='preview-notice';n.textContent='Mode pratinjau: pilihan hanya tersimpan di browser ini, belum tersinkron antar-member.';const board=document.querySelector('.board-section');board.parentNode.insertBefore(n,board);render()}
 function prepareRules(){const dialog=$('rules-dialog');const close=()=>dialog.close();$('rules-trigger').addEventListener('click',()=>dialog.showModal());$('rules-close').addEventListener('click',close);$('rules-understood').addEventListener('click',close);dialog.addEventListener('click',(e)=>{if(e.target===dialog)close()})}
-function attach(){prepareRules();document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>setFilter(btn.dataset.filter)));document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&state.mode==='live')scheduleReload()});setInterval(async()=>{const today=serviceDay();if(today!==state.day){state.day=today;if(state.mode==='demo'){state.selected=readDemo();state.counts=demoCounts()}else if(state.mode==='live'){try{await Promise.all([reloadMine(),reloadCounts()])}catch(e){console.error(e)}}render();toast('Jadwal baru sudah dimulai. Pilihan kemarin telah direset.')}},15000);}
+function attach(){prepareRules();document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>setFilter(btn.dataset.filter)));document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&state.mode==='live'){if(apiMode){reloadMine().catch(console.warn)}scheduleReload()}});setInterval(async()=>{const today=serviceDay();if(today!==state.day){clearTimeout(pendingSave);pendingSave=null;state.day=today;if(state.mode==='demo'){state.selected=readDemo();state.counts=demoCounts()}else if(state.mode==='live'){try{await Promise.all([reloadMine(),reloadCounts()])}catch(e){console.error(e)}}render();toast('Jadwal baru sudah dimulai. Pilihan kemarin telah direset.')}},15000);}
 attach();if(demoMode)startDemo();else startLive();
