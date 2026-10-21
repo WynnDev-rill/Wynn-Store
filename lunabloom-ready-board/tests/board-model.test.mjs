@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {serviceDay,slotsFrom,normalize,totals,change} from '../lib/board-model.mjs';
 test('rollover at 05:00 WIB',()=>{
-  assert.equal(serviceDay(Date.parse('2026-10-21T21:59:59+07:00')),'2026-10-20');
+  assert.equal(serviceDay(Date.parse('2026-10-21T04:59:59+07:00')),'2026-10-20');
   assert.equal(serviceDay(Date.parse('2026-10-21T05:00:00+07:00')),'2026-10-21');
 });
 test('limits, duplicates and invalid',()=>{

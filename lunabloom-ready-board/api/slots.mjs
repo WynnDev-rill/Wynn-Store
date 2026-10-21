@@ -6,6 +6,8 @@ export default async function handler(req,res) {
   const length=Number(req.headers['content-length'] || 0);
   if(length>1500) return reply(res,413,{error:'payload_too_large'});
   try {
+    const origin=req.headers.origin;
+    if(origin && new URL(origin).host!==req.headers.host) return reply(res,403,{error:'origin_not_allowed'});
     const key=visitor(req,res);
     const body=typeof req.body==='string'?JSON.parse(req.body):req.body;
     const slots=slotsFrom(body?.slots);
