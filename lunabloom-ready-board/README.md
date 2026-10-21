@@ -7,7 +7,7 @@ Minimalis, mobile-first, real-time Mobile Legends planning board. It lives indep
 - 24-hour service day 05:00–04:30 **Asia/Jakarta**; server-enforced rollover every morning at 05:00.
 - At most **35 anonymous participants per day**. Display 5 green dots at most, then `+N lainnya`.
 - Adaptive 2/3/4/6 column grid; five time-of-day filters; 12-hour friendly labels below 24-hour time.
-- Realtime counts from Supabase aggregate table, poll-on-refocus, anonymous auth, transactional anti-duplication.
+- Realtime counts from Supabase aggregate table, poll-on-refocus, anonymous device tokens, transactional anti-duplication.
 - No profile, email/password form, chat, or yellow 'maybe' markers.
 
 ## Run locally
@@ -15,13 +15,13 @@ Minimalis, mobile-first, real-time Mobile Legends planning board. It lives indep
 
 ## Backend provisioning
 1. Create a **dedicated Supabase project** (do not attach to unrelated existing production apps).
-2. Run `supabase/schema.sql` once using Supabase SQL editor / migration. The DB stores opaque auth user IDs but only publishes time-slot aggregates.
-3. Under Authentication > Providers > Anonymous Sign-Ins, **enable anonymous sign-ins**. In the dashboard configure captcha/rate limiting if abuse becomes an issue; no-login authentication is not a guarantee against malicious people using multiple devices.
+2. Run `supabase/schema.sql` once using Supabase SQL editor / migration. The DB stores random visitor UUIDs but only publishes time-slot aggregates.
+3. No Auth provider configuration is necessary. The app creates a random browser-local UUID. This is not proof of a unique human: people can still use another device/browser to evade casual limits.
 4. Fill `config.js` with **project URL and publishable key** from Supabase. These are public browser values, not the service-role key.
 5. Host folder as static site: build command empty, output directory `.`. Vercel root directory `lunabloom-ready-board`, no framework, no build command.
 6. Test with two separate browsers or devices; check counts and slot changes appear in both.
 
-**Security**: SQL functions enforce 5 slots, 35 distinct participants per day, and advisory locks to prevent simultaneous overbooking. Direct selection records have RLS enabled and no client policies. Only aggregate counts are included in the Realtime publication. A malicious user can create a new anonymous identity from another browser/device, which is a documented tradeoff of no-login.
+**Security**: SQL functions enforce 5 slots, 35 distinct participants per day, and advisory locks to prevent simultaneous overbooking. Direct selection records have RLS enabled and no client policies. Only aggregate counts are included in the Realtime publication. A malicious user can create a new browser-local UUID on a different browser/device. Anonymous boards cannot reliably guarantee unique humans without login or a group-issued identifier.
 
 **Reset**: Uses logical service-day filtering based on database time in Asia/Jakarta, not browser local clocks. Old data is deleted after seven days when writes occur.
 
