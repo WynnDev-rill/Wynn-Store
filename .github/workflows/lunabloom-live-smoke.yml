@@ -9,35 +9,40 @@ permissions:
 jobs:
   test-live-api:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     env:
       BASE: https://lunabloom-ready-board.vercel.app
     steps:
-      - name: Test anonymous save, read and delete through production API
+      - name: Verify latest production version and anonymous writes
         shell: bash
         run: |
           set -euo pipefail
           cookie="$RUNNER_TEMP/lunabloom-cookies"
-          common=(-fsS --retry 2 --retry-delay 2 -b "$cookie" -c "$cookie")
-          curl "${common[@]}" -D "$RUNNER_TEMP/h1" "$BASE/api/me" > "$RUNNER_TEMP/before.json"
-          echo "Before set-cookie: $(grep -ci "^set-cookie:" "$RUNNER_TEMP/h1" || true); cookie-file-lines: $(grep -c "^#HttpOnly_" "$cookie" || true)"
-          echo "Before: $(cat "$RUNNER_TEMP/before.json")"
-          node -e "const j=require(process.argv[1]);if(!Array.isArray(j.slots))process.exit(1)" "$RUNNER_TEMP/before.json"
+          client2="$RUNNER_TEMP/lunabloom-client2-cookies"
+          for i in $(seq 1 30); do
+            if curl -fsS "$BASE/app.mjs" | grep -q "REFRESH_INTERVAL = 120000"; then break; fi
+            sleep 5
+          done
+          curl -fsS "$BASE/app.mjs" | grep -q "REFRESH_INTERVAL = 120000"
+          day=$(curl -fsS -b "$cookie" -c "$cookie" "$BASE/api/me" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).day")
           cleanup() {
-            curl -fsS -b "$cookie" -c "$cookie" -H "Origin: $BASE" -H "Content-Type: application/json" -d '{"slots":[]}' "$BASE/api/slots" >/dev/null || true
+            curl -fsS -b "$cookie" -H "Origin: $BASE" -H 'Content-Type: application/json' -d "{\"day\":\"$day\",\"slots\":[]}" "$BASE/api/slots" >/dev/null || true
+            curl -fsS -b "$client2" -H "Origin: $BASE" -H 'Content-Type: application/json' -d "{\"day\":\"$day\",\"slots\":[]}" "$BASE/api/slots" >/dev/null || true
           }
           trap cleanup EXIT
-          curl "${common[@]}" -D "$RUNNER_TEMP/h2" -H "Origin: $BASE" -H "Content-Type: application/json" -d '{"slots":[47]}' "$BASE/api/slots" > "$RUNNER_TEMP/write.json"
-          echo "Write set-cookie: $(grep -ci "^set-cookie:" "$RUNNER_TEMP/h2" || true); cookie-file-lines: $(grep -c "^#HttpOnly_" "$cookie" || true)"
-          echo "Written: $(cat "$RUNNER_TEMP/write.json")"
+          curl -fsS -b "$cookie" -c "$cookie" -H "Origin: $BASE" -H 'Content-Type: application/json' -d "{\"day\":\"$day\",\"slots\":[47]}" "$BASE/api/slots" > "$RUNNER_TEMP/write.json"
           node -e "const j=require(process.argv[1]);if(JSON.stringify(j.slots)!=='[47]'||!j.rows.some(x=>x.slot===47&&x.members>=1))process.exit(1)" "$RUNNER_TEMP/write.json"
-          curl "${common[@]}" -D "$RUNNER_TEMP/h3" "$BASE/api/me" > "$RUNNER_TEMP/after.json"
-          echo "After set-cookie: $(grep -ci "^set-cookie:" "$RUNNER_TEMP/h3" || true); cookie-file-lines: $(grep -c "^#HttpOnly_" "$cookie" || true)"
-          echo "After: $(cat "$RUNNER_TEMP/after.json")"
+          curl -fsS -b "$cookie" -c "$cookie" "$BASE/api/me" > "$RUNNER_TEMP/after.json"
           node -e "const j=require(process.argv[1]);if(JSON.stringify(j.slots)!=='[47]')process.exit(1)" "$RUNNER_TEMP/after.json"
+          cross_origin=$(curl -sS -o /dev/null -w '%{http_code}' -b "$cookie" -H 'Origin: https://elsewhere.example' -H 'Content-Type: application/json' -d "{\"day\":\"$day\",\"slots\":[3]}" "$BASE/api/slots")
+          [ "$cross_origin" = '403' ]
+          invalid_slots=$(curl -sS -o /dev/null -w '%{http_code}' -b "$cookie" -H "Origin: $BASE" -H 'Content-Type: application/json' -d "{\"day\":\"$day\",\"slots\":[0,1,2,3,4,5]}" "$BASE/api/slots")
+          [ "$invalid_slots" = '400' ]
+          curl -fsS -b "$client2" -c "$client2" "$BASE/api/me" >/dev/null
+          curl -fsS -b "$client2" -c "$client2" -H "Origin: $BASE" -H 'Content-Type: application/json' -d "{\"day\":\"$day\",\"slots\":[47]}" "$BASE/api/slots" > "$RUNNER_TEMP/second.json"
+          node -e "const j=require(process.argv[1]);if(j.slots[0]!==47||!j.rows.some(x=>x.slot===47&&x.members>=2))process.exit(1)" "$RUNNER_TEMP/second.json"
           cleanup
           trap - EXIT
-          curl "${common[@]}" "$BASE/api/me" > "$RUNNER_TEMP/removed.json"
-          echo "Removed: $(cat "$RUNNER_TEMP/removed.json")"
+          curl -fsS -b "$cookie" -c "$cookie" "$BASE/api/me" > "$RUNNER_TEMP/removed.json"
           node -e "const j=require(process.argv[1]);if(JSON.stringify(j.slots)!=='[]')process.exit(1)" "$RUNNER_TEMP/removed.json"
-          echo "PASS: live save/read/delete with cookie persistence and no remaining test vote"
+          echo 'PASS live: two anonymous browsers, shared totals, save/read/delete, origin and six-slot protection'

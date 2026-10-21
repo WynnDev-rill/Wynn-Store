@@ -31,7 +31,7 @@
 
       <section class="interaction-card" aria-labelledby="choose-title">
         <div class="interaction-heading">
-          <div><p class="section-kicker">01 / PILIH JAM</p><h2 id="choose-title">Kapan kamu bisa main?</h2><p class="muted">Ketuk jam untuk memilih. Ketuk lagi jika ingin membatalkan.</p></div>
+          <div><p class="section-kicker">01 / PILIH JAM</p><h2 id="choose-title">Kapan kamu bisa main?</h2><p class="muted">Ketuk jam untuk memilih. Ketuk lagi untuk membatalkan. Maksimal 5 pilihan.</p></div>
           <div class="quota-box" aria-live="polite"><span id="quota-count">0</span><span class="quota-total">/ 5</span><small>pilihan</small></div>
         </div>
         <div class="selection-strip" id="selection-strip" aria-live="polite"><span class="muted"><svg class="inline-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v6l4 2M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z"/></svg> Belum memilih jam. Kamu bisa pilih maksimal 5 slot.</span></div>
@@ -39,7 +39,7 @@
 
       <section class="board-section" aria-labelledby="board-title">
         <div class="section-header">
-          <div><p class="section-kicker">02 / JADWAL BERSAMA</p><h2 id="board-title">Ketersediaan member</h2><p class="muted">Setiap titik hijau adalah satu member yang berencana main.</p></div>
+          <div><p class="section-kicker">02 / JADWAL BERSAMA</p><h2 id="board-title">Ketersediaan member</h2><p class="muted">Titik hijau menampilkan maksimal 5 orang, angka menunjukkan total member.</p></div>
           <div id="connection-pill" class="connection-pill" role="status"><span class="status-dot"></span><span>Menyiapkan...</span></div>
         </div>
         <div id="peak-banner" class="peak-banner" hidden>
@@ -48,7 +48,6 @@
           <span class="peak-count" id="peak-count">—</span>
         </div>
         <div class="filters" role="group" aria-label="Filter waktu">
-          <button class="filter active" type="button" data-filter="all" aria-pressed="true">Semua</button>
           <button class="filter" type="button" data-filter="pagi" aria-pressed="false"><span aria-hidden="true">☀</span> Pagi</button>
           <button class="filter" type="button" data-filter="siang" aria-pressed="false"><span aria-hidden="true">☼</span> Siang</button>
           <button class="filter" type="button" data-filter="sore" aria-pressed="false"><span aria-hidden="true">◕</span> Sore</button>
@@ -56,7 +55,7 @@
           <button class="filter" type="button" data-filter="dini" aria-pressed="false"><span aria-hidden="true">✧</span> Dini hari</button>
         </div>
         <div id="board-content" class="board-content" aria-live="off"></div>
-        <div class="board-footer"><span><span class="legend-dot"></span> 1 titik = 1 member</span><span>Lebih dari 5 ditulis sebagai <strong>+N</strong></span></div>
+        <div class="board-footer"><span><span class="legend-dot"></span> 1 titik = 1 member</span><span>Angka menunjukkan <strong>total member</strong></span></div>
       </section>
       <section class="info-note" aria-label="Informasi jadwal"><span class="info-icon" aria-hidden="true">i</span><p>Ini adalah <strong>perkiraan waktu bermain</strong>, bukan janji pasti online. Pilih jam yang realistis supaya lebih mudah mengajak mabar.</p></section>
     </main>
@@ -66,7 +65,7 @@
   <dialog id="rules-dialog" class="rules-dialog" aria-labelledby="rules-title">
     <div class="dialog-heading"><span class="dialog-mark">✦</span><button type="button" id="rules-close" class="close-btn" aria-label="Tutup aturan">×</button></div>
     <p class="section-kicker">SEBELUM MEMILIH</p><h2 id="rules-title">Aturan singkat</h2><p class="dialog-lead">Biar papannya tetap berguna untuk semua teman mabar.</p>
-    <ol class="rules-list"><li><strong>Tidak perlu daftar akun.</strong> Pengunjung memakai identitas anonim otomatis.</li><li><strong>Maksimal 5 jam pilihan</strong> (slot 30 menit) setiap member. Ketuk lagi untuk membatalkan.</li><li><strong>Jangan spam.</strong> Pilih jam yang benar-benar mungkin kamu gunakan untuk bermain.</li><li><strong>Reset 05.00 WIB.</strong> Jadwal hari baru dimulai pukul 05.00, termasuk dini hari setelah tengah malam.</li><li><strong>Hanya perkiraan.</strong> Titik hijau berarti berencana main, bukan kepastian hadir.</li></ol>
+    <ol class="rules-list"><li><strong>Tidak perlu daftar akun.</strong> Pengunjung memakai identitas anonim otomatis.</li><li><strong>Maksimal 5 slot waktu</strong> (slot 30 menit) setiap member. Ketuk lagi untuk membatalkan.</li><li><strong>Jangan spam.</strong> Pilih jam yang benar-benar mungkin kamu gunakan untuk bermain.</li><li><strong>Reset 05.00 WIB.</strong> Jadwal hari baru dimulai pukul 05.00, termasuk dini hari setelah tengah malam.</li><li><strong>Hanya perkiraan.</strong> Titik hijau berarti berencana main, bukan kepastian hadir.</li></ol>
     <p class="dialog-footnote">Pilihan anonim disimpan melalui identitas sesi perangkat. Menghapus data browser atau memakai perangkat lain bisa menghasilkan identitas baru.</p>
     <button type="button" id="rules-understood" class="primary-btn">Mengerti, ayo mabar <span aria-hidden="true">↗</span></button>
   </dialog>
