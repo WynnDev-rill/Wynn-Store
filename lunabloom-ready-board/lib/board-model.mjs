@@ -13,7 +13,7 @@ export function slotsFrom(value) {
   return unique;
 }
 export function normalize(raw, day) {
-  if (!raw || raw.day !== day || typeof raw.members !== 'object' || Array.isArray(raw.members)) return {day, members: {}};
+  if (!raw || raw.day !== day || typeof raw.members !== 'object' || raw.members === null || Array.isArray(raw.members)) return {day, members: {}};
   const members = {};
   for (const [key, value] of Object.entries(raw.members).slice(0, CAPACITY)) {
     if (!/^[a-f0-9]{64}$/.test(key)) continue;
