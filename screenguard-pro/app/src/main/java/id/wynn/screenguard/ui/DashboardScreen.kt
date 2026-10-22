@@ -12,6 +12,7 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import id.wynn.screenguard.domain.*
@@ -25,7 +26,8 @@ import id.wynn.screenguard.domain.*
     val goal = state.settings.dailyGoalMinutes * 60_000L
     val byPackage = device.apps.associateBy { it.packageName }
     val top = today?.apps.orEmpty().entries.sortedByDescending { it.value }.mapNotNull { (pkg, ms) -> byPackage[pkg]?.let { it to ms } }.take(5)
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 8.dp, 20.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    val largeText = LocalDensity.current.fontScale >= 1.3f
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 8.dp, 20.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 BrandMark(42.dp)
@@ -40,7 +42,7 @@ import id.wynn.screenguard.domain.*
             InfoBanner(if (!device.usageAccess) "Aktifkan akses penggunaan untuk melihat waktu layar." else "Shizuku belum terhubung. Kontrol aplikasi belum siap.", Icons.Outlined.Shield, action = permissions)
         }
         item {
-            GuardCard {
+            GuardCard(contentPadding = 12.dp, spacing = 8.dp) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Text("Total waktu layar hari ini", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -62,7 +64,7 @@ import id.wynn.screenguard.domain.*
             }
         }
         item {
-            GuardCard {
+            GuardCard(contentPadding = 12.dp, spacing = 8.dp) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                     Text("Tren Mingguan", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                     Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primaryContainer) {
@@ -72,27 +74,34 @@ import id.wynn.screenguard.domain.*
                         }
                     }
                 }
-                WeekChart(device.days.takeLast(7))
+                WeekChart(device.days.takeLast(7), chartHeight = 68.dp)
             }
         }
         item {
-            GuardCard {
+            GuardCard(contentPadding = 12.dp, spacing = 8.dp) {
                 SectionTitle("Paling banyak digunakan", "Semua") { navigate(Page.USAGE) }
                 if (top.isEmpty()) Text("Belum ada data penggunaan hari ini.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                else Column { top.forEach { (app, ms) -> UsageRow(app, ms, total) { selectApp(app) } } }
+                else Column { top.forEach { (app, ms) -> UsageRow(app, ms, total, compact = true) { selectApp(app) } } }
             }
         }
         item {
             SectionTitle("Aksi Cepat")
             Spacer(Modifier.height(10.dp))
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    QuickAction("Blokir Internet", Icons.Outlined.Lock, Modifier.weight(1f)) { navigate(Page.NETWORK) }
-                    QuickAction("Mode Fokus", Icons.Outlined.TrackChanges, Modifier.weight(1f)) { focusAction?.invoke() ?: navigate(Page.SCHEDULE) }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    QuickAction("Jadwal", Icons.Outlined.CalendarMonth, Modifier.weight(1f)) { scheduleAction?.invoke() ?: navigate(Page.SCHEDULE) }
-                    QuickAction("Bekukan Aplikasi", Icons.Outlined.AcUnit, Modifier.weight(1f)) { navigate(Page.FREEZE) }
+                if (largeText) {
+                    QuickAction("Blokir Internet", Icons.Outlined.Lock, Modifier.fillMaxWidth()) { navigate(Page.NETWORK) }
+                    QuickAction("Mode Fokus", Icons.Outlined.TrackChanges, Modifier.fillMaxWidth()) { focusAction?.invoke() ?: navigate(Page.SCHEDULE) }
+                    QuickAction("Jadwal", Icons.Outlined.CalendarMonth, Modifier.fillMaxWidth()) { scheduleAction?.invoke() ?: navigate(Page.SCHEDULE) }
+                    QuickAction("Bekukan Aplikasi", Icons.Outlined.AcUnit, Modifier.fillMaxWidth()) { navigate(Page.FREEZE) }
+                } else {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        QuickAction("Blokir Internet", Icons.Outlined.Lock, Modifier.weight(1f)) { navigate(Page.NETWORK) }
+                        QuickAction("Mode Fokus", Icons.Outlined.TrackChanges, Modifier.weight(1f)) { focusAction?.invoke() ?: navigate(Page.SCHEDULE) }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        QuickAction("Jadwal", Icons.Outlined.CalendarMonth, Modifier.weight(1f)) { scheduleAction?.invoke() ?: navigate(Page.SCHEDULE) }
+                        QuickAction("Bekukan Aplikasi", Icons.Outlined.AcUnit, Modifier.weight(1f)) { navigate(Page.FREEZE) }
+                    }
                 }
             }
         }

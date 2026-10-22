@@ -27,10 +27,10 @@ import id.wynn.screenguard.domain.InstalledApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-@Composable fun GuardCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+@Composable fun GuardCard(modifier: Modifier = Modifier, contentPadding: Dp = 16.dp, spacing: Dp = 12.dp, content: @Composable ColumnScope.() -> Unit) {
     Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .55f)), shadowElevation = .5.dp) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
+        Column(Modifier.padding(contentPadding), verticalArrangement = Arrangement.spacedBy(spacing), content = content)
     }
 }
 @Composable fun AppIcon(app: InstalledApp, size: Dp = 40.dp) {
@@ -86,13 +86,13 @@ import kotlinx.coroutines.withContext
         }
     }
 }
-@Composable fun UsageRow(app: InstalledApp, ms: Long, total: Long, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp).heightIn(min = 48.dp),
+@Composable fun UsageRow(app: InstalledApp, ms: Long, total: Long, compact: Boolean = false, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = if (compact) 48.dp else 56.dp).clickable(onClick = onClick).padding(vertical = if (compact) 6.dp else 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        AppIcon(app, 36.dp)
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        AppIcon(app, if (compact) 28.dp else 36.dp)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(app.label, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Text(app.label, style = if (compact) MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold) else MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                 Text(if (ms > 0) duration(ms) else "0 mnt", style = MaterialTheme.typography.labelLarge)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -105,12 +105,12 @@ import kotlinx.coroutines.withContext
         Icon(Icons.Outlined.ChevronRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
-@Composable fun WeekChart(days: List<UsageDay>, modifier: Modifier = Modifier, labels: Boolean = true) {
+@Composable fun WeekChart(days: List<UsageDay>, modifier: Modifier = Modifier, labels: Boolean = true, chartHeight: Dp = 96.dp) {
     val color = MaterialTheme.colorScheme.primary
     val max = days.maxOfOrNull { it.totalMs }?.coerceAtLeast(3_600_000) ?: 3_600_000
     val text = days.joinToString { "${it.date}: ${if (it.totalMs == 0L) "0 menit" else duration(it.totalMs)}" }
     Column(modifier.semantics(mergeDescendants = true) { contentDescription = "Penggunaan harian. $text" }) {
-        Canvas(Modifier.fillMaxWidth().height(if (labels) 96.dp else 62.dp)) {
+        Canvas(Modifier.fillMaxWidth().height(if (labels) chartHeight else 62.dp)) {
             val count = days.size.coerceAtLeast(1)
             val spacing = size.width / count
             val width = (spacing * .38f).coerceAtMost(21.dp.toPx())

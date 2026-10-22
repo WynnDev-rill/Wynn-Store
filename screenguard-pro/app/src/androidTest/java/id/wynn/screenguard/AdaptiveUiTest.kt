@@ -39,7 +39,10 @@ class AdaptiveUiTest {
         }
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Blokir Internet"))
         compose.onNodeWithText("Blokir Internet").assertIsDisplayed()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Bekukan Aplikasi"))
+        compose.onNodeWithText("Bekukan Aplikasi").assertIsDisplayed()
         capture("08-small-dark-large-text")
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Blokir Internet"))
         compose.onNodeWithText("Blokir Internet").performClick()
         org.junit.Assert.assertEquals(Page.NETWORK, opened)
     }

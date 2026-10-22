@@ -18,11 +18,15 @@ val Success: Color
     @Composable get() = if (MaterialTheme.colorScheme.background.luminance() < .2f) Color(0xFF6CDDAB) else Green
 private val LightColors = lightColorScheme(primary = Blue, onPrimary = Color.White,
     primaryContainer = PaleBlue, onPrimaryContainer = Color(0xFF1459AD),
+    secondary = Blue, onSecondary = Color.White, secondaryContainer = PaleBlue, onSecondaryContainer = Color(0xFF1459AD),
+    tertiary = Green, onTertiary = Color.White, tertiaryContainer = Color(0xFFE5F5EC), onTertiaryContainer = Color(0xFF075D37),
     background = Color(0xFFF6F9FD), onBackground = Ink, surface = Color.White,
     onSurface = Ink, surfaceVariant = Color(0xFFEFF3F8), onSurfaceVariant = Muted,
     outline = Color(0xFF8493A7), outlineVariant = Color(0xFFE5ECF5), error = Color(0xFFB3261E))
 private val DarkColors = darkColorScheme(primary = Color(0xFF9EC8FF), onPrimary = Color(0xFF003367),
     primaryContainer = Color(0xFF173B65), onPrimaryContainer = Color(0xFFD4E5FF),
+    secondary = Color(0xFF9EC8FF), onSecondary = Color(0xFF003367), secondaryContainer = Color(0xFF173B65), onSecondaryContainer = Color(0xFFD4E5FF),
+    tertiary = Color(0xFF6CDDAB), onTertiary = Color(0xFF003922), tertiaryContainer = Color(0xFF114D34), onTertiaryContainer = Color(0xFFC0F5D9),
     background = Color(0xFF0E1726), onBackground = Color(0xFFE8EFFB), surface = Color(0xFF172336),
     onSurface = Color(0xFFE8EFFB), surfaceVariant = Color(0xFF243248), onSurfaceVariant = Color(0xFFB6C4D8),
     outlineVariant = Color(0xFF35465E))
