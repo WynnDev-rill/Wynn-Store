@@ -54,19 +54,25 @@ import id.wynn.screenguard.domain.*
                 }
             }
             item { FilledTonalButton(pick, Modifier.fillMaxWidth().heightIn(min = 48.dp), shape = RoundedCornerShape(14.dp)) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(8.dp)); Text("Tambah Aturan Aplikasi") } }
-            if (tab == 1) item {
-                GuardCard {
-                    Icon(Icons.Outlined.DarkMode, null, tint = MaterialTheme.colorScheme.primary)
-                    Text("Periode Kunci Harian", style = MaterialTheme.typography.titleMedium)
-                    Text("Jadwal mendukung lintas tengah malam dan pilihan hari. Pada jadwal 22:00–06:00, hari yang dipilih adalah hari mulainya jadwal.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (tab == 1) {
+                item {
+                    GuardCard {
+                        Icon(Icons.Outlined.DarkMode, null, tint = MaterialTheme.colorScheme.primary)
+                        Text("Periode Kunci Harian", style = MaterialTheme.typography.titleMedium)
+                        Text("Jadwal mendukung lintas tengah malam dan pilihan hari. Pada jadwal 22:00–06:00, hari yang dipilih adalah hari mulainya jadwal.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
-            if (tab == 2) item { GuardCard {
-                Text("Sisihkan waktu untuk fokus", style = MaterialTheme.typography.titleMedium)
-                Text(if (state.settings.focusUntil > System.currentTimeMillis()) "Sesi berakhir pukul ${java.time.Instant.ofEpochMilli(state.settings.focusUntil).atZone(java.time.ZoneId.systemDefault()).toLocalTime().withSecond(0).withNano(0)}" else "Pilih aplikasi di atas, lalu mulai sesi.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(25, 50).forEach { m -> FilledTonalButton({ focus(m) }, Modifier.weight(1f)) { Text("$m menit") } } }
-                if (state.settings.focusUntil > System.currentTimeMillis()) OutlinedButton({ focus(0) }, Modifier.fillMaxWidth()) { Text("Akhiri sesi fokus") }
-            } }
+            if (tab == 2) {
+                item {
+                    GuardCard {
+                        Text("Sisihkan waktu untuk fokus", style = MaterialTheme.typography.titleMedium)
+                        Text(if (state.settings.focusUntil > System.currentTimeMillis()) "Sesi berakhir pukul ${java.time.Instant.ofEpochMilli(state.settings.focusUntil).atZone(java.time.ZoneId.systemDefault()).toLocalTime().withSecond(0).withNano(0)}" else "Pilih aplikasi di atas, lalu mulai sesi.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(25, 50).forEach { m -> FilledTonalButton({ focus(m) }, Modifier.weight(1f)) { Text("$m menit") } } }
+                        if (state.settings.focusUntil > System.currentTimeMillis()) OutlinedButton({ focus(0) }, Modifier.fillMaxWidth()) { Text("Akhiri sesi fokus") }
+                    }
+                }
+            }
             item { Text("Pemantauan memeriksa aturan setiap ±15 detik saat layar aktif. Mode hemat baterai/Doze dapat menunda jadwal; lihat panduan HyperOS di Pengaturan.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     }
