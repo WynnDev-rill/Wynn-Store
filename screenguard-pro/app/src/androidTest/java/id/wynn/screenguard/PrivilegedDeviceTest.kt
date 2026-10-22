@@ -27,7 +27,11 @@ class PrivilegedDeviceTest {
         val context = instrument.targetContext
         val graph = context.applicationContext as GuardApplication
         val ui = UiDevice.getInstance(instrument)
+        ui.wakeUp()
+        ui.executeShellCommand("wm dismiss-keyguard")
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        check(ui.wait(Until.hasObject(By.pkg(context.packageName)), 20_000)) { "Main activity did not become visible" }
+        ui.waitForIdle()
         withTimeout(20_000) { while (!Shizuku.pingBinder()) delay(200) }
         if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
             instrument.runOnMainSync { graph.gateway.requestPermission() }
