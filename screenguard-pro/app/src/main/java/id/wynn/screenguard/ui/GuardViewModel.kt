@@ -161,8 +161,11 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
             graph.store.rule(pkg) { it.copy(freeze = FreezeMode.NONE, overrideUntil = System.currentTimeMillis() + 5 * 60_000) }
             reconcile()
             val rule = state.value.rules[pkg]
-            check(rule?.lastError == null && rule?.ownedDisable != true && rule?.ownedSuspension != true) { rule?.lastError ?: "Aplikasi belum berhasil dipulihkan" }
-            launch(pkg); message.value = "Dibuka selama 5 menit; batas dan jadwal tetap disimpan"
+            check(rule?.ownedDisable != true && rule?.ownedSuspension != true) { rule?.lastError ?: "Aplikasi belum berhasil dipulihkan" }
+            val actual = withContext(Dispatchers.IO) { graph.catalog.managed(setOf(pkg)).firstOrNull() }
+            check(actual?.enabled == true && !actual.suspended) { "Android belum membuka aplikasi; periksa statusnya kembali" }
+            launch(pkg)
+            if (rule?.lastError == null) message.value = "Aplikasi dipulihkan. Batas dan jadwal mendapat jeda 5 menit."
         }
     }
     fun reason(app: InstalledApp): String = state.value.rules[app.packageName]?.let {

@@ -31,7 +31,7 @@ class PrivilegedDeviceTest {
         withTimeout(20_000) { while (!Shizuku.pingBinder()) delay(200) }
         if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
             instrument.runOnMainSync { graph.gateway.requestPermission() }
-            val allow = ui.wait(Until.findObject(By.text("Allow all the time")), 15_000)
+            val allow = ui.wait(Until.findObject(By.res("android", "button1").pkg("moe.shizuku.privileged.api")), 25_000)
             checkNotNull(allow) { "Shizuku permission dialog did not appear" }.click()
         }
         graph.gateway.refresh()

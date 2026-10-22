@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.view.WindowCompat
 import id.wynn.screenguard.domain.*
 import id.wynn.screenguard.privilege.ShizukuStatus
 
@@ -45,17 +46,27 @@ enum class Page { HOME, USAGE, NETWORK, FREEZE, UNLOCK, SCHEDULE, SETTINGS, PERM
     var editor by remember { mutableStateOf<InstalledApp?>(null) }
     var picker by remember { mutableStateOf(false) }
     var createPin by remember { mutableStateOf(false) }
+    var scheduleTab by rememberSaveable { mutableIntStateOf(0) }
     val context = LocalContext.current
+    SideEffect {
+        (context as? android.app.Activity)?.window?.let { window ->
+            WindowCompat.getInsetsController(window, window.decorView).apply {
+                isAppearanceLightStatusBars = !state.settings.darkMode
+                isAppearanceLightNavigationBars = !state.settings.darkMode
+            }
+        }
+    }
     fun back() { pageName = if (page == Page.UNLOCK) Page.FREEZE.name else Page.HOME.name }
     fun navigate(next: Page) { if (next == Page.SETTINGS || next == Page.SCHEDULE) vm.secure { pageName = next.name } else pageName = next.name }
     fun permissions() { pageName = Page.PERMISSIONS.name }
+    fun openSchedule(tab: Int) { vm.secure { scheduleTab = tab; pageName = Page.SCHEDULE.name } }
     BackHandler(page != Page.HOME && state.settings.onboardingDone && !busy) { back() }
     GuardTheme(state.settings.darkMode) {
         Scaffold(containerColor = MaterialTheme.colorScheme.background, bottomBar = {
             if (page == Page.HOME && state.settings.onboardingDone) NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
                 listOf(Triple(Page.HOME, "Beranda", Icons.Outlined.Home), Triple(Page.USAGE, "Aplikasi", Icons.Outlined.GridView),
                     Triple(Page.SCHEDULE, "Fokus", Icons.Outlined.TrackChanges), Triple(Page.SETTINGS, "Pengaturan", Icons.Outlined.Settings)).forEach { (target, label, icon) ->
-                    NavigationBarItem(page == target, { navigate(target) }, icon = { Icon(icon, null) }, label = { Text(label) }, colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer))
+                    NavigationBarItem(page == target, { if (target == Page.SCHEDULE) openSchedule(2) else navigate(target) }, icon = { Icon(icon, null) }, label = { Text(label) }, colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer))
                 }
             }
         }) { insets ->
@@ -64,7 +75,7 @@ enum class Page { HOME, USAGE, NETWORK, FREEZE, UNLOCK, SCHEDULE, SETTINGS, PERM
                     if (!state.settings.onboardingDone) PermissionsScreen(device.usageAccess, status, null, vm.graph.gateway::requestPermission, vm::onboarded, vm::refresh, connectionError)
                     else AnimatedContent(page, label = "page", transitionSpec = { fadeIn() togetherWith fadeOut() }) { current ->
                         when (current) {
-                            Page.HOME -> DashboardScreen(state, device, status == ShizukuStatus.READY, ::navigate, { detail = it }, ::permissions)
+                            Page.HOME -> DashboardScreen(state, device, status == ShizukuStatus.READY, ::navigate, { detail = it }, ::permissions, { openSchedule(2) }, { openSchedule(1) })
                             Page.USAGE -> UsageScreen(device, ::back) { detail = it }
                             Page.NETWORK -> NetworkScreen(state, device, status, supported, busy, ::back, vm::setNetwork, ::permissions) { navigate(Page.FREEZE) }
                             Page.FREEZE -> FreezeScreen(state, device, status == ShizukuStatus.READY, busy, ::back, vm::freeze) { app -> vm.prepareUnlock(app) { pageName = Page.UNLOCK.name } }
@@ -73,7 +84,7 @@ enum class Page { HOME, USAGE, NETWORK, FREEZE, UNLOCK, SCHEDULE, SETTINGS, PERM
                                 if (intent == null) vm.message.value = "Aplikasi dipulihkan, tetapi tidak menyediakan ikon peluncur."
                                 else runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.onFailure { vm.message.value = it.message ?: "Tidak dapat membuka aplikasi" }
                             } }
-                            Page.SCHEDULE -> ScheduleScreen(state, device.apps, ::back, { app -> vm.secure { editor = app } }, { vm.secure { picker = true } }, vm::monitor, vm::focus)
+                            Page.SCHEDULE -> ScheduleScreen(state, device.apps, ::back, { app -> vm.secure { editor = app } }, { vm.secure { picker = true } }, vm::monitor, vm::focus, scheduleTab)
                             Page.SETTINGS -> SettingsScreen(state, status, ::back, vm::secure, ::permissions, vm::settings, { vm.secure { createPin = true } }, vm::removePin, vm::restore)
                             Page.PERMISSIONS -> PermissionsScreen(device.usageAccess, status, ::back, vm.graph.gateway::requestPermission, ::back, vm::refresh, connectionError)
                         }

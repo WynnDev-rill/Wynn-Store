@@ -34,9 +34,9 @@ import id.wynn.screenguard.domain.*
                 else LinearProgressIndicator(progress = { 1 - remaining.toFloat() / settings.waitSeconds.coerceAtLeast(1) }, modifier = Modifier.fillMaxWidth())
                 if (error != null) Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
-            Button({ unlock(answer) }, Modifier.fillMaxWidth().heightIn(min = 52.dp), enabled = !busy && app != null && (settings.unlockMode == UnlockMode.MATH || remaining == 0), shape = RoundedCornerShape(12.dp)) { Text("Buka selama 5 menit") }
+            Button({ unlock(answer) }, Modifier.fillMaxWidth().heightIn(min = 52.dp), enabled = !busy && app != null && (settings.unlockMode == UnlockMode.MATH || remaining == 0), shape = RoundedCornerShape(12.dp)) { Text("Buka Aplikasi") }
             if (settings.unlockMode == UnlockMode.MATH) TextButton({ change(); answer = "" }) { Icon(Icons.Outlined.Refresh, null, Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text("Ganti soal") }
-            Text("Batas dan jadwal akan berlaku kembali setelah 5 menit. Blokir internet mengikuti pengaturannya sendiri.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            Text("Pembekuan manual dilepas. Batas dan jadwal mendapat jeda 5 menit sebelum berlaku kembali. Blokir internet mengikuti pengaturannya sendiri.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         }
     }
 }

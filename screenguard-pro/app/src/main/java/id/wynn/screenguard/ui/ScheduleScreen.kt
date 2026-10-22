@@ -18,8 +18,8 @@ import androidx.compose.ui.unit.dp
 import id.wynn.screenguard.domain.*
 
 @Composable fun ScheduleScreen(state: GuardState, apps: List<InstalledApp>, back: () -> Unit, edit: (InstalledApp) -> Unit,
-    pick: () -> Unit, monitor: (Boolean) -> Unit, focus: (Int) -> Unit) {
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+    pick: () -> Unit, monitor: (Boolean) -> Unit, focus: (Int) -> Unit, initialTab: Int = 0) {
+    var tab by rememberSaveable(initialTab) { mutableIntStateOf(initialTab) }
     val listed = apps.filter { app -> state.rules[app.packageName]?.let { r ->
         when (tab) { 0 -> r.dailyLimitMinutes > 0; 1 -> r.windows.isNotEmpty(); else -> r.focus }
     } == true }

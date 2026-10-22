@@ -15,11 +15,24 @@ shizuku_dir="$(adb shell pm path moe.shizuku.privileged.api | tr -d '\r' | sed -
 test -n "$shizuku_dir"
 adb shell "$shizuku_dir/lib/x86_64/libshizuku.so" > qa/output/shizuku-start.txt 2>&1
 
+ui_status=0
+./gradlew :app:connectedDebugAndroidTest || ui_status=$?
+adb pull /sdcard/Android/data/id.wynn.screenguard.debug/files/screenshots ./screenshots || true
+
 adb shell am instrument -w -e class id.wynn.screenguard.PrivilegedDeviceTest -e privileged true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/privileged-test.txt
-if ! rg -q 'OK \(1 test\)' qa/output/privileged-test.txt; then
-  adb logcat -d > qa/output/logcat.txt
-  exit 1
+privileged_status=0
+if ! grep -q 'OK (1 test)' qa/output/privileged-test.txt; then
+  privileged_status=1
+  adb shell uiautomator dump /sdcard/guard-window.xml || true
+  adb pull /sdcard/guard-window.xml qa/output/permission-window.xml || true
+  adb exec-out screencap -p > qa/output/permission-screen.png
 fi
-./gradlew :app:connectedDebugAndroidTest
-adb pull /sdcard/Android/data/id.wynn.screenguard.debug/files/screenshots ./screenshots
 adb logcat -d > qa/output/logcat.txt
+adb install -r app/build/outputs/apk/preview/app-preview.apk
+adb logcat -c
+adb shell am start -W -n id.wynn.screenguard.preview/id.wynn.screenguard.MainActivity > qa/output/preview-launch.txt
+sleep 3
+adb logcat -d -b crash > qa/output/preview-crash.txt
+if grep -q 'FATAL EXCEPTION' qa/output/preview-crash.txt; then exit 1; fi
+adb exec-out screencap -p > qa/output/preview-onboarding.png
+test "$ui_status" -eq 0 && test "$privileged_status" -eq 0

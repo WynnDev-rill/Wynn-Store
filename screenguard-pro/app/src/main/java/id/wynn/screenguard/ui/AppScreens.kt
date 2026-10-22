@@ -36,7 +36,7 @@ import id.wynn.screenguard.privilege.ShizukuStatus
                     Column(Modifier.weight(1f)) {
                         Text("Total waktu layar", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(if (!device.usageAccess) "—" else if (total == 0L) "0 mnt" else duration(total), style = MaterialTheme.typography.headlineLarge)
-                        Text(if (range == 0) "Penggunaan hari ini" else "${days.size} hari terakhir", style = MaterialTheme.typography.bodySmall, color = Green)
+                        Text(if (range == 0) "Penggunaan hari ini" else "${days.size} hari terakhir", style = MaterialTheme.typography.bodySmall, color = Success)
                     }
                     WeekChart(days.takeLast(7), Modifier.weight(1f), labels = false)
                 }

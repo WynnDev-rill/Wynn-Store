@@ -4,11 +4,11 @@ Aplikasi Android native Kotlin + Jetpack Compose untuk waktu layar, kontrol inte
 
 ## Instalasi dan penggunaan
 
-1. Buka workflow **ScreenGuard Pro Android** pada tab Actions repository, pilih run terbaru yang berhasil, lalu unduh artifact **ScreenGuard-Pro-test**. Ekstrak `ScreenGuard-Pro-test.apk` dan instal. Build tes menggunakan ID `id.wynn.screenguard.debug`.
+1. Buka workflow **ScreenGuard Pro Android** pada tab Actions repository, pilih run terbaru yang berhasil, lalu unduh artifact **ScreenGuard-Pro-test**. Ekstrak `ScreenGuard-Pro-test.apk` dan instal. APK tes dioptimalkan dengan R8 dan memakai ID `id.wynn.screenguard.preview`, terpisah dari paket produksi. Kunci tes dapat berubah antar-run; pulihkan aturan sebelum mengganti instalasi bila Android menolak update karena sertifikat berbeda.
 2. Android minimum: **11 / API 30**. Izinkan akses penggunaan. Instal [Shizuku](https://shizuku.rikka.app/download/), pairing melalui Debugging Nirkabel, mulai Shizuku, lalu berikan izin ScreenGuard.
 3. Pada HyperOS, izinkan autostart dan pilih baterai tanpa batasan untuk ScreenGuard dan Shizuku. UI menyediakan pintasan dan panduan; menu dapat berbeda pada tiap versi HyperOS.
 4. Tambahkan batas harian/jadwal/aplikasi fokus, lalu aktifkan **Pemantauan otomatis**. Notifikasi menunjukkan ketika Shizuku atau izin tidak siap. Membuat aturan saja tidak mengaktifkan pemantauan diam-diam.
-5. Untuk membuka aplikasi yang dikunci, gunakan **Bekukan Aplikasi → Dibekukan → Buka**. Tantangan matematika atau waktu tunggu memberikan jeda 5 menit. PIN tetap diperlukan jika diaktifkan.
+5. Untuk membuka aplikasi yang dikunci, gunakan **Bekukan Aplikasi → Dibekukan → Buka**. Tantangan matematika atau waktu tunggu melepas pembekuan manual dan memberikan jeda 5 menit untuk batas/jadwal. PIN tetap diperlukan jika diaktifkan.
 6. Sebelum uninstall, gunakan **Pengaturan → Pulihkan semua aplikasi** dan periksa hasilnya.
 
 ## Fitur dan batas teknis
@@ -21,7 +21,7 @@ Aplikasi Android native Kotlin + Jetpack Compose untuk waktu layar, kontrol inte
 | Firewall tanpa VPN/root | Shizuku UserService memanggil ConnectivityService `setUidFirewallRule`, OEM_DENY_3 (9), dan mengaktifkan chain tersebut. Dukungan diperiksa saat tersambung, dan kegagalan sistem dilaporkan. Beberapa ROM/modul Connectivity tidak menyediakan API ini meski versi Android memenuhi minimum. |
 | Wi-Fi dan seluler | Satu sakelar memblokir seluruh jaringan paket. API ini tidak menawarkan pemisahan Wi-Fi/seluler yang setara pada semua perangkat. UI sengaja menjelaskan satu kontrol tersebut. VPN milik aplikasi lain, profil kerja/kloning, shared UID, dan penerusan jaringan dapat memengaruhi hasil; shared UID ditolak. Kontrol Shizuku hanya mendukung profil utama/user 0; profil kerja dan aplikasi kloning tidak didukung. |
 | Pembekuan | `cmd package suspend --user …`; ikon tetap ada dan Android menolak peluncuran. Penonaktifan memakai `disable-user` dan biasanya menghilangkan ikon. Tidak menghapus data aplikasi. Hanya operasi milik ScreenGuard yang dipulihkan. Aplikasi yang sudah dikunci alat lain tidak diambil alih. |
-| Tantangan membuka | Dari ScreenGuard, bukan intersepsi universal setiap ketukan ikon peluncur. Android menampilkan dialog sistem untuk aplikasi ditangguhkan; aplikasi nonaktif tidak mempunyai ikon. Pengguna memilih matematika atau 30/60/120 detik, lalu mendapat jeda 5 menit sebelum aturan otomatis berlaku lagi. |
+| Tantangan membuka | Dari ScreenGuard, bukan intersepsi universal setiap ketukan ikon peluncur. Android menampilkan dialog sistem untuk aplikasi ditangguhkan; aplikasi nonaktif tidak mempunyai ikon. Pengguna memilih matematika atau 30/60/120 detik. Pembekuan manual dilepas; batas/jadwal mendapat jeda 5 menit sebelum berlaku lagi. |
 | Batas/jadwal/fokus | Foreground service pilihan pengguna; memeriksa setiap ~15 detik saat layar hidup, ~60 detik saat mati tanpa wakelock. Jadwal mendukung lintas tengah malam dan hari mulai. WorkManager ~15 menit menjadi pemulihan tambahan. Doze/force-stop/optimisasi vendor dapat menunda; ini bukan alarm tepat waktu. |
 | Restart | Aturan dan kepemilikan kunci disimpan atomik. Receiver/WorkManager memulihkan saat memungkinkan. Pada perangkat tanpa root, Shizuku harus dimulai lagi setelah boot. Aturan belum diklaim aktif ketika koneksi tidak siap. |
 | PIN | 6 digit, salt acak, PBKDF2-HMAC-SHA256 120.000 iterasi, pembandingan waktu konstan, lockout setelah 5 kegagalan, sesi izin 2 menit di memori dan dicabut saat app ke latar. PIN melindungi perubahan/pembukaan dalam ScreenGuard; bukan pengganti Device Owner/MDM. Pemilik perangkat bisa mencabut izin, force-stop, menghapus data/uninstall, atau memakai ADB. |
@@ -39,7 +39,7 @@ cd screenguard-pro
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-`assembleDebug` menghasilkan APK tes yang dapat dipasang. `assembleRelease` tanpa konfigurasi signing menghasilkan APK **unsigned**, bukan APK rilis siap instal. Wrapper memverifikasi checksum distribusi Gradle. Versi dependensi dipatok di Gradle.
+`assembleDebug` menghasilkan APK debug untuk pengujian instrumentasi. `assemblePreview` menghasilkan APK tes kecil yang dioptimalkan dengan signing debug (bukan kunci produksi). `assembleRelease` tanpa konfigurasi signing menghasilkan APK **unsigned**, bukan APK rilis siap instal. Wrapper memverifikasi checksum distribusi Gradle. Versi dependensi dipatok di Gradle.
 
 ## Release signing aman
 

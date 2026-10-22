@@ -28,11 +28,12 @@ jobs:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
       - uses: gradle/actions/setup-gradle@v4
       - name: Build, unit tests and Android lint
-        run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:lintRelease :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest :device-fixture:assembleDebug --stacktrace
+        run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:lintRelease :app:assembleDebug :app:assembleRelease :app:assemblePreview :app:assembleDebugAndroidTest :device-fixture:assembleDebug --stacktrace
       - name: Prepare installable test APK
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/ScreenGuard-Pro-test.apk
+          cp app/build/outputs/apk/preview/app-preview.apk dist/ScreenGuard-Pro-test.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose dist/ScreenGuard-Pro-test.apk
           sha256sum dist/ScreenGuard-Pro-test.apk > dist/SHA256SUMS
       - name: Enable KVM
         working-directory: .

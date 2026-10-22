@@ -68,7 +68,7 @@ class ScreenUiTest {
     }
     @Test fun waitChallengeCannotUnlockEarly() {
         content { UnlockScreen(apps[0], GuardSettings(unlockMode = UnlockMode.WAIT), MathChallenge(17, 8, 2), 10, null, false, {}, {}, {}) }
-        compose.onNodeWithText("Buka selama 5 menit").assertIsNotEnabled()
+        compose.onAllNodesWithText("Buka Aplikasi").filterToOne(hasClickAction()).assertIsNotEnabled()
         capture("05-unlock")
     }
     @Test fun scheduleShowsSavedLimitsAndMonitoring() {

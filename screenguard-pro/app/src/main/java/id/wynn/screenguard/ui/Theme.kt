@@ -3,6 +3,7 @@ package id.wynn.screenguard.ui
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -13,6 +14,8 @@ val PaleBlue = Color(0xFFEAF3FF)
 val Ink = Color(0xFF142137)
 val Muted = Color(0xFF58677C)
 val Green = Color(0xFF158453)
+val Success: Color
+    @Composable get() = if (MaterialTheme.colorScheme.background.luminance() < .2f) Color(0xFF6CDDAB) else Green
 private val LightColors = lightColorScheme(primary = Blue, onPrimary = Color.White,
     primaryContainer = PaleBlue, onPrimaryContainer = Color(0xFF1459AD),
     background = Color(0xFFF6F9FD), onBackground = Ink, surface = Color.White,

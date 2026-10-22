@@ -17,7 +17,8 @@ import androidx.compose.ui.unit.dp
 import id.wynn.screenguard.domain.*
 
 @Composable fun DashboardScreen(state: GuardState, device: DeviceData, connected: Boolean,
-    navigate: (Page) -> Unit, selectApp: (InstalledApp) -> Unit, permissions: () -> Unit) {
+    navigate: (Page) -> Unit, selectApp: (InstalledApp) -> Unit, permissions: () -> Unit,
+    focusAction: (() -> Unit)? = null, scheduleAction: (() -> Unit)? = null) {
     val today = device.days.lastOrNull()
     val total = today?.totalMs ?: 0
     val yesterday = device.days.dropLast(1).lastOrNull()?.totalMs ?: 0
@@ -46,10 +47,10 @@ import id.wynn.screenguard.domain.*
                         Text(if (!device.usageAccess) "—" else if (total == 0L) "0 mnt" else duration(total), style = MaterialTheme.typography.headlineLarge)
                         val delta = total - yesterday
                         Text(if (yesterday == 0L) "Mulai kenali kebiasaan digitalmu" else "${if (delta <= 0) "↓" else "↑"} ${duration(kotlin.math.abs(delta))} dari kemarin",
-                            style = MaterialTheme.typography.bodySmall, color = if (delta <= 0) Green else MaterialTheme.colorScheme.onSurfaceVariant)
+                            style = MaterialTheme.typography.bodySmall, color = if (delta <= 0) Success else MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Box(Modifier.size(64.dp).clip(RoundedCornerShape(22.dp)).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Outlined.Spa, null, Modifier.size(40.dp), tint = Green)
+                        Icon(Icons.Outlined.Spa, null, Modifier.size(40.dp), tint = Success)
                     }
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -87,10 +88,10 @@ import id.wynn.screenguard.domain.*
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     QuickAction("Blokir Internet", Icons.Outlined.Lock, Modifier.weight(1f)) { navigate(Page.NETWORK) }
-                    QuickAction("Mode Fokus", Icons.Outlined.TrackChanges, Modifier.weight(1f)) { navigate(Page.SCHEDULE) }
+                    QuickAction("Mode Fokus", Icons.Outlined.TrackChanges, Modifier.weight(1f)) { focusAction?.invoke() ?: navigate(Page.SCHEDULE) }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    QuickAction("Jadwal", Icons.Outlined.CalendarMonth, Modifier.weight(1f)) { navigate(Page.SCHEDULE) }
+                    QuickAction("Jadwal", Icons.Outlined.CalendarMonth, Modifier.weight(1f)) { scheduleAction?.invoke() ?: navigate(Page.SCHEDULE) }
                     QuickAction("Bekukan Aplikasi", Icons.Outlined.AcUnit, Modifier.weight(1f)) { navigate(Page.FREEZE) }
                 }
             }
