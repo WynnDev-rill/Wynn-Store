@@ -1,0 +1,47 @@
+package id.wynn.screenguard
+
+import android.content.Context
+import id.wynn.screenguard.data.GuardStore
+import id.wynn.screenguard.domain.*
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.*
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
+import java.io.File
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35], application = android.app.Application::class)
+class SecurityAndStorageTest {
+    @Test fun pinUsesIndependentSaltAndRejectsIncorrectOrMalformedValues() {
+        val (salt, hash) = PinCrypto.create("123456")
+        assertTrue(PinCrypto.verify("123456", salt, hash))
+        assertFalse(PinCrypto.verify("123457", salt, hash))
+        assertFalse(PinCrypto.verify("123456", "corrupt!", hash))
+        assertNotEquals(salt, PinCrypto.create("123456").first)
+        assertFalse(hash.contains("123456"))
+    }
+    @Test fun challengeUsesMultiplicationBeforeAddition() { val c = MathChallenge(17, 8, 2); assertTrue(c.accepts("33")); assertFalse(c.accepts("50")); assertFalse(c.accepts("")) }
+    @Test fun pinValidationIsExactlySixAsciiDigits() { assertTrue(PinCrypto.valid("012345")); assertFalse(PinCrypto.valid("1234")); assertFalse(PinCrypto.valid("abcdef")) }
+    @Test fun savedRulesAndOwnershipSurviveRecreation() = runTest {
+        val context = RuntimeEnvironment.getApplication() as Context
+        File(context.filesDir, "guard-state.json").delete()
+        val first = GuardStore(context)
+        first.rule("com.example.app") { it.copy(freeze = FreezeMode.DISABLE, ownedDisable = true, windows = listOf(TimeWindow(days = setOf(1, 2)))) }
+        first.settings { it.copy(monitorEnabled = true) }
+        val recreated = GuardStore(context)
+        assertTrue(recreated.state.value.settings.monitorEnabled)
+        assertTrue(recreated.state.value.rules.getValue("com.example.app").ownedDisable)
+        assertEquals(setOf(1, 2), recreated.state.value.rules.getValue("com.example.app").windows.first().days)
+    }
+    @Test fun corruptStateIsReportedAndNeverOverwrittenSilently() = runTest {
+        val context = RuntimeEnvironment.getApplication() as Context
+        val file = File(context.filesDir, "guard-state.json"); file.writeText("damaged")
+        val store = GuardStore(context)
+        assertNotNull(store.loadError)
+        val result = runCatching { store.settings { it.copy(onboardingDone = true) } }
+        assertTrue(result.isFailure); assertEquals("damaged", file.readText())
+    }
+}

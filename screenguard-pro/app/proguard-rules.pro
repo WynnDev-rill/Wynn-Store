@@ -1,0 +1,5 @@
+-keep class id.wynn.screenguard.privilege.GuardUserService { *; }
+-keep class id.wynn.screenguard.privilege.IGuardService$Stub { *; }
+-keep class id.wynn.screenguard.privilege.IGuardService$Stub$Proxy { *; }
+-keep class rikka.shizuku.** { *; }
+-keep class moe.shizuku.** { *; }
