@@ -29,6 +29,7 @@ enum class Page { HOME, USAGE, NETWORK, FREEZE, UNLOCK, SCHEDULE, SETTINGS, PERM
     val device by vm.device.collectAsStateWithLifecycle()
     val status by vm.status.collectAsStateWithLifecycle()
     val supported by vm.firewall.collectAsStateWithLifecycle()
+    val connectionError by vm.graph.gateway.error.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
     val pinPrompt by vm.pinPrompt.collectAsStateWithLifecycle()
@@ -58,14 +59,14 @@ enum class Page { HOME, USAGE, NETWORK, FREEZE, UNLOCK, SCHEDULE, SETTINGS, PERM
                 }
             }
         }) { insets ->
-            Box(Modifier.fillMaxSize().padding(insets), contentAlignment = Alignment.TopCenter) {
+            Box(Modifier.fillMaxSize().padding(insets).imePadding(), contentAlignment = Alignment.TopCenter) {
                 Box(Modifier.widthIn(max = 640.dp).fillMaxSize()) {
-                    if (!state.settings.onboardingDone) PermissionsScreen(device.usageAccess, status, null, vm.graph.gateway::requestPermission, vm::onboarded, vm::refresh)
+                    if (!state.settings.onboardingDone) PermissionsScreen(device.usageAccess, status, null, vm.graph.gateway::requestPermission, vm::onboarded, vm::refresh, connectionError)
                     else AnimatedContent(page, label = "page", transitionSpec = { fadeIn() togetherWith fadeOut() }) { current ->
                         when (current) {
                             Page.HOME -> DashboardScreen(state, device, status == ShizukuStatus.READY, ::navigate, { detail = it }, ::permissions)
                             Page.USAGE -> UsageScreen(device, ::back) { detail = it }
-                            Page.NETWORK -> NetworkScreen(state, device, status, supported, busy, ::back, vm::setNetwork, ::permissions)
+                            Page.NETWORK -> NetworkScreen(state, device, status, supported, busy, ::back, vm::setNetwork, ::permissions) { navigate(Page.FREEZE) }
                             Page.FREEZE -> FreezeScreen(state, device, status == ShizukuStatus.READY, busy, ::back, vm::freeze) { app -> vm.prepareUnlock(app) { pageName = Page.UNLOCK.name } }
                             Page.UNLOCK -> UnlockScreen(device.apps.find { it.packageName == unlocking }, state.settings, challenge, remaining, challengeError, busy, ::back, vm::newChallenge) { answer -> vm.unlock(answer) { pkg ->
                                 val intent = context.packageManager.getLaunchIntentForPackage(pkg)
@@ -74,7 +75,7 @@ enum class Page { HOME, USAGE, NETWORK, FREEZE, UNLOCK, SCHEDULE, SETTINGS, PERM
                             } }
                             Page.SCHEDULE -> ScheduleScreen(state, device.apps, ::back, { app -> vm.secure { editor = app } }, { vm.secure { picker = true } }, vm::monitor, vm::focus)
                             Page.SETTINGS -> SettingsScreen(state, status, ::back, vm::secure, ::permissions, vm::settings, { vm.secure { createPin = true } }, vm::removePin, vm::restore)
-                            Page.PERMISSIONS -> PermissionsScreen(device.usageAccess, status, ::back, vm.graph.gateway::requestPermission, ::back, vm::refresh)
+                            Page.PERMISSIONS -> PermissionsScreen(device.usageAccess, status, ::back, vm.graph.gateway::requestPermission, ::back, vm::refresh, connectionError)
                         }
                     }
                 }

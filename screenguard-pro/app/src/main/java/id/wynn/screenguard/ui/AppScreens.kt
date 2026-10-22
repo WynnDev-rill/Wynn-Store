@@ -58,7 +58,7 @@ import id.wynn.screenguard.privilege.ShizukuStatus
 }
 
 @Composable fun NetworkScreen(state: GuardState, device: DeviceData, status: ShizukuStatus, supported: Boolean, busy: Boolean,
-    back: () -> Unit, toggle: (InstalledApp, Boolean) -> Unit, permissions: () -> Unit) {
+    back: () -> Unit, toggle: (InstalledApp, Boolean) -> Unit, permissions: () -> Unit, fallback: (() -> Unit)? = null) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var query by rememberSaveable { mutableStateOf("") }
     val apps = device.apps.filter { !it.protected && it.label.contains(query, true) && (tab == 0 || state.rules[it.packageName]?.networkBlocked == true) }
@@ -69,6 +69,9 @@ import id.wynn.screenguard.privilege.ShizukuStatus
             item { InfoBanner("Saat diblokir, seluruh koneksi Wi-Fi dan data seluler aplikasi dihentikan. Kontrol terpisah tidak disediakan API Android ini.", Icons.Outlined.Wifi) }
             if (status != ShizukuStatus.READY || !supported) item {
                 InfoBanner(if (status != ShizukuStatus.READY) status.label else "API firewall tidak tersedia pada Android perangkat ini.", Icons.Outlined.Shield, action = permissions)
+            }
+            if (status == ShizukuStatus.READY && !supported && fallback != null) item {
+                InfoBanner("Alternatif: bekukan aplikasi untuk menghentikan aplikasi beserta koneksinya.", Icons.Outlined.AcUnit, action = fallback)
             }
             item { PillTabs(listOf("Semua Aplikasi", "Diblokir (${state.rules.values.count { it.networkBlocked }})"), tab) { tab = it } }
             item { OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), label = { Text("Cari aplikasi") }, singleLine = true, shape = RoundedCornerShape(16.dp), leadingIcon = { Icon(Icons.Outlined.Search, null) }) }

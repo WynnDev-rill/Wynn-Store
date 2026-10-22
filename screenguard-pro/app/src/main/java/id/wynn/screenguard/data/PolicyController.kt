@@ -1,7 +1,6 @@
 package id.wynn.screenguard.data
 
 import id.wynn.screenguard.domain.*
-import id.wynn.screenguard.privilege.ShizukuGateway
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -10,7 +9,7 @@ import java.time.ZonedDateTime
 
 /** Shared by UI, foreground service and WorkManager: only one reconciliation at a time. */
 class PolicyController(private val store: GuardStore, private val catalog: AppCatalog,
-    private val usage: UsageRepository, private val gateway: ShizukuGateway) {
+    private val usage: UsageRepository, private val gateway: PrivilegedBackend) {
     private val mutex = Mutex()
     suspend fun reconcile(forceNetwork: Boolean = false): List<String> = withContext(Dispatchers.IO) { mutex.withLock {
         val snapshot = store.state.value
@@ -21,13 +20,20 @@ class PolicyController(private val store: GuardStore, private val catalog: AppCa
         for ((pkg, _) in snapshot.rules) {
             val app = apps[pkg] ?: continue
             var rule = store.state.value.rules[pkg] ?: continue
+            var networkError: String? = null
             try {
                 check(!app.protected) { "Aplikasi penting dilindungi" }
                 if (rule.networkBlocked || rule.appliedNetwork || rule.pendingNetwork) {
-                    check(!app.sharedUid) { "UID dipakai bersama; blokir jaringan tidak aman" }
-                    if (forceNetwork || rule.pendingNetwork || rule.networkBlocked != rule.appliedNetwork || rule.appliedUid != app.uid) {
-                        gateway.network(pkg, app.uid, rule.networkBlocked)
-                        store.rule(pkg) { it.copy(appliedNetwork = it.networkBlocked, appliedUid = app.uid, pendingNetwork = false) }
+                    try {
+                        check(!app.sharedUid) { "UID dipakai bersama; blokir jaringan tidak aman" }
+                        if (forceNetwork || rule.pendingNetwork || rule.networkBlocked != rule.appliedNetwork || rule.appliedUid != app.uid) {
+                            gateway.network(pkg, app.uid, rule.networkBlocked)
+                            store.rule(pkg) { it.copy(appliedNetwork = it.networkBlocked, appliedUid = app.uid, pendingNetwork = false) }
+                        }
+                    } catch (e: Exception) {
+                        if (e is kotlinx.coroutines.CancellationException) throw e
+                        networkError = "Jaringan: ${e.message ?: "Operasi gagal"}"
+                        errors += "${app.label}: $networkError"
                     }
                 }
                 val decision = PolicyEngine.decide(rule, snapshot.settings, used.getOrDefault(pkg, 0), ZonedDateTime.now())
@@ -54,12 +60,13 @@ class PolicyController(private val store: GuardStore, private val catalog: AppCa
                     if (!rule.ownedSuspension) store.rule(pkg) { it.copy(ownedSuspension = true) }
                     if (!app.suspended) gateway.freeze(pkg, app.uid / 100000, 1, true)
                 }
-                if (rule.lastError != null) store.rule(pkg) { it.copy(lastError = null) }
+                if (rule.lastError != networkError) store.rule(pkg) { it.copy(lastError = networkError) }
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 val message = e.message ?: "Operasi gagal"
                 errors += "${app.label}: $message"
-                if (rule.lastError != message) store.rule(pkg) { it.copy(lastError = message) }
+                val combined = listOfNotNull(networkError, message).joinToString("\n")
+                if (rule.lastError != combined) store.rule(pkg) { it.copy(lastError = combined) }
             }
         }
         errors

@@ -4,6 +4,7 @@ import android.content.*
 import android.content.pm.PackageManager
 import android.os.IBinder
 import id.wynn.screenguard.BuildConfig
+import id.wynn.screenguard.domain.PrivilegedBackend
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +14,7 @@ import rikka.shizuku.Shizuku
 
 enum class ShizukuStatus(val label: String) { STOPPED("Shizuku belum aktif"), DENIED("Izin Shizuku diperlukan"), CONNECTING("Menghubungkan Shizuku"), READY("Terhubung"), ERROR("Koneksi bermasalah") }
 
-class ShizukuGateway(context: Context, private val scope: CoroutineScope) {
+class ShizukuGateway(context: Context, private val scope: CoroutineScope) : PrivilegedBackend {
     private val mutableStatus = MutableStateFlow(ShizukuStatus.STOPPED)
     val status = mutableStatus.asStateFlow()
     val firewallSupported = MutableStateFlow(false)
@@ -47,6 +48,11 @@ class ShizukuGateway(context: Context, private val scope: CoroutineScope) {
         Shizuku.addBinderReceivedListenerSticky(received)
     }
     fun refresh() {
+        if (android.os.Process.myUid() / 100000 != 0) {
+            error.value = "Kontrol Shizuku saat ini hanya mendukung profil utama Android (user 0)."
+            mutableStatus.value = ShizukuStatus.ERROR
+            return
+        }
         runCatching {
             if (!Shizuku.pingBinder()) { disconnected(); return }
             if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) { mutableStatus.value = ShizukuStatus.DENIED; return }
@@ -59,8 +65,8 @@ class ShizukuGateway(context: Context, private val scope: CoroutineScope) {
         if (!Shizuku.pingBinder()) { mutableStatus.value = ShizukuStatus.STOPPED; return }
         runCatching { Shizuku.requestPermission(10) }.onFailure { error.value = it.message; mutableStatus.value = ShizukuStatus.ERROR }
     }
-    suspend fun network(pkg: String, uid: Int, blocked: Boolean) = execute { it.network(pkg, uid, blocked) }
-    suspend fun freeze(pkg: String, userId: Int, mode: Int, enabled: Boolean) = execute { it.freeze(pkg, userId, mode, enabled) }
+    override suspend fun network(pkg: String, uid: Int, blocked: Boolean) = execute { it.network(pkg, uid, blocked) }
+    override suspend fun freeze(pkg: String, userId: Int, mode: Int, enabled: Boolean) = execute { it.freeze(pkg, userId, mode, enabled) }
     private suspend fun execute(action: (IGuardService) -> String) = withContext(Dispatchers.IO) {
         mutex.withLock {
             check(Shizuku.pingBinder()) { "Aktifkan Shizuku terlebih dahulu" }

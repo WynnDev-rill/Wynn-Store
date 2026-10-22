@@ -20,7 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import id.wynn.screenguard.privilege.ShizukuStatus
 
-@Composable fun PermissionsScreen(usageAccess: Boolean, status: ShizukuStatus, back: (() -> Unit)?, requestShizuku: () -> Unit, done: () -> Unit, refresh: () -> Unit) {
+@Composable fun PermissionsScreen(usageAccess: Boolean, status: ShizukuStatus, back: (() -> Unit)?, requestShizuku: () -> Unit, done: () -> Unit, refresh: () -> Unit, connectionError: String? = null) {
     val context = LocalContext.current
     val notifyPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { refresh() }
     fun open(intent: Intent) { runCatching { context.startActivity(intent) }.onFailure { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))) } }
@@ -36,6 +36,7 @@ import id.wynn.screenguard.privilege.ShizukuStatus
             GuardCard {
                 Text("2. Hubungkan Shizuku", style = MaterialTheme.typography.titleMedium)
                 Text(status.label, color = MaterialTheme.colorScheme.primary)
+                if (connectionError != null) Text(connectionError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 Text("Instal Shizuku, aktifkan Opsi Pengembang → Debugging Nirkabel, lalu lakukan pairing dan mulai Shizuku. Setelah itu berikan izin ScreenGuard.", style = MaterialTheme.typography.bodyMedium)
                 Button(requestShizuku, Modifier.fillMaxWidth(), enabled = status != ShizukuStatus.READY) { Text("Berikan izin Shizuku") }
                 TextButton({ open(context.packageManager.getLaunchIntentForPackage("moe.shizuku.privileged.api") ?: Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/"))) }, Modifier.fillMaxWidth()) { Text("Buka / unduh Shizuku") }
