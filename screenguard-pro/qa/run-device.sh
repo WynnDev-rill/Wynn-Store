@@ -19,11 +19,14 @@ test -n "$shizuku_dir"
 adb shell "$shizuku_dir/lib/x86_64/libshizuku.so" > qa/output/shizuku-start.txt 2>&1
 
 ui_status=0
-./gradlew :app:connectedDebugAndroidTest || ui_status=$?
+# Direct instrumentation retains installed APKs and their screenshot files.
+# Gradle connected tests uninstall test APKs by default on completion.
+adb shell am instrument -w id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/ui-tests.txt || ui_status=$?
+if ! grep -q '^OK (' qa/output/ui-tests.txt; then ui_status=1; fi
 adb pull /sdcard/Android/data/id.wynn.screenguard.debug/files/screenshots ./screenshots || true
 
-adb shell am instrument -w -e class id.wynn.screenguard.PrivilegedDeviceTest -e privileged true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/privileged-test.txt
 privileged_status=0
+adb shell am instrument -w -e class id.wynn.screenguard.PrivilegedDeviceTest -e privileged true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/privileged-test.txt || privileged_status=$?
 if ! grep -q 'OK (1 test)' qa/output/privileged-test.txt; then
   privileged_status=1
   adb shell uiautomator dump /sdcard/guard-window.xml || true
@@ -36,6 +39,8 @@ adb logcat -c
 adb shell am start -W -n id.wynn.screenguard.preview/id.wynn.screenguard.MainActivity > qa/output/preview-launch.txt
 sleep 3
 adb logcat -d -b crash > qa/output/preview-crash.txt
-if grep -q 'FATAL EXCEPTION' qa/output/preview-crash.txt; then exit 1; fi
+if grep -q 'Error' qa/output/preview-launch.txt; then exit 1; fi
+if grep -q 'Process: id.wynn.screenguard.preview' qa/output/preview-crash.txt; then exit 1; fi
+adb shell pidof id.wynn.screenguard.preview
 adb exec-out screencap -p > qa/output/preview-onboarding.png
 test "$ui_status" -eq 0 && test "$privileged_status" -eq 0

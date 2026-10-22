@@ -50,7 +50,7 @@ class ScreenUiTest {
         content { UsageScreen(data, {}) {} }
         compose.onNodeWithText("7 hari").performClick()
         compose.onNodeWithText("Cari aplikasi").performTextInput("TikTok")
-        compose.onNodeWithText("TikTok").assertExists()
+        compose.onNode(hasText("TikTok") and !hasSetTextAction()).assertExists()
         compose.onNodeWithText("YouTube").assertDoesNotExist()
         capture("02-usage")
     }

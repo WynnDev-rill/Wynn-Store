@@ -37,7 +37,8 @@ class AdaptiveUiTest {
                 }
             }
         }
-        compose.onNodeWithText("Blokir Internet").performScrollTo().assertIsDisplayed()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Blokir Internet"))
+        compose.onNodeWithText("Blokir Internet").assertIsDisplayed()
         capture("08-small-dark-large-text")
         compose.onNodeWithText("Blokir Internet").performClick()
         org.junit.Assert.assertEquals(Page.NETWORK, opened)
@@ -48,7 +49,8 @@ class AdaptiveUiTest {
                 SettingsScreen(state, ShizukuStatus.READY, {}, { it() }, {}, {}, {}, {}, {})
             }
         } }
-        compose.onNodeWithText("Tentang Aplikasi").performScrollTo().assertIsDisplayed()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Tentang Aplikasi"))
+        compose.onNodeWithText("Tentang Aplikasi").assertIsDisplayed()
         capture("09-landscape-dark")
     }
 }
