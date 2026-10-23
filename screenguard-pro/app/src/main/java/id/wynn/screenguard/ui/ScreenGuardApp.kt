@@ -87,7 +87,11 @@ enum class Page { HOME, FREEZE, NETWORK, SETTINGS, USAGE, APP_STATS, UNLOCK, PER
     }
     fun select(app: InstalledApp) {
         val rule = state.rules[app.packageName] ?: return
-        if (rule.gate == null || rule.gate.automaticOnly) return
+        if (rule.gate == null) {
+            vm.message.value = "Aplikasi ini sedang menunggu pemulihan. Tekan lama ikonnya dan pilih Keluarkan saat Shizuku siap."
+            return
+        }
+        if (rule.gate.automaticOnly) return
         if (app.enabled && !app.suspended && vm.sessionOpen(rule)) launchApp(app.packageName)
         else if (status != ShizukuStatus.READY) permissions()
         else if (state.settings.freezeChallengeEnabled) vm.prepareUnlock(app) { pageName = Page.UNLOCK.name }
