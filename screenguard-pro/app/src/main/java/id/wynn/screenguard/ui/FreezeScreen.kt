@@ -1,8 +1,11 @@
 package id.wynn.screenguard.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -15,78 +18,193 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import id.wynn.screenguard.domain.*
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable fun FreezeScreen(state: GuardState, device: DeviceData, ready: Boolean, busy: Boolean, back: () -> Unit,
-    edit: (InstalledApp) -> Unit, select: (InstalledApp) -> Unit, permissions: () -> Unit = {}) {
-    var filter by rememberSaveable { mutableIntStateOf(0) }
-    var query by rememberSaveable { mutableStateOf("") }
-    var guarded by rememberSaveable { mutableStateOf(false) }
-    val apps = remember(device.apps, query, filter, guarded, state.rules) {
-        device.apps.filter { app ->
-            (app.label.contains(query, true) || app.packageName.contains(query, true)) &&
-                (filter == 0 || if (filter == 1) !app.system else app.system) &&
-                (!guarded || state.rules[app.packageName]?.gate != null)
-        }.sortedWith(compareBy<InstalledApp> { it.protected || !it.launchable }.thenBy { it.label.lowercase() })
-    }
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable fun FreezeScreen(
+    state: GuardState, device: DeviceData, ready: Boolean, busy: Boolean,
+    add: (InstalledApp) -> Unit, select: (InstalledApp) -> Unit,
+    remove: (InstalledApp) -> Unit, saveOptions: (Boolean, AccessGate) -> Unit,
+    permissions: () -> Unit = {}
+) {
+    var picker by rememberSaveable { mutableStateOf(false) }
+    var options by rememberSaveable { mutableStateOf(false) }
+    var removeApp by remember { mutableStateOf<InstalledApp?>(null) }
+    val selected = remember(state.rules, device.apps) { FreezeCatalog.selected(state, device.apps) }
     Column {
-        PageHeader("Bekukan", back)
-        LazyColumn(contentPadding = PaddingValues(20.dp, 4.dp, 20.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), label = { Text("Cari aplikasi") }, singleLine = true,
-                leadingIcon = { Icon(Icons.Outlined.Search, null) }, shape = RoundedCornerShape(20.dp)) }
-            item { PillTabs(listOf("Semua", "Unduhan", "Sistem"), filter) { filter = it } }
-            item { FlowRow(verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                FilterChip(guarded, { guarded = !guarded }, label = { Text("Dilindungi (${state.rules.values.count { it.gate != null }})") },
-                    leadingIcon = { Icon(Icons.Outlined.Shield, null, Modifier.size(18.dp)) })
-                Text("${apps.size} aplikasi", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            } }
-            if (!ready) item { InfoBanner("Hubungkan Shizuku untuk menerapkan pembekuan.", Icons.Outlined.Bolt, action = permissions) }
-            if (apps.isEmpty()) item {
-                if (device.loading) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text("Memuat aplikasi terpasang…", style = MaterialTheme.typography.bodyMedium) }
-                else EmptyState("Tidak ada aplikasi", "Coba kata pencarian atau filter lain.")
+        PageHeader("Bekukan", null, action = {
+            Row {
+                IconButton({ picker = true }, enabled = !busy) {
+                    Icon(Icons.Outlined.Add, contentDescription = "Tambah aplikasi")
+                }
+                IconButton({ options = true }, enabled = !busy) {
+                    Icon(Icons.Outlined.MoreVert, contentDescription = "Pengaturan Bekukan")
+                }
             }
-            items(apps, key = { it.packageName }) { app ->
-                val rule = state.rules[app.packageName]
-                val safe = !app.protected && app.launchable
-                val owned = rule?.ownedDisable == true || rule?.ownedSuspension == true
-                val external = (!app.enabled || app.suspended) && !owned
-                val closed = !app.enabled || app.suspended
-                Surface(modifier = Modifier.animateItem(), shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .55f))) {
-                    Column {
-                        Row(Modifier.fillMaxWidth().clickable(enabled = safe && !external && !busy, role = Role.Button,
-                            onClickLabel = if (rule?.gate != null && closed) "Selesaikan tantangan" else "Atur perlindungan", onClick = { select(app) }).padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            AppIcon(app)
-                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(app.label, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                Text(when {
-                                    !safe -> "Komponen sistem • dilindungi"
-                                    external -> "Dikunci oleh alat lain"
-                                    rule?.lastError != null -> "Perlu diperiksa"
-                                    closed && owned -> "Dibekukan • ikon disembunyikan"
-                                    rule?.gate?.automaticOnly == true -> if (state.settings.monitorEnabled) "Batas & jadwal aktif" else "Aturan otomatis dijeda"
-                                    rule?.gate != null && rule.overrideUntil > System.currentTimeMillis() -> "Akses sementara aktif"
-                                    rule?.gate != null -> "Menunggu pembekuan"
-                                    else -> "Ketuk untuk memilih tantangan"
-                                }, style = MaterialTheme.typography.bodySmall, color = if (closed && owned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+        })
+        if (!ready) {
+            Box(Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
+                InfoBanner("Aktifkan Shizuku agar pembekuan dan pembukaan aplikasi berfungsi.", Icons.Outlined.Bolt, action = permissions)
+            }
+        }
+        if (selected.isEmpty()) {
+            Column(Modifier.fillMaxWidth().weight(1f).padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                Icon(Icons.Outlined.AcUnit, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.height(16.dp))
+                Text("Belum ada aplikasi", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(8.dp))
+                Text("Ketuk + untuk menambahkan aplikasi yang ingin dibekukan.",
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(20.dp))
+                Button({ picker = true }, enabled = !busy) {
+                    Icon(Icons.Outlined.Add, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Tambah aplikasi")
+                }
+            }
+        } else {
+            Text("${selected.size} aplikasi · ketuk untuk buka sementara",
+                Modifier.padding(horizontal = 22.dp, vertical = 10.dp), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 80.dp), modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 30.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(selected, key = { it.packageName }) { app ->
+                    val rule = state.rules[app.packageName]
+                    Column(Modifier.fillMaxWidth().combinedClickable(
+                        enabled = !busy,
+                        onClickLabel = "Buka sementara ${app.label}",
+                        onLongClickLabel = "Keluarkan ${app.label} dari Bekukan",
+                        onClick = { select(app) },
+                        onLongClick = { removeApp = app }
+                    ), horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Box {
+                            AppIcon(app, 56.dp)
+                            if (rule?.lastError != null) {
+                                Icon(Icons.Outlined.ErrorOutline, "Pembekuan perlu diperiksa",
+                                    Modifier.align(Alignment.BottomEnd).size(20.dp), tint = MaterialTheme.colorScheme.error)
+                            } else if (!app.enabled || app.suspended) {
+                                Icon(Icons.Outlined.AcUnit, null, Modifier.align(Alignment.BottomEnd).size(17.dp),
+                                    tint = MaterialTheme.colorScheme.primary)
                             }
-                            if (safe && !external) Icon(if (closed && owned) Icons.Outlined.LockOpen else Icons.Outlined.ChevronRight, null,
-                                Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
                         }
-                        if (rule?.gate != null && safe && !external) {
-                            HorizontalDivider(Modifier.padding(horizontal = 14.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                            Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text(gateLabel(rule.gate), Modifier.weight(1f).padding(start = 8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                IconButton({ edit(app) }, enabled = !busy, modifier = Modifier.semantics { contentDescription = "Atur tantangan ${app.label}" }) {
-                                    Icon(Icons.Outlined.Tune, null, tint = MaterialTheme.colorScheme.primary)
-                                }
-                            }
-                        }
-                        if (rule?.lastError != null) Text(rule.lastError, Modifier.padding(14.dp), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        Text(app.label, style = MaterialTheme.typography.labelMedium, maxLines = 2,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
-            item { Text("Data aplikasi tetap disimpan. Komponen penting dan aplikasi tanpa peluncur ditampilkan hanya untuk informasi.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            Text("Tekan lama ikon untuk mengeluarkan aplikasi.",
+                Modifier.fillMaxWidth().padding(bottom = 12.dp), style = MaterialTheme.typography.bodySmall,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+    if (picker) {
+        var query by rememberSaveable { mutableStateOf("") }
+        val addable = remember(device.apps, state.rules, query) {
+            device.apps.filter { FreezeCatalog.canAdd(it, state.rules[it.packageName]) &&
+                (it.label.contains(query, ignoreCase = true) || it.packageName.contains(query, ignoreCase = true)) }
+                .sortedBy { it.label.lowercase() }
+        }
+        ModalBottomSheet(onDismissRequest = { picker = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+            Column(Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp)) {
+                Text("Tambah aplikasi", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), singleLine = true,
+                    placeholder = { Text("Cari aplikasi") }, leadingIcon = { Icon(Icons.Outlined.Search, null) },
+                    shape = RoundedCornerShape(18.dp))
+                if (!ready) Text("Hubungkan Shizuku sebelum menambahkan aplikasi.",
+                    color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(vertical = 12.dp))
+                LazyColumn(Modifier.fillMaxWidth().heightIn(max = 520.dp),
+                    contentPadding = PaddingValues(vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (addable.isEmpty()) item { EmptyState("Tidak ditemukan", "Tidak ada aplikasi yang aman untuk ditambahkan.") }
+                    items(addable, key = { it.packageName }) { app ->
+                        Row(Modifier.fillMaxWidth().clickable(enabled = ready && !busy) {
+                            add(app); picker = false
+                        }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            AppIcon(app, 42.dp)
+                            Text(app.label, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, maxLines = 2)
+                            Icon(Icons.Outlined.AddCircleOutline, "Tambahkan ${app.label}", tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (options) {
+        FreezeOptionsSheet(state.settings, { options = false }) { enabled, gate ->
+            saveOptions(enabled, gate)
+            options = false
+        }
+    }
+    removeApp?.let { app ->
+        AlertDialog(onDismissRequest = { removeApp = null },
+            title = { Text("Keluarkan ${app.label}?") },
+            text = { Text("Aplikasi akan diaktifkan kembali dan muncul di launcher. Data aplikasinya tidak dihapus.") },
+            confirmButton = {
+                TextButton({ remove(app); removeApp = null }, enabled = ready && !busy) {
+                    Text("Keluarkan")
+                }
+            },
+            dismissButton = { TextButton({ removeApp = null }) { Text("Batal") } })
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable private fun FreezeOptionsSheet(settings: GuardSettings, dismiss: () -> Unit,
+    save: (Boolean, AccessGate) -> Unit) {
+    var enabled by rememberSaveable { mutableStateOf(settings.freezeChallengeEnabled) }
+    var mode by rememberSaveable { mutableStateOf(settings.freezeGate.mode) }
+    var wait by rememberSaveable { mutableIntStateOf(settings.freezeGate.waitSeconds) }
+    var count by rememberSaveable { mutableIntStateOf(settings.freezeGate.questions) }
+    var level by rememberSaveable { mutableStateOf(settings.freezeGate.level) }
+    var minutes by rememberSaveable { mutableIntStateOf(settings.freezeGate.accessMinutes) }
+    ModalBottomSheet(onDismissRequest = dismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        LazyColumn(Modifier.fillMaxWidth().imePadding(),
+            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            item { Text("Pengaturan Bekukan", style = MaterialTheme.typography.headlineSmall) }
+            item { Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Perlindungan tambahan", style = MaterialTheme.typography.titleMedium)
+                    Text("Secara default aplikasi langsung dibuka sementara tanpa tantangan.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(enabled, { enabled = it })
+            } }
+            if (enabled) {
+                item {
+                    Text("Tantangan saat membuka", style = MaterialTheme.typography.titleMedium)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(GateMode.WAIT to "Jeda", GateMode.MATH to "Matematika", GateMode.BOTH to "Keduanya").forEach { (value, label) ->
+                            FilterChip(mode == value, { mode = value }, label = { Text(label) })
+                        }
+                    }
+                }
+                if (mode != GateMode.MATH) item { ChoiceGroup("Waktu menunggu", listOf(5, 15, 30, 60, 120), wait, { "$it detik" }) { wait = it } }
+                if (mode != GateMode.WAIT) {
+                    item {
+                        Text("Tingkat soal", style = MaterialTheme.typography.titleMedium)
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf(MathLevel.EASY to "Mudah", MathLevel.MEDIUM to "Sedang", MathLevel.HARD to "Sulit").forEach { (value, label) ->
+                                FilterChip(level == value, { level = value }, label = { Text(label) })
+                            }
+                        }
+                    }
+                    item { ChoiceGroup("Jumlah soal", (1..5).toList(), count, { "$it soal" }) { count = it } }
+                }
+            }
+            item { ChoiceGroup("Durasi akses sementara", listOf(1, 5, 10, 15, 30), minutes, { "$it menit" }) { minutes = it } }
+            item { Button({
+                save(enabled, AccessGate(mode, wait, count, level, minutes))
+            }, Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = RoundedCornerShape(16.dp)) {
+                Text("Simpan pengaturan")
+            } }
         }
     }
 }

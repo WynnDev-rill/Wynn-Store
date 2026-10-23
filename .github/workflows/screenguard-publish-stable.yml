@@ -1,0 +1,66 @@
+name: ScreenGuard Pro — Publish stable update
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'screenguard-pro/app/**'
+      - 'screenguard-pro/scripts/publish-release.py'
+      - '.github/workflows/screenguard-publish-stable.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screenguard-stable-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: screenguard-release
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: screenguard-pro
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Require the existing production signing key
+        shell: bash
+        env:
+          KEYSTORE: ${{ secrets.SG_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.SG_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SG_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SG_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE" ] || [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::error::Production signing secrets missing in environment screenguard-release; stable update cannot be published."
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/screenguard-release.jks"
+      - name: Compile signed production APK
+        env:
+          SG_KEYSTORE_PATH: ${{ runner.temp }}/screenguard-release.jks
+          SG_STORE_PASSWORD: ${{ secrets.SG_STORE_PASSWORD }}
+          SG_KEY_ALIAS: ${{ secrets.SG_KEY_ALIAS }}
+          SG_KEY_PASSWORD: ${{ secrets.SG_KEY_PASSWORD }}
+        run: |
+          ./gradlew :app:assembleRelease --stacktrace
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
+      - name: Publish release and verified stable feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/publish-release.py
+      - name: Remove transient signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/screenguard-release.jks"

@@ -18,12 +18,12 @@ import androidx.compose.ui.unit.dp
 import id.wynn.screenguard.domain.*
 
 @Composable fun UnlockScreen(app: InstalledApp?, gate: AccessGate, challenge: MathChallenge, completed: Int, remaining: Int,
-    error: String?, busy: Boolean, back: () -> Unit, change: () -> Unit, unlock: (String) -> Unit) {
+    error: String?, busy: Boolean, back: () -> Unit, change: () -> Unit, unlock: (String) -> Unit, removing: Boolean = false) {
     var answer by rememberSaveable(challenge) { mutableStateOf("") }
     val waiting = gate.hasWait && remaining > 0
     val math = !waiting && gate.hasMath && completed < gate.questions
     Column {
-        PageHeader("Buka aplikasi", back)
+        PageHeader(if (removing) "Aktifkan kembali" else "Buka aplikasi", back)
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(20.dp)) {
             Spacer(Modifier.height(8.dp))
             if (app != null) AppIcon(app, 72.dp) else BrandMark(72.dp)
@@ -44,10 +44,10 @@ import id.wynn.screenguard.domain.*
                 if (error != null) Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
             Button({ unlock(answer) }, Modifier.fillMaxWidth().heightIn(min = 52.dp), enabled = !busy && app != null && !waiting, shape = RoundedCornerShape(16.dp)) {
-                Text(if (math && completed + 1 < gate.questions) "Periksa jawaban" else "Buka ${gate.accessMinutes} menit")
+                Text(if (math && completed + 1 < gate.questions) "Periksa jawaban" else if (removing) "Aktifkan kembali" else "Buka ${gate.accessMinutes} menit")
             }
             if (math) TextButton({ change(); answer = "" }) { Icon(Icons.Outlined.Refresh, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Ganti soal") }
-            Text("Aplikasi akan dibekukan kembali setelah ${gate.accessMinutes} menit. Timer tetap berjalan saat ScreenGuard ditutup, selama Shizuku aktif. Blokir internet mengikuti pengaturannya sendiri.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            Text(if (removing) "Setelah tantangan, aplikasi diaktifkan kembali dan dikeluarkan dari daftar Bekukan." else "Aplikasi akan dibekukan kembali setelah ${gate.accessMinutes} menit. Timer tetap berjalan saat ScreenGuard ditutup, selama Shizuku aktif. Blokir internet mengikuti pengaturannya sendiri.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         }
     }
 }

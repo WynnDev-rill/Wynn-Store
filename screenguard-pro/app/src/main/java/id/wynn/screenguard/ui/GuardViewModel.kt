@@ -123,6 +123,24 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
             throw e
         }
     } }
+    /** Add an app to the curated freeze list and immediately disable it through Shizuku. */
+    fun addFrozen(app: InstalledApp) = secure { work {
+        check(FreezeCatalog.canAdd(app, state.value.rules[app.packageName])) { "Aplikasi ini tidak dapat ditambahkan atau sudah dikelola." }
+        check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku terlebih dahulu" }
+        graph.store.rule(app.packageName) {
+            it.copy(gate = AccessGate(accessMinutes = 5), freeze = FreezeMode.DISABLE, overrideUntil = 0, lastError = null)
+        }
+        reconcile()
+    } }
+
+    /** Opening from the curated list has no challenge unless the user opts in. */
+    fun openTemporarily(app: InstalledApp, launch: (String) -> Unit) {
+        val rule = state.value.rules[app.packageName] ?: return
+        if (rule.gate == null || rule.gate.automaticOnly) return
+        if (app.enabled && !app.suspended && sessionOpen(rule)) { launch(app.packageName); return }
+        work { grantTemporaryAccess(app.packageName, state.value.settings.freezeGate.accessMinutes, launch) }
+    }
+
     fun configureGate(app: InstalledApp, gate: AccessGate) = secure { work {
         check(!app.protected && app.launchable) { "Aplikasi penting atau tanpa peluncur dilindungi" }
         check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku terlebih dahulu" }
@@ -131,10 +149,17 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
         graph.store.rule(app.packageName) { it.copy(gate = gate, freeze = if (gate.automaticOnly) FreezeMode.NONE else FreezeMode.DISABLE, overrideUntil = 0) }
         syncMonitor(); reconcile()
     } }
+    private suspend fun clearGate(pkg: String) {
+        graph.store.rule(pkg) { it.copy(gate = null, freeze = FreezeMode.NONE, dailyLimitMinutes = 0,
+            windows = emptyList(), focus = false, overrideUntil = 0) }
+        syncMonitor()
+        reconcile()
+    }
     fun removeGate(app: InstalledApp) = secure { work {
-        graph.store.rule(app.packageName) { it.copy(gate = null, freeze = FreezeMode.NONE, dailyLimitMinutes = 0, windows = emptyList(), focus = false, overrideUntil = 0) }
-        syncMonitor(); reconcile()
+        check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku sebelum mengaktifkan kembali aplikasi" }
+        clearGate(app.packageName)
     } }
+
     fun closeAccess(app: InstalledApp) = work {
         graph.store.rule(app.packageName) { it.copy(overrideUntil = 0) }; reconcile()
     }
@@ -172,7 +197,7 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
     fun onboarded() = work { graph.store.settings { it.copy(onboardingDone = true) } }
     fun prepareUnlock(app: InstalledApp, navigate: () -> Unit) {
         val rule = state.value.rules[app.packageName] ?: return
-        val gate = rule.gate ?: AccessGate(mode = if (state.value.settings.unlockMode == UnlockMode.WAIT) GateMode.WAIT else GateMode.MATH)
+        val gate = state.value.settings.freezeGate
         challengeGate.value = gate
         unlocking.value = app.packageName; challenge.value = MathChallenge.next(gate.level)
         completedQuestions.value = 0; challengeError.value = null
@@ -190,29 +215,57 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
     }
     fun cancelChallenge() { countdown?.cancel(); unlocking.value = null; completedQuestions.value = 0 }
     fun newChallenge() { challenge.value = MathChallenge.next(challengeGate.value.level); challengeError.value = null }
-    fun unlock(answer: String, launch: (String) -> Unit) {
-        val pkg = unlocking.value ?: return
+    /** Returns true only after the configured wait and every math question have passed. */
+    private fun challengePassed(answer: String): Boolean {
         val gate = challengeGate.value
-        if (SystemClock.elapsedRealtime() < waitDeadline) { challengeError.value = "Tunggu hingga jeda selesai."; return }
+        if (SystemClock.elapsedRealtime() < waitDeadline) {
+            challengeError.value = "Tunggu hingga jeda selesai."
+            return false
+        }
         if (gate.hasMath && completedQuestions.value < gate.questions) {
-            if (!challenge.value.accepts(answer)) { challengeError.value = "Belum tepat. Dahulukan perkalian."; return }
+            if (!challenge.value.accepts(answer)) {
+                challengeError.value = "Jawaban belum tepat."
+                return false
+            }
             completedQuestions.value += 1
             challengeError.value = null
-            if (completedQuestions.value < gate.questions) { newChallenge(); return }
+            if (completedQuestions.value < gate.questions) { newChallenge(); return false }
         }
-        work {
-            check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku untuk membuka aplikasi" }
-            val wall = System.currentTimeMillis(); val elapsed = SystemClock.elapsedRealtime()
-            graph.store.rule(pkg) { it.copy(gate = it.gate ?: gate, freeze = if (it.gate?.automaticOnly == true) FreezeMode.NONE else FreezeMode.DISABLE,
-                overrideUntil = wall + gate.accessMinutes * 60_000L,
+        return true
+    }
+    fun unlock(answer: String, launch: (String) -> Unit) {
+        val pkg = unlocking.value ?: return
+        if (!challengePassed(answer)) return
+        work { grantTemporaryAccess(pkg, challengeGate.value.accessMinutes, launch) }
+    }
+    fun releaseAfterChallenge(answer: String, done: () -> Unit) {
+        val pkg = unlocking.value ?: return
+        if (!challengePassed(answer)) return
+        secure { work {
+            check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku untuk memulihkan aplikasi" }
+            clearGate(pkg)
+            cancelChallenge()
+            done()
+        } }
+    }
+
+    private suspend fun grantTemporaryAccess(pkg: String, minutes: Int, launch: (String) -> Unit) {
+        check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku untuk membuka aplikasi" }
+        val rule = state.value.rules[pkg] ?: error("Aplikasi sudah dikeluarkan dari Bekukan")
+        check(rule.gate != null && !rule.gate.automaticOnly) { "Aplikasi tidak ada dalam daftar Bekukan" }
+        val wall = System.currentTimeMillis()
+        val elapsed = SystemClock.elapsedRealtime()
+        graph.store.rule(pkg) {
+            it.copy(freeze = FreezeMode.DISABLE,
+                overrideUntil = wall + minutes * 60_000L,
                 sessionStartedWall = wall, sessionStartedElapsed = elapsed,
-                sessionUntilElapsed = elapsed + gate.accessMinutes * 60_000L, sessionBoot = graph.usage.bootCount()) }
-            reconcile()
-            val actual = withContext(Dispatchers.IO) { graph.catalog.managed(setOf(pkg)).firstOrNull() }
-            check(actual?.enabled == true && !actual.suspended) { state.value.rules[pkg]?.lastError ?: "Android belum membuka aplikasi; periksa statusnya kembali" }
-            GuardMonitorService.start(graph) // Daemon timer already armed; foreground service is a second recovery path.
-            launch(pkg)
+                sessionUntilElapsed = elapsed + minutes * 60_000L, sessionBoot = graph.usage.bootCount())
         }
+        reconcile()
+        val actual = withContext(Dispatchers.IO) { graph.catalog.managed(setOf(pkg)).firstOrNull() }
+        check(actual?.enabled == true && !actual.suspended) { state.value.rules[pkg]?.lastError ?: "Android belum mengaktifkan aplikasi" }
+        check(GuardMonitorService.start(graph)) { "Layanan penguncian ulang gagal dijalankan. Akses sementara perlu dipantau." }
+        launch(pkg)
     }
     fun sessionOpen(rule: AppRule): Boolean = AccessSession.isOpen(rule, System.currentTimeMillis(), SystemClock.elapsedRealtime(), graph.usage.bootCount())
 }

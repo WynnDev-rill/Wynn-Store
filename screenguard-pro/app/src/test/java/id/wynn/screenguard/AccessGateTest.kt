@@ -65,4 +65,41 @@ class AccessGateTest {
         assertFalse(GuardState(rules = mapOf(closed.packageName to closed)).needsMonitoring)
     }
     @Test(expected = IllegalArgumentException::class) fun gateCannotRequestUnboundedAccess() { AccessGate(accessMinutes = 31) }
+    @Test fun freezeMenuStartsEmptyAndExtraChallengeIsOptIn() {
+        val settings = GuardSettings()
+        assertFalse(settings.freezeChallengeEnabled)
+        assertEquals(AccessGate(), settings.freezeGate)
+        assertTrue(FreezeCatalog.selected(GuardState(), emptyList()).isEmpty())
+    }
+
+    @Test fun freezeCatalogShowsOnlyAddedAppsIncludingDisabledButNotAutomaticRules() {
+        val hidden = InstalledApp("com.test.hidden", "Hidden", 10100, -1, false, false, false, false)
+        val scheduled = InstalledApp("com.test.scheduled", "Scheduled", 10101, -1, true, false, false, false)
+        val unadded = InstalledApp("com.test.other", "Other", 10102, -1, true, false, false, false)
+        val rules = mapOf(
+            hidden.packageName to AppRule(hidden.packageName, freeze = FreezeMode.DISABLE, gate = AccessGate(), ownedDisable = true),
+            scheduled.packageName to AppRule(scheduled.packageName, gate = AccessGate(automaticOnly = true))
+        )
+        val selected = FreezeCatalog.selected(GuardState(rules = rules), listOf(unadded, scheduled, hidden))
+        assertEquals(listOf(hidden), selected)
+        assertFalse(FreezeCatalog.canAdd(hidden, rules[hidden.packageName]))
+        assertFalse(FreezeCatalog.canAdd(scheduled, rules[scheduled.packageName]))
+        assertTrue(FreezeCatalog.canAdd(unadded, null))
+    }
+
+    @Test fun protectedAndExternallyDisabledPackagesCannotBeAdded() {
+        val ordinary = InstalledApp("com.test.app", "Test", 10100, -1, true, false, false, false)
+        assertFalse(FreezeCatalog.canAdd(ordinary.copy(protected = true), null))
+        assertFalse(FreezeCatalog.canAdd(ordinary.copy(launchable = false), null))
+        assertFalse(FreezeCatalog.canAdd(ordinary.copy(enabled = false), null))
+        assertFalse(FreezeCatalog.canAdd(ordinary.copy(suspended = true), null))
+    }
+
+    @Test fun failedUnfreezeRemainsRecoverableInCuratedCollection() {
+        val app = InstalledApp("com.example.retry", "Retry", 10140, -1, false, false, false, false)
+        val residual = AppRule(app.packageName, ownedDisable = true, lastError = "Shizuku stopped")
+        val state = GuardState(rules = mapOf(app.packageName to residual))
+        assertEquals(listOf(app), FreezeCatalog.selected(state, listOf(app)))
+        assertFalse(FreezeCatalog.canAdd(app.copy(enabled = true), residual))
+    }
 }

@@ -29,7 +29,7 @@ import id.wynn.screenguard.privilege.ShizukuStatus
     var goal by remember { mutableStateOf(state.settings.dailyGoalMinutes.toString()) }
     val context = LocalContext.current
     Column {
-        PageHeader("Pengaturan", back)
+        PageHeader("Pengaturan", null)
         LazyColumn(contentPadding = PaddingValues(20.dp, 8.dp, 20.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item { SectionTitle("Keamanan") }
             item { GuardCard {
