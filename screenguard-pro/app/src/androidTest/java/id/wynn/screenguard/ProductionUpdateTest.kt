@@ -18,15 +18,26 @@ class ProductionUpdateTest {
         val pkg = "id.wynn.screenguard"
         context.startActivity(context.packageManager.getLaunchIntentForPackage(pkg)!!.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         assertTrue(ui.wait(Until.hasObject(By.pkg(pkg)), 20_000))
-        val scroll = UiScrollable(UiSelector().scrollable(true)).setAsVerticalList()
-        if (!ui.hasObject(By.desc("Pengaturan"))) {
-            assertTrue(scroll.scrollIntoView(UiSelector().text("Mulai ScreenGuard")))
-            ui.findObject(By.text("Mulai ScreenGuard")).click()
+        fun scrollToText(text: String): UiObject2 {
+            repeat(20) {
+                val found = ui.findObject(By.pkg(pkg).textContains(text))
+                if (found != null && found.visibleBounds.height() > 0 && found.visibleBounds.centerY() < ui.displayHeight - 80) return found
+                // Compose exposes virtual accessibility nodes; legacy UiScrollable can stop early.
+                // Swipe the real window instead, just as a user scrolls the native screen.
+                ui.swipe(ui.displayWidth / 2, ui.displayHeight * 4 / 5, ui.displayWidth / 2, ui.displayHeight / 3, 24)
+                ui.waitForIdle()
+            }
+            val file = File(context.getExternalFilesDir(null), "screenshots/production-test-failure.png")
+            file.parentFile!!.mkdirs(); ui.takeScreenshot(file)
+            ui.dumpWindowHierarchy(File(context.getExternalFilesDir(null), "production-test-window.xml"))
+            error("Production screen did not expose '$text'")
+        }
+        if (!ui.hasObject(By.pkg(pkg).desc("Pengaturan"))) {
+            scrollToText("Mulai ScreenGuard").click()
         }
         val settings = checkNotNull(ui.wait(Until.findObject(By.desc("Pengaturan")), 20_000)) { "Production dock not available" }
         settings.click()
-        assertTrue(scroll.scrollIntoView(UiSelector().textContains("Periksa update")))
-        ui.findObject(By.textContains("Periksa update"))?.click()
+        scrollToText("Periksa update").click()
         assertTrue("Real stable-feed check did not succeed", ui.wait(Until.hasObject(By.textContains("Kamu menggunakan versi terbaru")), 60_000))
         val file = File(context.getExternalFilesDir(null), "screenshots/15-production-live-update.png")
         file.parentFile!!.mkdirs(); ui.takeScreenshot(file)
