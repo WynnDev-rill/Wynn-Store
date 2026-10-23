@@ -46,20 +46,21 @@ class AdaptiveUiTest {
         compose.onNodeWithText("Blokir Internet").performClick()
         org.junit.Assert.assertEquals(Page.NETWORK, opened)
     }
-    @Test fun freezeListKeepsFiltersAndProtectedStateReadableAtLargestText() {
-        val target = InstalledApp("test.fixture.longlabel", "Aplikasi dengan nama yang cukup panjang", 10123, 0, true, false, false, false)
+    @Test fun freezeGridKeepsLongNamesReadableAtLargestText() {
+        val target = InstalledApp("test.fixture.longlabel", "Aplikasi dengan nama yang cukup panjang", 10123, 0, false, false, false, false)
+        val selected = state.copy(rules = mapOf(target.packageName to AppRule(target.packageName,
+            gate = AccessGate(), freeze = FreezeMode.DISABLE, ownedDisable = true)))
         compose.setContent {
             val density = LocalDensity.current
             GuardTheme(dark = true) {
                 CompositionLocalProvider(LocalDensity provides Density(density.density, 2f)) {
                     Surface(Modifier.width(320.dp).height(600.dp).testTag("adaptive"), color = MaterialTheme.colorScheme.background) {
-                        FreezeScreen(state, DeviceData(apps = listOf(target), usageAccess = true, loading = false), true, false, {}, {}, {})
+                        FreezeScreen(selected, DeviceData(apps = listOf(target), usageAccess = true, loading = false),
+                            true, false, {}, {}, {}, { _, _ -> }, {})
                     }
                 }
             }
         }
-        compose.onNodeWithText("Unduhan").performClick()
-        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(target.label))
         compose.onNodeWithText(target.label).assertIsDisplayed()
         capture("16-freeze-largest-text-dark")
     }
