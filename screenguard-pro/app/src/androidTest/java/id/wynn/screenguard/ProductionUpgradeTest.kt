@@ -68,7 +68,11 @@ class ProductionUpgradeTest {
             assertEquals("Android installer did not apply the update", expected, after.versionName)
             assertEquals("Update must retain original install identity", before.firstInstallTime, after.firstInstallTime)
             assertEquals("Update must retain UID and app data sandbox", beforeUid, context.packageManager.getApplicationInfo(pkg, 0).uid)
-            context.startActivity(context.packageManager.getLaunchIntentForPackage(pkg)!!.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            // ACTION_VIEW finishes on Android's "App installed" screen. Use its Open action,
+            // rather than a background startActivity from the instrumentation process.
+            val open = ui.wait(Until.findObject(By.res("android", "button1").text(java.util.regex.Pattern.compile("(?i)open|buka"))), 30_000)
+            assertNotNull("Installer did not expose Open after successful update", open)
+            open!!.click()
             assertTrue("Previously completed onboarding data must survive update", ui.wait(Until.hasObject(By.pkg(pkg).desc("Pengaturan")), 30_000))
             ui.takeScreenshot(File(file.parentFile, "18-production-installed-in-place.png"))
         }
