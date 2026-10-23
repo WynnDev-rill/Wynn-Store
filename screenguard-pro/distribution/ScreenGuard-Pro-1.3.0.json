@@ -1,0 +1,12 @@
+{
+  "sha256": "45fb46b0c5fee0f5ea6b0fead9e307e87e4d0082f09f8089baaad428a51bc194",
+  "sizeBytes": 3450895,
+  "signerSha256": "eca17e8afa84775e941e0e490741b01636e7941da545c508f85b8a256a4f346a",
+  "sourceCommit": "a5078fd2bc02a832a43780ade8e6bf482ca434c6",
+  "workflowRun": "https://github.com/WynnDev-rill/Wynn-Store/actions/runs/39904448430",
+  "artifactId": 12480995482,
+  "versionCode": 4,
+  "versionName": "1.3.0",
+  "packageName": "id.wynn.screenguard",
+  "signing": "Original production keystore; signed outside repository. Source build passed unit tests and lint. Device and upgrade validation are required by the publishing workflow."
+}

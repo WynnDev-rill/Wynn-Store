@@ -8,7 +8,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.File
 
-/** Real 1.1 production client must detect/download/verify the published 1.2 APK without a manual check. */
+/** Runs the original production client against the real public feed and Android package installer. */
 class ProductionUpgradeTest {
     @Test fun previousProductionAutomaticallyDetectsAndVerifiesTheNewRelease() {
         assumeTrue(InstrumentationRegistry.getArguments().getString("upgrade") == "true")
@@ -38,10 +38,30 @@ class ProductionUpgradeTest {
         assertTrue("Opening the old APK did not automatically offer the real new release",
             ui.wait(Until.hasObject(By.pkg(pkg).text("ScreenGuard Pro $expected")), 60_000))
         val download = checkNotNull(ui.wait(Until.findObject(By.pkg(pkg).textContains("Unduh update")), 10_000)) { "No real download action" }
+        val before = context.packageManager.getPackageInfo(pkg, 0)
+        val beforeUid = context.packageManager.getApplicationInfo(pkg, 0).uid
         download.click()
         assertTrue("Downloaded release did not pass the old client's size/hash/package/version/certificate checks",
             ui.wait(Until.hasObject(By.pkg(pkg).text("Pasang update")), 60_000))
         val file = File(context.getExternalFilesDir(null), "screenshots/17-production-upgrade-verified.png")
         file.parentFile!!.mkdirs(); ui.takeScreenshot(file)
+        if (InstrumentationRegistry.getArguments().getString("installUpdate") == "true") {
+            ui.findObject(By.pkg(pkg).text("Pasang update")).click()
+            val install = ui.wait(Until.findObject(By.res("android", "button1")), 30_000)
+            assertNotNull("Android installer confirmation was not shown", install)
+            assertTrue("Confirmation must belong to the system package installer", install!!.applicationPackage.contains("packageinstaller"))
+            install.click()
+            val deadline = android.os.SystemClock.elapsedRealtime() + 60_000
+            while (context.packageManager.getPackageInfo(pkg, 0).versionName != expected && android.os.SystemClock.elapsedRealtime() < deadline) {
+                Thread.sleep(500)
+            }
+            val after = context.packageManager.getPackageInfo(pkg, 0)
+            assertEquals("Android installer did not apply the update", expected, after.versionName)
+            assertEquals("Update must retain original install identity", before.firstInstallTime, after.firstInstallTime)
+            assertEquals("Update must retain UID and app data sandbox", beforeUid, context.packageManager.getApplicationInfo(pkg, 0).uid)
+            context.startActivity(context.packageManager.getLaunchIntentForPackage(pkg)!!.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            assertTrue("Previously completed onboarding data must survive update", ui.wait(Until.hasObject(By.pkg(pkg).desc("Pengaturan")), 30_000))
+            ui.takeScreenshot(File(file.parentFile, "18-production-installed-in-place.png"))
+        }
     }
 }

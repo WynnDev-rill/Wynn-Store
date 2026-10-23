@@ -12,6 +12,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   verify:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 40
     defaults:
@@ -50,6 +52,22 @@ jobs:
           profile: pixel_6
           disable-animations: false
           script: bash screenguard-pro/qa/run-device.sh
+      - name: Publish staged production APK after all checks
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && hashFiles('screenguard-pro/distribution/ScreenGuard-Pro-1.3.0.apk') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SG_APK_PATH: distribution/ScreenGuard-Pro-1.3.0.apk
+        run: python3 scripts/publish-release.py
+      - name: Verify live production 1.2 to 1.3 updater installation
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && hashFiles('screenguard-pro/distribution/ScreenGuard-Pro-1.3.0.apk') != ''
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: false
+          script: bash screenguard-pro/qa/run-upgrade.sh
       - name: Upload verified production release APK
         if: success() && hashFiles('screenguard-pro/dist/production/RELEASE-SHA256.txt') != ''
         uses: actions/upload-artifact@v4

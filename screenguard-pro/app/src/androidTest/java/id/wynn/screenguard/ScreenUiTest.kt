@@ -54,7 +54,8 @@ class ScreenUiTest {
         compose.onNodeWithText("ScreenGuard Pro").assertIsDisplayed()
         compose.onNodeWithText("Tren Mingguan").assertIsDisplayed()
         capture("01-dashboard")
-        compose.onNodeWithText("Blokir Internet").performScrollTo().performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Blokir Internet"))
+        compose.onNodeWithText("Blokir Internet").performClick()
         org.junit.Assert.assertEquals(Page.NETWORK, page)
     }
     @Test fun usageRangeAndSearchReallyFilter() {

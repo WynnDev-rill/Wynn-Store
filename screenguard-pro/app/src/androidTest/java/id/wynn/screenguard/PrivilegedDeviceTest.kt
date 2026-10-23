@@ -80,7 +80,7 @@ class PrivilegedDeviceTest {
             assertNull("Disabled app must disappear from normal launcher resolution", pm.getLaunchIntentForPackage(pkg))
             graph.gateway.freeze(pkg, user, 2, false)
             assertTrue(pm.getApplicationInfo(pkg, 0).enabled)
-            graph.store.settings { it.copy(pinHash = "", pinSalt = "") }
+            graph.store.settings { it.copy(pinHash = "", pinSalt = "", freezeChallengeEnabled = true, freezeGate = AccessGate(mode = GateMode.BOTH, waitSeconds = 5, questions = 2, level = MathLevel.EASY, accessMinutes = 1)) }
             val vm = GuardViewModel(graph)
             val app = graph.catalog.list().first { it.packageName == pkg }
             vm.configureGate(app, AccessGate(mode = GateMode.BOTH, waitSeconds = 5, questions = 2, level = MathLevel.EASY, accessMinutes = 1))
