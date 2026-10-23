@@ -76,7 +76,7 @@ enum class Page { HOME, FREEZE, NETWORK, SETTINGS, USAGE, APP_STATS, UNLOCK, PER
         if (page == Page.UNLOCK) { vm.cancelChallenge(); removalPackage = null }
         pageName = when (page) { Page.UNLOCK -> Page.FREEZE.name; Page.APP_STATS -> detailReturn; Page.PERMISSIONS -> previousPage; else -> Page.HOME.name }
     }
-    fun navigate(next: Page) { if (next == Page.SETTINGS) vm.secure { pageName = next.name } else pageName = next.name }
+    fun navigate(next: Page) { detailPackage = null; if (next == Page.SETTINGS) vm.secure { pageName = next.name } else pageName = next.name }
     fun permissions() { previousPage = pageName; pageName = Page.PERMISSIONS.name }
     fun details(app: InstalledApp) { detailDate = java.time.LocalDate.now().toString(); detailPackage = app.packageName; detailReturn = pageName; pageName = Page.APP_STATS.name }
     fun detailsAt(app: InstalledApp, date: java.time.LocalDate) { details(app); detailDate = date.toString() }
@@ -91,10 +91,9 @@ enum class Page { HOME, FREEZE, NETWORK, SETTINGS, USAGE, APP_STATS, UNLOCK, PER
             vm.message.value = "Aplikasi ini sedang menunggu pemulihan. Tekan lama ikonnya dan pilih Keluarkan saat Shizuku siap."
             return
         }
-        if (rule.gate.automaticOnly) return
-        if (app.enabled && !app.suspended && vm.sessionOpen(rule)) launchApp(app.packageName)
+        if (app.enabled && !app.suspended && (vm.sessionOpen(rule) || rule.gate.automaticOnly && vm.canLaunchWithoutChallenge(app))) launchApp(app.packageName)
         else if (status != ShizukuStatus.READY) permissions()
-        else if (state.settings.freezeChallengeEnabled) vm.prepareUnlock(app) { pageName = Page.UNLOCK.name }
+        else if (state.settings.freezeChallengeEnabled || rule.gate.automaticOnly) vm.prepareUnlock(app) { pageName = Page.UNLOCK.name }
         else vm.openTemporarily(app, ::launchApp)
     }
     BackHandler(page != Page.HOME && state.settings.onboardingDone && !busy) { back() }
@@ -112,10 +111,10 @@ enum class Page { HOME, FREEZE, NETWORK, SETTINGS, USAGE, APP_STATS, UNLOCK, PER
                     }) { current ->
                         pageStateHolder.SaveableStateProvider(if (current == Page.APP_STATS) "${current.name}:$detailPackage:$detailDate" else current.name) {
                         when (current) {
-                            Page.HOME -> DashboardScreen(state, device, status == ShizukuStatus.READY, ::navigate, ::details, ::permissions, ::detailsAt)
+                            Page.HOME -> DashboardScreen(state, device, status == ShizukuStatus.READY, ::navigate, ::details, ::permissions, ::detailsAt, vm::refreshStatistics)
                             Page.USAGE -> UsageScreen(device, ::back, { navigate(Page.FREEZE) }, ::details)
                             Page.APP_STATS -> device.apps.find { it.packageName == detailPackage }?.let { app ->
-                                AppStatsScreen(app, device, ::back, { pkg, date -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { vm.graph.usage.details(pkg, date) } }, { pageName = Page.FREEZE.name }, detailDate)
+                                AppStatsScreen(app, device, ::back, { pkg, date -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { vm.graph.usage.details(pkg, date) } }, { detailPackage = app.packageName; pageName = Page.FREEZE.name }, detailDate)
                             } ?: Column {
                                 PageHeader("Statistik aplikasi", ::back)
                                 if (!device.loading) EmptyState("Aplikasi tidak ditemukan", "Aplikasi mungkin sudah dihapus dari perangkat.")
@@ -133,7 +132,7 @@ enum class Page { HOME, FREEZE, NETWORK, SETTINGS, USAGE, APP_STATS, UNLOCK, PER
                                     } else vm.removeGate(app)
                                 },
                                 { enabled, config -> vm.settings { it.copy(freezeChallengeEnabled = enabled, freezeGate = config) } },
-                                ::permissions)
+                                ::permissions, vm::closeAccess, vm::freezeAllNow, vm::addFrozenApps, vm::saveRule, detailPackage)
                             Page.UNLOCK -> UnlockScreen(device.apps.find { it.packageName == unlocking }, gate, challenge, completed, remaining, challengeError, busy, ::back, vm::newChallenge,
                                 unlock = { answer ->
                                     if (removalPackage != null) vm.releaseAfterChallenge(answer) {

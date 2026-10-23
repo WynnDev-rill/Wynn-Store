@@ -23,8 +23,9 @@ import id.wynn.screenguard.privilege.ShizukuStatus
     var query by rememberSaveable { mutableStateOf("") }
     val days = device.days.takeLast(listOf(1, 7, 30)[range])
     val usage = days.flatMap { it.apps.entries }.groupBy({ it.key }, { it.value }).mapValues { it.value.sum() }
-    val total = usage.values.sum()
-    val apps = device.apps.filter { it.label.contains(query, true) }.filter {
+    val total = days.filter { it.available }.sumOf { it.totalMs }
+    val appTotal = usage.values.sum()
+    val apps = device.apps.filter { (usage[it.packageName] ?: 0) > 0 && it.label.contains(query, true) }.filter {
         when (category) { 1 -> it.category == ApplicationInfo.CATEGORY_SOCIAL; 2 -> it.category == ApplicationInfo.CATEGORY_VIDEO; 3 -> it.category == ApplicationInfo.CATEGORY_GAME; else -> true }
     }.sortedByDescending { usage[it.packageName] ?: 0 }
     Column {
@@ -41,7 +42,7 @@ import id.wynn.screenguard.privilege.ShizukuStatus
                     WeekChart(days.takeLast(7), Modifier.weight(1f), labels = false)
                 }
             } }
-            if (days.any { it.estimated }) item { Text("Riwayat lama memakai agregat Android dan dapat berupa perkiraan. Data harian tersimpan lokal hingga 90 hari.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            if (days.any { !it.available || it.estimated }) item { Text("${days.count { it.available }} dari ${days.size} hari memiliki riwayat. Hari tanpa data tidak dihitung sebagai nol; data sebagian ditandai pada rincian.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             item { OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), label = { Text("Cari aplikasi") }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, singleLine = true, shape = RoundedCornerShape(20.dp)) }
             item { LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 itemsIndexed(listOf("Semua", "Sosial", "Video", "Game")) { i, name -> FilterChip(category == i, { category = i }, label = { Text(name) }) }
@@ -50,7 +51,7 @@ import id.wynn.screenguard.privilege.ShizukuStatus
             if (apps.isEmpty()) item { EmptyState("Tidak ada aplikasi", "Coba kategori atau kata pencarian lain.") }
             items(apps, key = { it.packageName }) { app ->
                 Surface(modifier = Modifier.animateItem(), shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface) {
-                    Box(Modifier.padding(horizontal = 12.dp)) { UsageRow(app, usage[app.packageName] ?: 0, total) { selected(app) } }
+                    Box(Modifier.padding(horizontal = 12.dp)) { UsageRow(app, usage[app.packageName] ?: 0, appTotal) { selected(app) } }
                 }
             }
         }

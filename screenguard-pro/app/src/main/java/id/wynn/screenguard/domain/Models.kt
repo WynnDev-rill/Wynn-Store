@@ -89,7 +89,7 @@ object AccessSession {
 ) { val hasPin: Boolean get() = pinHash.isNotBlank() }
 
 @Serializable data class GuardState(val settings: GuardSettings = GuardSettings(), val rules: Map<String, AppRule> = emptyMap(), val schemaVersion: Int = 2) {
-    val needsMonitoring get() = settings.monitorEnabled || rules.values.any { it.gate != null && it.overrideUntil > 0 }
+    val needsMonitoring get() = settings.monitorEnabled && rules.values.any { it.gate?.automaticOnly == true && (it.dailyLimitMinutes > 0 || it.windows.isNotEmpty()) }
 }
 
 /** Convert manual freezes and Focus selections once, keeping recovery ownership and network rules. */
@@ -129,7 +129,7 @@ object PolicyEngine {
 }
 
 data class InstalledApp(val packageName: String, val label: String, val uid: Int, val category: Int,
-    val enabled: Boolean, val suspended: Boolean, val protected: Boolean, val sharedUid: Boolean, val system: Boolean = false, val launchable: Boolean = true)
+    val enabled: Boolean, val suspended: Boolean, val protected: Boolean, val sharedUid: Boolean, val system: Boolean = false, val launchable: Boolean = true, val iconVersion: Long = 0)
 
 /** Only packages explicitly added to Bekukan appear in the home collection.
  * A previously disabled managed package stays visible even without a launcher icon.
@@ -139,7 +139,7 @@ object FreezeCatalog {
     fun selected(state: GuardState, apps: List<InstalledApp>): List<InstalledApp> =
         apps.filter { app ->
             val rule = state.rules[app.packageName]
-            rule?.gate?.automaticOnly == false || rule?.ownedDisable == true || rule?.ownedSuspension == true
+            rule?.gate != null || rule?.ownedDisable == true || rule?.ownedSuspension == true
         }.sortedBy { it.label.lowercase() }
 
     fun canAdd(app: InstalledApp, rule: AppRule?): Boolean =

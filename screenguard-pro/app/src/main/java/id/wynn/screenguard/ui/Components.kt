@@ -38,12 +38,16 @@ import kotlinx.coroutines.withContext
 private val iconCache = android.util.LruCache<String, ImageBitmap>(64)
 @Composable fun AppIcon(app: InstalledApp, size: Dp = 40.dp) {
     val context = LocalContext.current
-    val bitmap by produceState<ImageBitmap?>(null, app.packageName) {
-        value = iconCache.get(app.packageName) ?: withContext(Dispatchers.IO) { runCatching { context.packageManager.getApplicationIcon(app.packageName).toBitmap(112, 112).asImageBitmap().also { iconCache.put(app.packageName, it) } }.getOrNull() }
+    val bitmap by produceState<ImageBitmap?>(null, app.packageName, app.enabled, app.iconVersion) {
+        val key = "${app.packageName}:${app.iconVersion}"
+        value = iconCache.get(key) ?: withContext(Dispatchers.IO) { runCatching {
+            val info = context.packageManager.getApplicationInfo(app.packageName, android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS)
+            info.loadIcon(context.packageManager).toBitmap(112, 112).asImageBitmap().also { iconCache.put(key, it) }
+        }.getOrNull() }
     }
     Box(Modifier.size(size).clearAndSetSemantics {}.clip(RoundedCornerShape(size * .23f)).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
         if (bitmap != null) Image(bitmap!!, contentDescription = null, modifier = Modifier.fillMaxSize())
-        else Text(app.label.take(1).uppercase(), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+        else Icon(Icons.Outlined.Android, null, Modifier.size(size * .6f), tint = MaterialTheme.colorScheme.primary)
     }
 }
 @Composable fun BrandMark(size: Dp = 42.dp) { Image(painterResource(R.drawable.brand_mark), null, Modifier.size(size).clip(RoundedCornerShape(size * .24f))) }
@@ -143,17 +147,18 @@ fun dateLabel(date: java.time.LocalDate): String = when (date) {
                 val selected = selectedDate == day.date
                 val action = if (onSelect != null) Modifier.clickable(role = Role.Button) { onSelect(day) } else Modifier
                 Column(Modifier.weight(1f).then(action).semantics(mergeDescendants = true) {
-                    contentDescription = "${day.date}: ${if (day.totalMs == 0L) "0 menit" else duration(day.totalMs)}"
+                    contentDescription = "${day.date}: ${if (!day.available) "data tidak tersedia" else if (day.totalMs == 0L) "0 menit" else duration(day.totalMs)}"
                     if (onSelect != null) this.selected = selected
                 }, horizontalAlignment = Alignment.CenterHorizontally) {
                     Canvas(Modifier.fillMaxWidth().height(if (labels) chartHeight else 62.dp)) {
+                        if (!day.available) return@Canvas
                         repeat(3) { n -> val y = size.height * n / 2; drawLine(color.copy(alpha = .1f), Offset(0f, y), Offset(size.width, y), 1.dp.toPx()) }
                         val height = (day.totalMs.toFloat() / max * (size.height - 4.dp.toPx()) * reveal.value).coerceAtLeast(2.dp.toPx())
                         val width = minOf(size.width * .42f, 22.dp.toPx())
                         drawRoundRect(Brush.verticalGradient(listOf(color.copy(alpha = if (selected) .8f else .38f), color.copy(alpha = if (selected) 1f else .7f))),
                             Offset((size.width - width) / 2, size.height - height), androidx.compose.ui.geometry.Size(width, height), androidx.compose.ui.geometry.CornerRadius(5.dp.toPx()))
                     }
-                    if (labels) Text(names[day.date.dayOfWeek.value - 1], Modifier.padding(vertical = 12.dp), style = MaterialTheme.typography.bodySmall,
+                    if (labels) Text(if (day.available) names[day.date.dayOfWeek.value - 1] else "—", Modifier.padding(vertical = 12.dp), style = MaterialTheme.typography.bodySmall,
                         color = if (selected) color else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
                 }
             }

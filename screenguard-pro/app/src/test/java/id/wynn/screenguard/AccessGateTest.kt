@@ -60,8 +60,10 @@ class AccessGateTest {
             if (level == MathLevel.EASY) assertEquals(1, c.c)
         } }
     }
-    @Test fun sessionsKeepRecoveryServiceAliveEvenWhenNoDailyRulesExist() {
-        assertTrue(GuardState(rules = mapOf(opened.packageName to opened)).needsMonitoring)
+    @Test fun manualSessionsUseDaemonWithoutPersistentForegroundNotification() {
+        assertFalse(GuardState(rules = mapOf(opened.packageName to opened)).needsMonitoring)
+        val automatic = opened.copy(gate = AccessGate(automaticOnly = true), dailyLimitMinutes = 20)
+        assertTrue(GuardState(GuardSettings(monitorEnabled = true), mapOf(automatic.packageName to automatic)).needsMonitoring)
         assertFalse(GuardState(rules = mapOf(closed.packageName to closed)).needsMonitoring)
     }
     @Test(expected = IllegalArgumentException::class) fun gateCannotRequestUnboundedAccess() { AccessGate(accessMinutes = 31) }
@@ -72,7 +74,7 @@ class AccessGateTest {
         assertTrue(FreezeCatalog.selected(GuardState(), emptyList()).isEmpty())
     }
 
-    @Test fun freezeCatalogShowsOnlyAddedAppsIncludingDisabledButNotAutomaticRules() {
+    @Test fun freezeCatalogKeepsAutomaticRulesDiscoverableAfterUpgrade() {
         val hidden = InstalledApp("com.test.hidden", "Hidden", 10100, -1, false, false, false, false)
         val scheduled = InstalledApp("com.test.scheduled", "Scheduled", 10101, -1, true, false, false, false)
         val unadded = InstalledApp("com.test.other", "Other", 10102, -1, true, false, false, false)
@@ -81,7 +83,7 @@ class AccessGateTest {
             scheduled.packageName to AppRule(scheduled.packageName, gate = AccessGate(automaticOnly = true))
         )
         val selected = FreezeCatalog.selected(GuardState(rules = rules), listOf(unadded, scheduled, hidden))
-        assertEquals(listOf(hidden), selected)
+        assertEquals(listOf(hidden, scheduled), selected)
         assertFalse(FreezeCatalog.canAdd(hidden, rules[hidden.packageName]))
         assertFalse(FreezeCatalog.canAdd(scheduled, rules[scheduled.packageName]))
         assertTrue(FreezeCatalog.canAdd(unadded, null))

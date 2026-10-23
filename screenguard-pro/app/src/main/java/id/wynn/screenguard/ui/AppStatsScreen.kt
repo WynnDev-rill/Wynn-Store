@@ -23,7 +23,7 @@ import java.time.LocalDate
     var selectedDate by rememberSaveable(app.packageName) { mutableStateOf(initialDate ?: LocalDate.now().toString()) }
     val selected = device.days.find { it.date.toString() == selectedDate } ?: device.days.lastOrNull()
     val date = selected?.date ?: LocalDate.now()
-    val week = device.days.takeLast(7).map { day -> day.copy(apps = mapOf(app.packageName to day.apps.getOrDefault(app.packageName, 0))) }
+    val week = device.days.takeLast(7).map { day -> day.copy(apps = mapOf(app.packageName to day.apps.getOrDefault(app.packageName, 0)), screenMs = day.apps.getOrDefault(app.packageName, 0)) }
     val total = selected?.apps?.get(app.packageName) ?: 0
     var detail by remember(app.packageName, date) { mutableStateOf<AppDayDetail?>(null) }
     var error by remember(app.packageName, date) { mutableStateOf<String?>(null) }
@@ -40,9 +40,13 @@ import java.time.LocalDate
             } }
             item { GuardCard(spacing = 16.dp) {
                 Text("${dateLabel(date)} · waktu layar", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(if (device.usageAccess) duration(total) else "—", style = MaterialTheme.typography.headlineLarge)
+                Text(if (device.usageAccess && selected?.available == true) duration(total) else "—", style = MaterialTheme.typography.headlineLarge)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    TextButton({ selectedDate = date.minusDays(1).toString() }, enabled = device.days.any { it.date == date.minusDays(1) }) { Text("Hari sebelumnya") }
+                    TextButton({ selectedDate = date.plusDays(1).toString() }, enabled = date.isBefore(LocalDate.now())) { Text("Berikutnya") }
+                }
                 WeekChart(week, chartHeight = 100.dp, selectedDate = date, onSelect = { selectedDate = it.date.toString() })
-                Text("Rata-rata 7 hari: ${duration(week.sumOf { it.totalMs } / week.size.coerceAtLeast(1))}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Rata-rata 7 hari: ${duration(week.filter { it.available }.let { days -> days.sumOf { it.totalMs } / days.size.coerceAtLeast(1) })}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             } }
             item { GuardCard {
                 SectionTitle("Penggunaan per jam")
@@ -54,19 +58,19 @@ import java.time.LocalDate
                     else -> {
                         HourChart(detail!!.hourly)
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                        StatLine("Dibuka", "${detail!!.opens} kali")
+                        StatLine("Sesi di latar depan", "${detail!!.opens} kali")
                         StatLine("Sesi terlama", duration(detail!!.longestMs))
                     }
                 }
             } }
             item { GuardCard {
-                StatLine("Bagian dari waktu layar", "${if ((selected?.totalMs ?: 0) > 0) total * 100 / selected!!.totalMs else 0}%")
+                StatLine("Bagian penggunaan aplikasi", "${if ((selected?.appTotalMs ?: 0) > 0) total * 100 / selected!!.appTotalMs else 0}%")
                 StatLine("Total 7 hari", duration(week.sumOf { it.totalMs }))
             } }
             if (!app.protected && app.launchable) item { FilledTonalButton(protect, Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
                 Icon(Icons.Outlined.AcUnit, null); Spacer(Modifier.width(8.dp)); Text("Atur perlindungan aplikasi")
             } }
-            item { Text(if (selected?.estimated == true) "Total hari ini memakai agregat Android dan merupakan perkiraan. Riwayat disimpan lokal hingga 90 hari." else "Durasi dihitung dari kejadian aplikasi di latar depan. Aktivitas bersamaan digabung per aplikasi. Sesi yang terpotong shutdown tidak ditebak.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            item { Text(if (selected?.available != true) "Riwayat hari ini tidak tersedia. Android menyimpan kejadian rinci untuk waktu terbatas; hari kosong tidak dihitung sebagai nol." else if (selected.estimated) "Riwayat hari ini belum lengkap. Rincian yang masih tersedia ditampilkan tanpa menebak bagian yang hilang." else "Durasi dihitung dari sesi aplikasi di latar depan. Sesi berbeda dari jumlah ketukan ikon. Aktivitas bersamaan dalam aplikasi digabung; total layar dihitung terpisah.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     }
 }
