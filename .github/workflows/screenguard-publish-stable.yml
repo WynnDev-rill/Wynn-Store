@@ -1,11 +1,5 @@
 name: ScreenGuard Pro — Publish stable update
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'screenguard-pro/app/**'
-      - 'screenguard-pro/scripts/publish-release.py'
-      - '.github/workflows/screenguard-publish-stable.yml'
   workflow_dispatch:
 
 permissions:
