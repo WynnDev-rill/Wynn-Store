@@ -58,6 +58,7 @@ jobs:
           retention-days: 30
           path: |
             screenguard-pro/dist/
+            screenguard-pro/app/build/outputs/apk/release/app-release-unsigned.apk
             screenguard-pro/screenshots/
             screenguard-pro/app/build/reports/
             screenguard-pro/app/build/outputs/androidTest-results/

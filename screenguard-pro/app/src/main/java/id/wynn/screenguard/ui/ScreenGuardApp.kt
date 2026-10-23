@@ -74,11 +74,11 @@ enum class Page { HOME, USAGE, NETWORK, FREEZE, UNLOCK, SCHEDULE, SETTINGS, PERM
     fun openSchedule(tab: Int) { vm.secure { scheduleTab = tab; pageName = Page.SCHEDULE.name } }
     BackHandler(page != Page.HOME && state.settings.onboardingDone && !busy) { back() }
     GuardTheme(state.settings.darkMode) {
-        Scaffold(containerColor = MaterialTheme.colorScheme.background, bottomBar = {
+        Scaffold(modifier = Modifier.imePadding(), containerColor = MaterialTheme.colorScheme.background, bottomBar = {
             if (page != Page.UNLOCK && page != Page.PERMISSIONS && state.settings.onboardingDone)
                 FloatingDock(page, ::navigate)
         }) { insets ->
-            Box(Modifier.fillMaxSize().padding(insets).imePadding(), contentAlignment = Alignment.TopCenter) {
+            Box(Modifier.fillMaxSize().padding(insets), contentAlignment = Alignment.TopCenter) {
                 Box(Modifier.widthIn(max = 640.dp).fillMaxSize()) {
                     if (!state.settings.onboardingDone) PermissionsScreen(device.usageAccess, status, null, vm.graph.gateway::requestPermission, vm::onboarded, vm::refresh, connectionError, vm::grantUsageThroughShizuku, busy)
                     else AnimatedContent(page, label = "page", transitionSpec = {
