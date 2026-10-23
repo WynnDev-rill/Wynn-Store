@@ -2,9 +2,9 @@ name: ScreenGuard Pro Android
 on:
   workflow_dispatch:
   push:
-    paths: ['screenguard-pro/**', '.github/workflows/screenguard-android.yml']
+    paths: ['screenguard-pro/**', '!screenguard-pro/updates/**', '.github/workflows/screenguard-android.yml']
   pull_request:
-    paths: ['screenguard-pro/**', '.github/workflows/screenguard-android.yml']
+    paths: ['screenguard-pro/**', '!screenguard-pro/updates/**', '.github/workflows/screenguard-android.yml']
 permissions:
   contents: read
 concurrency:
@@ -63,6 +63,8 @@ jobs:
             screenguard-pro/app/build/outputs/androidTest-results/
             screenguard-pro/qa/output/
   signed-release:
+    permissions:
+      contents: write
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     needs: verify
     runs-on: ubuntu-latest
@@ -111,6 +113,12 @@ jobs:
         with:
           name: ScreenGuard-Pro-release
           path: screenguard-pro/app/build/outputs/apk/release/app-release.apk
+      - name: Publish verified stable release and update feed
+        if: steps.signing.outputs.available == 'true'
+        working-directory: screenguard-pro
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/publish-release.py
       - name: Remove temporary signing material
         if: always()
         run: rm -f "$RUNNER_TEMP/screenguard-release.jks"

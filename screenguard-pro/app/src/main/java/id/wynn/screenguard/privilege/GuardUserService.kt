@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.IBinder
 import id.wynn.screenguard.domain.PackageSafety
+import id.wynn.screenguard.BuildConfig
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
@@ -52,6 +53,15 @@ class GuardUserService(private val context: Context) : IGuardService.Stub() {
         val fresh = pm.getApplicationInfo(packageName, PackageManager.MATCH_DISABLED_COMPONENTS)
         val applied = if (mode == 1) fresh.flags and ApplicationInfo.FLAG_SUSPENDED != 0 else !fresh.enabled
         check(applied == enabled) { "Android menolak perubahan: $output" }
+    }
+    @Synchronized override fun grantOwnUsageAccess(): String = result {
+        // No caller-controlled target/operation: this can grant access only to this exact APK package.
+        val ownPackage = BuildConfig.APPLICATION_ID
+        val own = pm.getApplicationInfo(ownPackage, 0)
+        require(own.uid / 100000 == 0) { "Hanya profil utama Android yang didukung" }
+        command(listOf("/system/bin/cmd", "appops", "set", "--user", "0", ownPackage, "GET_USAGE_STATS", "allow"))
+        val actual = command(listOf("/system/bin/cmd", "appops", "get", "--user", "0", ownPackage, "GET_USAGE_STATS"))
+        check(actual.contains("GET_USAGE_STATS: allow")) { "Android belum memberikan akses penggunaan: $actual" }
     }
     private fun command(args: List<String>): String {
         val process = ProcessBuilder(args).redirectErrorStream(true).start()

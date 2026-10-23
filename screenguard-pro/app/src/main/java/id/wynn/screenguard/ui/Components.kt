@@ -1,6 +1,7 @@
 package id.wynn.screenguard.ui
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.*
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
@@ -28,15 +29,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable fun GuardCard(modifier: Modifier = Modifier, contentPadding: Dp = 16.dp, spacing: Dp = 12.dp, content: @Composable ColumnScope.() -> Unit) {
-    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .55f)), shadowElevation = .5.dp) {
+    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .55f)), shadowElevation = 0.dp) {
         Column(Modifier.padding(contentPadding), verticalArrangement = Arrangement.spacedBy(spacing), content = content)
     }
 }
+private val iconCache = android.util.LruCache<String, ImageBitmap>(64)
 @Composable fun AppIcon(app: InstalledApp, size: Dp = 40.dp) {
     val context = LocalContext.current
     val bitmap by produceState<ImageBitmap?>(null, app.packageName) {
-        value = withContext(Dispatchers.IO) { runCatching { context.packageManager.getApplicationIcon(app.packageName).toBitmap(112, 112).asImageBitmap() }.getOrNull() }
+        value = iconCache.get(app.packageName) ?: withContext(Dispatchers.IO) { runCatching { context.packageManager.getApplicationIcon(app.packageName).toBitmap(112, 112).asImageBitmap().also { iconCache.put(app.packageName, it) } }.getOrNull() }
     }
     Box(Modifier.size(size).clip(RoundedCornerShape(size * .23f)).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
         if (bitmap != null) Image(bitmap!!, contentDescription = null, modifier = Modifier.fillMaxSize())
@@ -45,7 +47,7 @@ import kotlinx.coroutines.withContext
 }
 @Composable fun BrandMark(size: Dp = 42.dp) { Image(painterResource(R.drawable.ic_guard), null, Modifier.size(size)) }
 @Composable fun PageHeader(title: String, back: () -> Unit, action: (@Composable () -> Unit)? = null) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(back) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Kembali") }
         Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
         if (action != null) action() else Spacer(Modifier.width(16.dp))
@@ -77,8 +79,9 @@ import kotlinx.coroutines.withContext
 @Composable fun PillTabs(tabs: List<String>, selected: Int, select: (Int) -> Unit) {
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(3.dp)) {
         tabs.forEachIndexed { i, title ->
+            val selectedColor by animateColorAsState(if (selected == i) MaterialTheme.colorScheme.primary else Color.Transparent, tween(180), label = "tab color")
             Surface(onClick = { select(i) }, modifier = Modifier.weight(1f).heightIn(min = 44.dp).semantics { this.selected = selected == i },
-                shape = RoundedCornerShape(22.dp), color = if (selected == i) MaterialTheme.colorScheme.primary else Color.Transparent) {
+                shape = RoundedCornerShape(22.dp), color = selectedColor) {
                 Box(Modifier.padding(horizontal = 5.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
                     Text(title, style = MaterialTheme.typography.labelLarge, color = if (selected == i) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -107,6 +110,8 @@ import kotlinx.coroutines.withContext
 }
 @Composable fun WeekChart(days: List<UsageDay>, modifier: Modifier = Modifier, labels: Boolean = true, chartHeight: Dp = 96.dp) {
     val color = MaterialTheme.colorScheme.primary
+    val reveal = remember { Animatable(0f) }
+    LaunchedEffect(days) { reveal.animateTo(1f, tween(480, easing = FastOutSlowInEasing)) }
     val max = days.maxOfOrNull { it.totalMs }?.coerceAtLeast(3_600_000) ?: 3_600_000
     val text = days.joinToString { "${it.date}: ${if (it.totalMs == 0L) "0 menit" else duration(it.totalMs)}" }
     Column(modifier.semantics(mergeDescendants = true) { contentDescription = "Penggunaan harian. $text" }) {
@@ -116,7 +121,7 @@ import kotlinx.coroutines.withContext
             val width = (spacing * .38f).coerceAtMost(21.dp.toPx())
             repeat(3) { n -> val y = size.height * n / 2; drawLine(color.copy(alpha = .08f), Offset(0f, y), Offset(size.width, y), 1.dp.toPx()) }
             days.forEachIndexed { index, day ->
-                val height = (day.totalMs.toFloat() / max * (size.height - 4.dp.toPx())).coerceAtLeast(2.dp.toPx())
+                val height = (day.totalMs.toFloat() / max * (size.height - 4.dp.toPx()) * reveal.value).coerceAtLeast(2.dp.toPx())
                 drawRoundRect(Brush.verticalGradient(listOf(color.copy(alpha = .36f), color.copy(alpha = .8f))),
                     Offset(spacing * (index + .5f) - width / 2, size.height - height), androidx.compose.ui.geometry.Size(width, height), androidx.compose.ui.geometry.CornerRadius(4.dp.toPx()))
             }

@@ -25,7 +25,7 @@ Aplikasi Android native Kotlin + Jetpack Compose untuk waktu layar, kontrol inte
 | Batas/jadwal/fokus | Foreground service pilihan pengguna; memeriksa setiap ~15 detik saat layar hidup, ~60 detik saat mati tanpa wakelock. Jadwal mendukung lintas tengah malam dan hari mulai. WorkManager ~15 menit menjadi pemulihan tambahan. Doze/force-stop/optimisasi vendor dapat menunda; ini bukan alarm tepat waktu. |
 | Restart | Aturan dan kepemilikan kunci disimpan atomik. Receiver/WorkManager memulihkan saat memungkinkan. Pada perangkat tanpa root, Shizuku harus dimulai lagi setelah boot. Aturan belum diklaim aktif ketika koneksi tidak siap. |
 | PIN | 6 digit, salt acak, PBKDF2-HMAC-SHA256 120.000 iterasi, pembandingan waktu konstan, lockout setelah 5 kegagalan, sesi izin 2 menit di memori dan dicabut saat app ke latar. PIN melindungi perubahan/pembukaan dalam ScreenGuard; bukan pengganti Device Owner/MDM. Pemilik perangkat bisa mencabut izin, force-stop, menghapus data/uninstall, atau memakai ADB. |
-| Privasi | Tidak ada server, akun, SDK analitik, iklan, API berbayar, atau izin `INTERNET`. Backup Android dimatikan. Aturan dan PIN hash di sandbox internal; statistik harian di SQLite lokal. |
+| Privasi | Tidak ada server pribadi, akun, SDK analitik, iklan atau API berbayar. Izin `INTERNET` hanya untuk update resmi GitHub, tanpa unggahan data penggunaan. Backup Android dimatikan. Aturan dan PIN hash di sandbox internal; statistik harian di SQLite lokal. |
 
 Jangan gunakan bersama firewall lain yang menulis OEM_DENY_3 pada UID yang sama. ScreenGuard tidak mematikan atau mengosongkan chain global karena itu dapat membuka blokir milik alat lain. Pemulihan internet hanya membersihkan UID aplikasi yang dikelolanya.
 
@@ -65,3 +65,9 @@ Untuk signing lokal gunakan environment `SG_KEYSTORE_PATH`, `SG_STORE_PASSWORD`,
 - `app/src/androidTest`: tes interaksi Compose dan screenshot tujuh halaman. Fixture hanya berada dalam source set tes.
 
 Lihat [panduan pengujian perangkat](docs/DEVICE-TESTING.md), [pemulihan darurat](docs/RECOVERY.md), [acuan desain](docs/DESIGN.md), dan [sumber/lisensi](THIRD_PARTY_NOTICES.md).
+
+## Versi 1.1 — navigasi, izin, dan update
+
+UI UX Pro Max terpasang pada `.agents/skills/ui-ux-pro-max`; sistem desain yang telah disesuaikan berada di `design-system/screenguard-pro/MASTER.md`. Seluruh halaman memakai font Plus Jakarta Sans lokal, tema putih-biru/gelap, dock mengambang dengan state tiap tab yang dipertahankan, dan animasi native yang mengikuti pengaturan animasi Android.
+
+Panduan baru menjelaskan Setelan Terbatas Android dan membuka Info aplikasi. Pembaruan dideteksi ketika aplikasi dibuka; unduhan diperiksa checksum, versi, paket, dan sertifikat sebelum pemasangan melalui Android. Internet dipakai hanya untuk update resmi GitHub, tanpa mengirim data pemakaian. Lihat [UPDATES.md](docs/UPDATES.md) untuk signing, penerbitan feed, serta migrasi dari APK preview lama.

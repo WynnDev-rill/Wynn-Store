@@ -20,8 +20,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import id.wynn.screenguard.privilege.ShizukuStatus
 
-@Composable fun PermissionsScreen(usageAccess: Boolean, status: ShizukuStatus, back: (() -> Unit)?, requestShizuku: () -> Unit, done: () -> Unit, refresh: () -> Unit, connectionError: String? = null) {
+@Composable fun PermissionsScreen(usageAccess: Boolean, status: ShizukuStatus, back: (() -> Unit)?, requestShizuku: () -> Unit, done: () -> Unit, refresh: () -> Unit, connectionError: String? = null, grantUsage: (() -> Unit)? = null, busy: Boolean = false) {
     val context = LocalContext.current
+    var confirmGrant by remember { mutableStateOf(false) }
+    var restrictedHelp by remember { mutableStateOf(false) }
     val notifyPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { refresh() }
     fun open(intent: Intent) { runCatching { context.startActivity(intent) }.onFailure { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))) } }
     Column {
@@ -31,7 +33,24 @@ import id.wynn.screenguard.privilege.ShizukuStatus
             GuardCard {
                 Text("1. Akses penggunaan", style = MaterialTheme.typography.titleMedium)
                 Text("${if (usageAccess) "✓ Aktif. " else ""}Membaca durasi aplikasi untuk grafik dan batas harian. Riwayat tetap di perangkat.", style = MaterialTheme.typography.bodyMedium)
-                FilledTonalButton({ open(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }, Modifier.fillMaxWidth()) { Text(if (usageAccess) "Kelola akses penggunaan" else "Berikan akses penggunaan") }
+                FilledTonalButton({ open(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS, Uri.parse("package:${context.packageName}"))) }, Modifier.fillMaxWidth()) { Text(if (usageAccess) "Kelola akses penggunaan" else "Berikan akses penggunaan") }
+            }
+            if (!usageAccess) GuardCard {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Icon(Icons.Outlined.AdminPanelSettings, null, tint = MaterialTheme.colorScheme.primary)
+                    Text("Izin tidak bisa diaktifkan?", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                }
+                Text("Pesan ‘Aplikasi tidak diberi akses’ atau ‘Dikontrol oleh Setelan Terbatas’ berasal dari perlindungan Android untuk aplikasi yang dipasang dari APK.", style = MaterialTheme.typography.bodyMedium)
+                if (grantUsage != null && status == ShizukuStatus.READY) FilledTonalButton({ confirmGrant = true }, Modifier.fillMaxWidth(), enabled = !busy) { Text("Aktifkan akses melalui Shizuku") }
+                TextButton({ restrictedHelp = !restrictedHelp }, Modifier.fillMaxWidth()) { Text(if (restrictedHelp) "Sembunyikan langkah" else "Lihat cara mengizinkan akses") }
+                androidx.compose.animation.AnimatedVisibility(restrictedHelp) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("1. Buka Info aplikasi ScreenGuard Pro.\n2. Ketuk menu ⋮ di kanan atas.\n3. Pilih ‘Izinkan setelan terbatas’ dan konfirmasi dengan kunci layar.\n4. Kembali ke sini, lalu aktifkan akses penggunaan.", style = MaterialTheme.typography.bodyMedium)
+                        Text("Pada HyperOS, nama atau letak menu dapat berbeda. Jika pilihan belum muncul, buka halaman akses penggunaan sekali, lalu kembali ke Info aplikasi. ScreenGuard tidak dapat mengubah perlindungan ini secara otomatis.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        FilledTonalButton({ open(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))) }, Modifier.fillMaxWidth()) { Text("Buka info ScreenGuard Pro") }
+                        TextButton({ open(Intent(Intent.ACTION_VIEW, Uri.parse("https://support.google.com/android/answer/12623953?hl=id"))) }, Modifier.fillMaxWidth()) { Text("Panduan resmi Android") }
+                    }
+                }
             }
             GuardCard {
                 Text("2. Hubungkan Shizuku", style = MaterialTheme.typography.titleMedium)
@@ -54,4 +73,10 @@ import id.wynn.screenguard.privilege.ShizukuStatus
             TextButton(refresh, Modifier.fillMaxWidth()) { Text("Periksa status kembali") }
         }
     }
+    if (confirmGrant) AlertDialog(onDismissRequest = { confirmGrant = false },
+        title = { Text("Aktifkan akses penggunaan?") },
+        text = { Text("Dengan izin Shizuku, ScreenGuard akan mengaktifkan akses statistik penggunaan untuk dirinya sendiri. Akses ini dipakai untuk durasi aplikasi, grafik, dan batas harian. Data tetap di perangkat. Kebijakan vendor dapat tetap menolak operasi ini.") },
+        confirmButton = { TextButton({ confirmGrant = false; grantUsage?.invoke() }) { Text("Aktifkan") } },
+        dismissButton = { TextButton({ confirmGrant = false }) { Text("Batal") } })
+
 }

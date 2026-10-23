@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import id.wynn.screenguard.domain.*
 import id.wynn.screenguard.privilege.ShizukuStatus
 
-@Composable fun UsageScreen(device: DeviceData, back: () -> Unit, selected: (InstalledApp) -> Unit) {
+@Composable fun UsageScreen(device: DeviceData, back: () -> Unit, freeze: (() -> Unit)? = null, selected: (InstalledApp) -> Unit) {
     var range by rememberSaveable { mutableIntStateOf(0) }
     var category by rememberSaveable { mutableIntStateOf(0) }
     var query by rememberSaveable { mutableStateOf("") }
@@ -28,7 +28,7 @@ import id.wynn.screenguard.privilege.ShizukuStatus
         when (category) { 1 -> it.category == ApplicationInfo.CATEGORY_SOCIAL; 2 -> it.category == ApplicationInfo.CATEGORY_VIDEO; 3 -> it.category == ApplicationInfo.CATEGORY_GAME; else -> true }
     }.sortedByDescending { usage[it.packageName] ?: 0 }
     Column {
-        PageHeader("Penggunaan Aplikasi", back)
+        PageHeader("Penggunaan Aplikasi", back, action = { if (freeze != null) IconButton(freeze) { Icon(Icons.Outlined.AcUnit, "Bekukan aplikasi") } })
         LazyColumn(contentPadding = PaddingValues(20.dp, 8.dp, 20.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item { PillTabs(listOf("Hari ini", "7 hari", "30 hari"), range) { range = it } }
             item { GuardCard {
@@ -42,14 +42,14 @@ import id.wynn.screenguard.privilege.ShizukuStatus
                 }
             } }
             if (days.any { it.estimated }) item { Text("Riwayat lama memakai agregat Android dan dapat berupa perkiraan. Data harian tersimpan lokal hingga 90 hari.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            item { OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), label = { Text("Cari aplikasi") }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, singleLine = true, shape = RoundedCornerShape(16.dp)) }
+            item { OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), label = { Text("Cari aplikasi") }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, singleLine = true, shape = RoundedCornerShape(20.dp)) }
             item { LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 itemsIndexed(listOf("Semua", "Sosial", "Video", "Game")) { i, name -> FilterChip(category == i, { category = i }, label = { Text(name) }) }
             } }
             if (!device.usageAccess) item { InfoBanner("Buka Pengaturan → Akses penggunaan untuk memberikan izin statistik.") }
             if (apps.isEmpty()) item { EmptyState("Tidak ada aplikasi", "Coba kategori atau kata pencarian lain.") }
             items(apps, key = { it.packageName }) { app ->
-                Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
+                Surface(modifier = Modifier.animateItem(), shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface) {
                     Box(Modifier.padding(horizontal = 12.dp)) { UsageRow(app, usage[app.packageName] ?: 0, total) { selected(app) } }
                 }
             }
@@ -74,12 +74,12 @@ import id.wynn.screenguard.privilege.ShizukuStatus
                 InfoBanner("Alternatif: bekukan aplikasi untuk menghentikan aplikasi beserta koneksinya.", Icons.Outlined.AcUnit, action = fallback)
             }
             item { PillTabs(listOf("Semua Aplikasi", "Diblokir (${state.rules.values.count { it.networkBlocked }})"), tab) { tab = it } }
-            item { OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), label = { Text("Cari aplikasi") }, singleLine = true, shape = RoundedCornerShape(16.dp), leadingIcon = { Icon(Icons.Outlined.Search, null) }) }
+            item { OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), label = { Text("Cari aplikasi") }, singleLine = true, shape = RoundedCornerShape(20.dp), leadingIcon = { Icon(Icons.Outlined.Search, null) }) }
             if (apps.isEmpty()) item { EmptyState("Belum ada aplikasi", "Aplikasi yang sesuai akan ditampilkan di sini.") }
             items(apps, key = { it.packageName }) { app ->
                 val rule = state.rules[app.packageName]
                 val blocked = rule?.appliedNetwork == true
-                GuardCard {
+                GuardCard(Modifier.animateItem()) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         AppIcon(app)
                         Column(Modifier.weight(1f)) {
@@ -114,14 +114,14 @@ import id.wynn.screenguard.privilege.ShizukuStatus
         LazyColumn(contentPadding = PaddingValues(20.dp, 8.dp, 20.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item { Text("Tangguhkan atau nonaktifkan aplikasi sementara.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             item { PillTabs(listOf("Terpasang", "Dibekukan ($lockedCount)"), tab) { tab = it } }
-            item { OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), label = { Text("Cari aplikasi") }, singleLine = true, shape = RoundedCornerShape(16.dp)) }
+            item { OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), label = { Text("Cari aplikasi") }, singleLine = true, shape = RoundedCornerShape(20.dp)) }
             if (!ready) item { InfoBanner("Hubungkan Shizuku untuk membekukan dan memulihkan aplikasi.", Icons.Outlined.Shield) }
             item { InfoBanner("Buka aplikasi yang dibekukan melalui halaman ini untuk menjalani tantangan. Android tidak mengizinkan kami mengganti layar peluncur aplikasi lain.", Icons.Outlined.LockOpen) }
             if (apps.isEmpty()) item { EmptyState("Tidak ada aplikasi", "Daftar mengikuti filter yang dipilih.") }
             items(apps, key = { it.packageName }) { app ->
                 val rule = state.rules[app.packageName]
                 val locked = rule?.let { it.freeze != FreezeMode.NONE || it.ownedDisable || it.ownedSuspension } == true
-                Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
+                Surface(modifier = Modifier.animateItem(), shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface) {
                     Column(Modifier.padding(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             AppIcon(app, 36.dp)

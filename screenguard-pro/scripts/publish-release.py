@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+"""Runs only after verified production signing in the protected release environment."""
+import base64
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+
+repo = os.environ['GITHUB_REPOSITORY']
+assert repo == 'WynnDev-rill/Wynn-Store'
+apk = Path('app/build/outputs/apk/release/app-release.apk')
+build = Path('app/build.gradle.kts').read_text()
+version = re.search(r'versionName = "([0-9]+\.[0-9]+\.[0-9]+)"', build).group(1)
+code = int(re.search(r'versionCode = (\d+)', build).group(1))
+verification = subprocess.check_output([f'{os.environ["ANDROID_HOME"]}/build-tools/36.0.0/apksigner', 'verify', '--print-certs', str(apk)], text=True)
+signer = re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-f]+)', verification).group(1)
+tag = f'screenguard-v{version}'
+name = f'ScreenGuard-Pro-{version}.apk'
+output = Path('dist'); output.mkdir(exist_ok=True)
+public_apk = output / name; public_apk.write_bytes(apk.read_bytes())
+manifest = dict(versionCode=code, versionName=version, packageName='id.wynn.screenguard', minSdk=30,
+    apkUrl=f'https://github.com/{repo}/releases/download/{tag}/{name}', sha256=hashlib.sha256(apk.read_bytes()).hexdigest(),
+    signerSha256=signer, sizeBytes=apk.stat().st_size, notes='Peningkatan ScreenGuard Pro. Lihat catatan rilis dan kode sumber untuk perubahan lengkap.')
+metadata = output / 'update.json'; metadata.write_text(json.dumps(manifest, indent=2) + '\n')
+endpoint = f'repos/{repo}/contents/screenguard-pro/updates/stable.json'
+previous = subprocess.run(['gh', 'api', endpoint], text=True, capture_output=True)
+request = dict(message=f'chore(screenguard): publish update feed {version}', branch='main', content=base64.b64encode(metadata.read_bytes()).decode())
+if previous.returncode == 0:
+    old = json.loads(previous.stdout)
+    old_metadata = json.loads(base64.b64decode(old['content']))
+    assert code > old_metadata['versionCode'], 'versionCode must increase'
+    assert signer == old_metadata['signerSha256'], 'Signing certificate must match existing stable channel'
+    request['sha'] = old['sha']
+# Never mutate an existing release asset/version. versionCode must increase.
+subprocess.run(['gh', 'release', 'create', tag, str(public_apk), str(metadata), '--repo', repo, '--target', os.environ['GITHUB_SHA'],
+    '--title', f'ScreenGuard Pro {version}', '--notes', f'Native Android 11+. Source: {os.environ["GITHUB_SHA"]}. SHA-256: {manifest["sha256"]}', '--latest=false'], check=True)
+subprocess.run(['gh', 'api', '--method', 'PUT', endpoint, '--input', '-'], input=json.dumps(request), text=True, check=True, stdout=subprocess.DEVNULL)

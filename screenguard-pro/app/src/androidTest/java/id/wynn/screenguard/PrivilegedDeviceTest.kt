@@ -42,6 +42,10 @@ class PrivilegedDeviceTest {
         withTimeout(20_000) { while (graph.gateway.status.value != ShizukuStatus.READY) delay(200) }
         assertEquals(2000, Shizuku.getUid()) // Test the no-root path.
         assertTrue(graph.gateway.firewallSupported.value)
+        ui.executeShellCommand("cmd appops set ${context.packageName} GET_USAGE_STATS ignore")
+        assertFalse(graph.usage.hasAccess())
+        graph.gateway.grantOwnUsageAccess()
+        assertTrue(graph.usage.hasAccess())
         val pkg = "id.wynn.guardfixture"
         val pm = context.packageManager
         val info = pm.getApplicationInfo(pkg, 0)

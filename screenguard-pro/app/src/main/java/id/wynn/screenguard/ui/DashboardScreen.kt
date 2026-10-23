@@ -42,7 +42,7 @@ import id.wynn.screenguard.domain.*
             InfoBanner(if (!device.usageAccess) "Aktifkan akses penggunaan untuk melihat waktu layar." else "Shizuku belum terhubung. Kontrol aplikasi belum siap.", Icons.Outlined.Shield, action = permissions)
         }
         item {
-            GuardCard(contentPadding = 12.dp, spacing = 8.dp) {
+            GuardCard(contentPadding = 16.dp, spacing = 12.dp) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Text("Total waktu layar hari ini", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -64,7 +64,7 @@ import id.wynn.screenguard.domain.*
             }
         }
         item {
-            GuardCard(contentPadding = 12.dp, spacing = 8.dp) {
+            GuardCard(contentPadding = 16.dp, spacing = 12.dp) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                     Text("Tren Mingguan", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                     Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primaryContainer) {
@@ -78,7 +78,7 @@ import id.wynn.screenguard.domain.*
             }
         }
         item {
-            GuardCard(contentPadding = 12.dp, spacing = 8.dp) {
+            GuardCard(contentPadding = 16.dp, spacing = 12.dp) {
                 SectionTitle("Paling banyak digunakan", "Semua") { navigate(Page.USAGE) }
                 if (top.isEmpty()) Text("Belum ada data penggunaan hari ini.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 else Column { top.forEach { (app, ms) -> UsageRow(app, ms, total, compact = true) { selectApp(app) } } }
@@ -108,7 +108,7 @@ import id.wynn.screenguard.domain.*
     }
 }
 @Composable private fun QuickAction(title: String, icon: ImageVector, modifier: Modifier, action: () -> Unit) {
-    Surface(onClick = action, modifier = modifier.heightIn(min = 54.dp), shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.primaryContainer) {
+    Surface(onClick = action, modifier = modifier.heightIn(min = 54.dp), shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.primaryContainer) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(icon, null, Modifier.size(21.dp), tint = MaterialTheme.colorScheme.primary)
             Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)

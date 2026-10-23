@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         setContent { ScreenGuardApp(viewModel) }
     }
     override fun onResume() {
-        super.onResume(); viewModel.refresh()
+        super.onResume(); viewModel.refresh(); viewModel.checkUpdates()
         if ((application as GuardApplication).store.state.value.settings.monitorEnabled) GuardMonitorService.start(this)
     }
     override fun onStop() { viewModel.invalidateSession(); super.onStop() }

@@ -12,6 +12,8 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
@@ -20,7 +22,9 @@ import id.wynn.screenguard.domain.*
 import id.wynn.screenguard.privilege.ShizukuStatus
 
 @Composable fun SettingsScreen(state: GuardState, status: ShizukuStatus, back: () -> Unit, secure: (() -> Unit) -> Unit,
-    permissions: () -> Unit, change: ((GuardSettings) -> GuardSettings) -> Unit, pin: () -> Unit, removePin: () -> Unit, restore: () -> Unit) {
+    permissions: () -> Unit, change: ((GuardSettings) -> GuardSettings) -> Unit, pin: () -> Unit, removePin: () -> Unit, restore: () -> Unit,
+    update: id.wynn.screenguard.update.AppUpdater.State = id.wynn.screenguard.update.AppUpdater.State(),
+    autoUpdate: Boolean = true, checkUpdate: () -> Unit = {}, autoUpdateChange: (Boolean) -> Unit = {}) {
     var dialog by remember { mutableStateOf<String?>(null) }
     var goal by remember { mutableStateOf(state.settings.dailyGoalMinutes.toString()) }
     val context = LocalContext.current
@@ -39,6 +43,19 @@ import id.wynn.screenguard.privilege.ShizukuStatus
                 SettingsRow(Icons.Outlined.Bolt, "Status Shizuku", status.label, if (status == ShizukuStatus.READY) "Terhubung" else "Periksa", permissions)
                 SettingsRow(Icons.Outlined.MenuBook, "Panduan Shizuku & HyperOS", "Izin, restart, dan penghematan baterai", onClick = permissions)
                 SettingsRow(Icons.Outlined.Restore, "Pulihkan semua aplikasi", "Lepas blokir dan kunci milik ScreenGuard", onClick = { secure { dialog = "restore" } })
+            } }
+            item { SectionTitle("Pembaruan aplikasi") }
+            item { GuardCard {
+                SettingsRow(Icons.Outlined.SystemUpdate, "Periksa update", update.message,
+                    if (update.checking) "Memeriksa…" else "v${BuildConfig.VERSION_NAME}", onClick = checkUpdate)
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Periksa saat dibuka", style = MaterialTheme.typography.titleMedium)
+                        Text("Menghubungi GitHub untuk metadata versi. Data penggunaan tetap lokal.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(autoUpdate, autoUpdateChange, modifier = Modifier.semantics { contentDescription = "Periksa update otomatis" })
+                }
+                if (update.error) Text(update.message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             } }
             item { SectionTitle("Umum") }
             item { GuardCard {
@@ -60,7 +77,7 @@ import id.wynn.screenguard.privilege.ShizukuStatus
         } }, confirmButton = { TextButton({ dialog = null }) { Text("Tutup") } })
         "goal" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Target harian") }, text = { OutlinedTextField(goal, { goal = it.filter(Char::isDigit).take(4) }, label = { Text("Menit (1–1440)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)) }, confirmButton = { TextButton({ goal.toIntOrNull()?.takeIf { it in 1..1440 }?.let { minutes -> change { it.copy(dailyGoalMinutes = minutes) }; dialog = null } }, enabled = goal.toIntOrNull() in 1..1440) { Text("Simpan") } }, dismissButton = { TextButton({ dialog = null }) { Text("Batal") } })
         "about" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("ScreenGuard Pro") }, text = { Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("v${BuildConfig.VERSION_NAME} · Android 11+\nAplikasi native Kotlin dan Jetpack Compose. Tanpa akun, server, analitik, iklan, VPN, atau izin internet.")
+            Text("v${BuildConfig.VERSION_NAME} · Android 11+\nAplikasi native Kotlin dan Jetpack Compose. Tanpa akun, server pribadi, analitik, iklan, atau VPN. Izin internet hanya dipakai untuk memeriksa dan mengunduh update resmi dari GitHub.")
             Text("Kode sumber: GPL-3.0. Referensi: ShizuWall (GPL-3.0) dan Hail (GPL-3.0). Dependensi AndroidX, Kotlin, dan Shizuku API: Apache-2.0.")
             Text("PIN melindungi pengaturan ScreenGuard. Pemilik perangkat masih dapat mencabut izin, menghentikan aplikasi, atau menghapusnya melalui Android.", style = MaterialTheme.typography.bodySmall)
             TextButton({ context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/WynnDev-rill/Wynn-Store/tree/main/screenguard-pro"))) }) { Text("Kode sumber & lisensi") }

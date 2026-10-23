@@ -16,6 +16,19 @@ data class DeviceData(val apps: List<InstalledApp> = emptyList(), val days: List
 
 class GuardViewModel(application: Application) : AndroidViewModel(application) {
     val graph = application as GuardApplication
+    val updater = id.wynn.screenguard.update.AppUpdater(application)
+    private var updateJob: Job? = null
+    private var lastUpdateAttempt = 0L
+    fun checkUpdates(manual: Boolean = false) {
+        if (!manual && (!updater.automatic.value || lastUpdateAttempt > 0 && SystemClock.elapsedRealtime() - lastUpdateAttempt < 120_000)) return
+        lastUpdateAttempt = SystemClock.elapsedRealtime()
+        viewModelScope.launch { updater.check() }
+    }
+    fun downloadUpdate() { if (updateJob?.isActive != true) updateJob = viewModelScope.launch { updater.download() } }
+    fun cancelUpdate() { updateJob?.cancel() }
+    fun installUpdate(launch: (android.content.Intent) -> Unit) { secure { viewModelScope.launch {
+        updater.install()?.let { intent -> runCatching { launch(intent) }.onFailure { message.value = "Pemasang tidak dapat dibuka: ${it.message}" } }
+    } } }
     val state = graph.store.state
     val status = graph.gateway.status
     val firewall = graph.gateway.firewallSupported.asStateFlow()
@@ -89,6 +102,11 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
         val errors = graph.controller.reconcile()
         if (errors.isNotEmpty()) message.value = errors.joinToString("\n").take(700)
     }
+    fun grantUsageThroughShizuku() = secure { work {
+        graph.gateway.grantOwnUsageAccess()
+        check(graph.usage.hasAccess()) { "Perangkat belum mengizinkan akses. Gunakan Info aplikasi → Izinkan setelan terbatas, lalu coba kembali." }
+        message.value = "Akses penggunaan aktif. Statistik dan batas harian siap digunakan."
+    } }
     fun setNetwork(app: InstalledApp, blocked: Boolean) = secure { work {
         check(!app.protected && !app.sharedUid) { "Aplikasi ini dilindungi atau memakai UID bersama" }
         check(firewall.value) { "Firewall tidak tersedia. Periksa Shizuku dan dukungan Android." }

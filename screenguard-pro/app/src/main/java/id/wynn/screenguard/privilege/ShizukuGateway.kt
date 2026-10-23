@@ -65,6 +65,7 @@ class ShizukuGateway(context: Context, private val scope: CoroutineScope) : Priv
         if (!Shizuku.pingBinder()) { mutableStatus.value = ShizukuStatus.STOPPED; return }
         runCatching { Shizuku.requestPermission(10) }.onFailure { error.value = it.message; mutableStatus.value = ShizukuStatus.ERROR }
     }
+    suspend fun grantOwnUsageAccess() = execute { it.grantOwnUsageAccess() }
     override suspend fun network(pkg: String, uid: Int, blocked: Boolean) = execute { it.network(pkg, uid, blocked) }
     override suspend fun freeze(pkg: String, userId: Int, mode: Int, enabled: Boolean) = execute { it.freeze(pkg, userId, mode, enabled) }
     private suspend fun execute(action: (IGuardService) -> String) = withContext(Dispatchers.IO) {

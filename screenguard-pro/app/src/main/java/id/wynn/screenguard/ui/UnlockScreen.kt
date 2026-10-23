@@ -1,6 +1,7 @@
 package id.wynn.screenguard.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.animation.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -29,7 +30,9 @@ import id.wynn.screenguard.domain.*
             Spacer(Modifier.height(8.dp))
             GuardCard {
                 Text(if (settings.unlockMode == UnlockMode.MATH) "Berapa hasil dari" else "Tarik napas. Tunggu sebentar.", Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(if (settings.unlockMode == UnlockMode.MATH) challenge.question else "$remaining detik", Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
+                AnimatedContent(if (settings.unlockMode == UnlockMode.MATH) challenge.question else "$remaining detik", label = "challenge", transitionSpec = { fadeIn() togetherWith fadeOut() }) { label ->
+                    Text(label, Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
+                }
                 if (settings.unlockMode == UnlockMode.MATH) OutlinedTextField(answer, { answer = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth(), label = { Text("Masukkan jawaban") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, shape = RoundedCornerShape(12.dp), isError = error != null)
                 else LinearProgressIndicator(progress = { 1 - remaining.toFloat() / settings.waitSeconds.coerceAtLeast(1) }, modifier = Modifier.fillMaxWidth())
                 if (error != null) Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)

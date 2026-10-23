@@ -24,3 +24,6 @@ Dokumentasi resmi yang diperiksa:
 - [Batas memulai foreground service dari latar](https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start)
 - [WorkManager periodic work](https://developer.android.com/develop/background-work/background-tasks/persistent/getting-started/define-work#schedule_periodic_work)
 - [Android app signing](https://developer.android.com/studio/publish/app-signing)
+
+| [Plus Jakarta Sans](https://github.com/tokotype/PlusJakartaSans) | SIL Open Font License 1.1 | Font lokal, empat bobot statis diturunkan dari font variabel Google Fonts; teks OFL dibundel di APK |
+| [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | MIT (beserta pemberitahuan sumber vendor) | Skill desain lokal, bukan dependensi runtime APK; lihat `.agents/skills/ui-ux-pro-max/LICENSE` |
