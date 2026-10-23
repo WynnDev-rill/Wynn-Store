@@ -155,7 +155,10 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
         syncMonitor()
         reconcile()
     }
-    fun removeGate(app: InstalledApp) = secure { work { clearGate(app.packageName) } }
+    fun removeGate(app: InstalledApp) = secure { work {
+        check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku sebelum mengaktifkan kembali aplikasi" }
+        clearGate(app.packageName)
+    } }
 
     fun closeAccess(app: InstalledApp) = work {
         graph.store.rule(app.packageName) { it.copy(overrideUntil = 0) }; reconcile()
