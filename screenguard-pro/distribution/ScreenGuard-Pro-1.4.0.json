@@ -1,0 +1,13 @@
+{
+  "versionCode": 5,
+  "versionName": "1.4.0",
+  "packageName": "id.wynn.screenguard",
+  "minSdk": 30,
+  "sha256": "66b7816eb1832a7108fe53f10d324988eb74d0b9823811056a4d4c95dc4f2a52",
+  "unsignedSha256": "39d4aaab29bc18f2c02c6b9e4349537d9b7ec9cbb867bcb3262d5a17d56bc95d",
+  "signerSha256": "eca17e8afa84775e941e0e490741b01636e7941da545c508f85b8a256a4f346a",
+  "sizeBytes": 3491656,
+  "sourceCommit": "b2b5c1129d5dd5382ed3502d68c83f09e43c32ef",
+  "workflowRun": "https://github.com/WynnDev-rill/Wynn-Store/actions/runs/39920447235",
+  "signing": "Original production key, signed locally; key and credentials kept outside repository. APK v3 verified locally; signed install/data-retention and live updater tests run in release workflow."
+}
