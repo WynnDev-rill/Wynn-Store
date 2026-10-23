@@ -78,6 +78,8 @@ object AccessSession {
     val focusUntil: Long = 0,
     val unlockMode: UnlockMode = UnlockMode.MATH,
     val waitSeconds: Int = 30,
+    val freezeChallengeEnabled: Boolean = false,
+    val freezeGate: AccessGate = AccessGate(),
     val dailyGoalMinutes: Int = 240,
     val darkMode: Boolean = false,
     val pinSalt: String = "",
@@ -128,6 +130,19 @@ object PolicyEngine {
 
 data class InstalledApp(val packageName: String, val label: String, val uid: Int, val category: Int,
     val enabled: Boolean, val suspended: Boolean, val protected: Boolean, val sharedUid: Boolean, val system: Boolean = false, val launchable: Boolean = true)
+
+/** Only packages explicitly added to Bekukan appear in the home collection.
+ * A previously disabled managed package stays visible even without a launcher icon.
+ * Scheduled/automatic gates are not added to the manual collection.
+ */
+object FreezeCatalog {
+    fun selected(state: GuardState, apps: List<InstalledApp>): List<InstalledApp> =
+        apps.filter { state.rules[it.packageName]?.gate?.automaticOnly == false }
+            .sortedBy { it.label.lowercase() }
+
+    fun canAdd(app: InstalledApp, rule: AppRule?): Boolean =
+        !app.protected && app.launchable && app.enabled && !app.suspended && rule?.gate == null
+}
 
 object PackageSafety {
     private val protectedNames = setOf("android", "com.android.settings", "com.android.systemui", "com.android.phone",
