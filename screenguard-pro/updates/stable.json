@@ -1,11 +1,11 @@
 {
-  "versionCode": 4,
-  "versionName": "1.3.0",
+  "versionCode": 5,
+  "versionName": "1.4.0",
   "packageName": "id.wynn.screenguard",
   "minSdk": 30,
-  "apkUrl": "https://github.com/WynnDev-rill/Wynn-Store/releases/download/screenguard-v1.3.0/ScreenGuard-Pro-1.3.0.apk",
-  "sha256": "45fb46b0c5fee0f5ea6b0fead9e307e87e4d0082f09f8089baaad428a51bc194",
+  "apkUrl": "https://github.com/WynnDev-rill/Wynn-Store/releases/download/screenguard-v1.4.0/ScreenGuard-Pro-1.4.0.apk",
+  "sha256": "66b7816eb1832a7108fe53f10d324988eb74d0b9823811056a4d4c95dc4f2a52",
   "signerSha256": "eca17e8afa84775e941e0e490741b01636e7941da545c508f85b8a256a4f346a",
-  "sizeBytes": 3450895,
-  "notes": "Peningkatan ScreenGuard Pro. Lihat catatan rilis dan kode sumber untuk perubahan lengkap."
+  "sizeBytes": 3491656,
+  "notes": "Statistik layar dan aplikasi dihitung ulang dari kejadian Android; riwayat/per jam lebih jelas. Bekukan: pilih banyak aplikasi, pencarian, sisa akses, menu aplikasi dan bekukan sekarang. Notifikasi sesi manual dihapus; kategori pemantauan otomatis dapat disembunyikan. Ikon SG diseragamkan. Data pengaturan dan identitas aplikasi tetap dipertahankan."
 }
