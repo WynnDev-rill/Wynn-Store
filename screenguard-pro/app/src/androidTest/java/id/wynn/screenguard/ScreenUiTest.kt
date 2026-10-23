@@ -70,19 +70,26 @@ class ScreenUiTest {
         compose.onNodeWithContentDescription("Blokir internet YouTube").assertIsNotEnabled()
         capture("03-network")
     }
-    @Test fun freezeSearchAndDownloadSystemFiltersReallyWork() {
-        val filtered = data.copy(apps = apps.mapIndexed { i, app -> app.copy(system = i == 0) })
-        var selected: InstalledApp? = null
-        content { FreezeScreen(state, filtered, true, false, {}, {}, { selected = it }) }
-        capture("04-freeze")
-        compose.onNodeWithText("Unduhan").performClick()
+    @Test fun freezeOnlyShowsSelectedAppsAndPlusAddsNewApps() {
+        val chosen = apps[1]
+        val manual = state.copy(rules = mapOf(chosen.packageName to AppRule(
+            chosen.packageName, freeze = FreezeMode.DISABLE, gate = AccessGate(), ownedDisable = true)))
+        var added: InstalledApp? = null
+        var opened: InstalledApp? = null
+        content { FreezeScreen(manual, data, true, false,
+            { added = it }, { opened = it }, {}, { _, _ -> }, {}) }
+        compose.onNodeWithText("TikTok").assertIsDisplayed()
         compose.onNodeWithText("YouTube").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Kembali").assertDoesNotExist()
         compose.onNodeWithText("TikTok").performClick()
-        org.junit.Assert.assertEquals(apps[1].packageName, selected?.packageName)
-        compose.onNodeWithText("Sistem").performClick()
+        org.junit.Assert.assertEquals(chosen.packageName, opened?.packageName)
+        compose.onNodeWithContentDescription("Tambah aplikasi").performClick()
         compose.onNodeWithText("YouTube").assertExists()
-        compose.onNodeWithText("TikTok").assertDoesNotExist()
+        compose.onNodeWithText("YouTube").performClick()
+        org.junit.Assert.assertEquals(apps[0].packageName, added?.packageName)
+        capture("04-freeze")
     }
+
     @Test fun waitChallengeCannotUnlockEarly() {
         content { UnlockScreen(apps[0], AccessGate(mode = GateMode.WAIT), MathChallenge(17, 8, 2), 0, 10, null, false, {}, {}, {}) }
         compose.onNodeWithText("Buka 5 menit").assertIsNotEnabled()
