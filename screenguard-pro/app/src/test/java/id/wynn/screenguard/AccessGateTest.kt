@@ -95,4 +95,11 @@ class AccessGateTest {
         assertFalse(FreezeCatalog.canAdd(ordinary.copy(suspended = true), null))
     }
 
+    @Test fun failedUnfreezeRemainsRecoverableInCuratedCollection() {
+        val app = InstalledApp("com.example.retry", "Retry", 10140, -1, false, false, false, false)
+        val residual = AppRule(app.packageName, ownedDisable = true, lastError = "Shizuku stopped")
+        val state = GuardState(rules = mapOf(app.packageName to residual))
+        assertEquals(listOf(app), FreezeCatalog.selected(state, listOf(app)))
+        assertFalse(FreezeCatalog.canAdd(app.copy(enabled = true), residual))
+    }
 }
