@@ -36,7 +36,7 @@ for attempt in range(24):
 else: raise SystemExit('Live stable feed did not activate 1.3.0')
 print('Live feed active:',feed['versionName'],feed['sha256'])
 PY
-adb shell am instrument -w -e class id.wynn.screenguard.ProductionUpgradeTest -e upgrade true -e releaseVersion 1.3.0 -e installUpdate true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/production-1.2-to-1.3.txt
+adb shell am instrument -w -e class id.wynn.screenguard.ProductionUpgradeTest -e upgrade true -e releaseVersion 1.3.0 -e installUpdate true -e manualCheck "${SG_MANUAL_UPDATE_CHECK:-false}" id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/production-1.2-to-1.3.txt
 grep -q 'OK (1 test)' qa/output/production-1.2-to-1.3.txt
 adb shell am instrument -w -e class id.wynn.screenguard.ProductionUpdateTest -e production true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/production-1.3-live-feed.txt
 grep -q 'OK (1 test)' qa/output/production-1.3-live-feed.txt

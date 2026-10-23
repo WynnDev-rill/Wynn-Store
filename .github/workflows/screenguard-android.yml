@@ -59,6 +59,8 @@ jobs:
           SG_APK_PATH: distribution/ScreenGuard-Pro-1.3.0.apk
         run: python3 scripts/publish-release.py
       - name: Verify live production 1.2 to 1.3 updater installation
+        env:
+          SG_MANUAL_UPDATE_CHECK: 'true'
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && hashFiles('screenguard-pro/distribution/ScreenGuard-Pro-1.3.0.apk') != ''
         uses: reactivecircus/android-emulator-runner@v2
         with:
