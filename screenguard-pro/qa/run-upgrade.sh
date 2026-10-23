@@ -2,6 +2,21 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p qa/output screenshots
+collect() {
+  adb logcat -d > qa/output/production-upgrade-logcat.txt || true
+  adb shell dumpsys connectivity > qa/output/upgrade-connectivity.txt || true
+  adb shell uiautomator dump /sdcard/upgrade-window.xml || true
+  adb pull /sdcard/upgrade-window.xml qa/output/upgrade-window.xml || true
+  adb exec-out screencap -p > qa/output/upgrade-final.png || true
+  adb pull /sdcard/Android/data/id.wynn.screenguard.debug/files/screenshots ./screenshots || true
+}
+trap collect EXIT
+# A cold emulator can finish booting before Android validates internet access.
+for attempt in $(seq 1 30); do
+  if adb shell dumpsys connectivity | grep -q VALIDATED; then break; fi
+  sleep 2
+done
+adb shell dumpsys connectivity | grep -q VALIDATED
 adb shell settings put system screen_off_timeout 2147483647
 adb shell input keyevent KEYCODE_WAKEUP
 adb shell wm dismiss-keyguard
@@ -29,3 +44,7 @@ adb shell dumpsys package id.wynn.screenguard > qa/output/production-installed-p
 adb pull /sdcard/Android/data/id.wynn.screenguard.debug/files/screenshots ./screenshots
 adb logcat -d -b crash > qa/output/production-upgrade-crash.txt
 if grep -Fq 'Process: id.wynn.screenguard,' qa/output/production-upgrade-crash.txt; then exit 1; fi
+
+mkdir -p dist/production
+cp distribution/ScreenGuard-Pro-1.3.0.apk dist/production/
+sha256sum dist/production/ScreenGuard-Pro-1.3.0.apk > dist/production/RELEASE-SHA256.txt

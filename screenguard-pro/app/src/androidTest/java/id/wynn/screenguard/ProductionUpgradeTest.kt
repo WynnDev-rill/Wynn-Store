@@ -10,6 +10,15 @@ import java.io.File
 
 /** Runs the original production client against the real public feed and Android package installer. */
 class ProductionUpgradeTest {
+    @org.junit.Rule @JvmField val diagnostic = object : org.junit.rules.TestWatcher() {
+        override fun failed(error: Throwable, description: org.junit.runner.Description) {
+            val i = InstrumentationRegistry.getInstrumentation()
+            val ui = UiDevice.getInstance(i)
+            val dir = File(i.targetContext.getExternalFilesDir(null), "screenshots").apply { mkdirs() }
+            ui.takeScreenshot(File(dir, "upgrade-failure.png"))
+            ui.dumpWindowHierarchy(File(dir, "upgrade-failure.xml"))
+        }
+    }
     @Test fun previousProductionAutomaticallyDetectsAndVerifiesTheNewRelease() {
         assumeTrue(InstrumentationRegistry.getArguments().getString("upgrade") == "true")
         val instrument = InstrumentationRegistry.getInstrumentation()
