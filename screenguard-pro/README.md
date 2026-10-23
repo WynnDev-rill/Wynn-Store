@@ -1,5 +1,7 @@
 # ScreenGuard Pro
 
+Versi produksi terbaru: [unduh APK 1.1.0](distribution/ScreenGuard-Pro-1.1.0.apk). Pulihkan aturan di APK preview lama sebelum beralih; lihat [panduan migrasi dan update](docs/UPDATES.md).
+
 Aplikasi Android native Kotlin + Jetpack Compose untuk waktu layar, kontrol internet tanpa VPN, penangguhan aplikasi, jadwal, dan PIN orang tua. Proyek berdiri sendiri; situs Wynn Store, Road to Immortal, dan Lunabloom tidak diubah.
 
 ## Instalasi dan penggunaan

@@ -1,0 +1,11 @@
+{
+  "versionCode": 2,
+  "versionName": "1.1.0",
+  "packageName": "id.wynn.screenguard",
+  "minSdk": 30,
+  "apkUrl": "https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/screenguard-pro/distribution/ScreenGuard-Pro-1.1.0.apk",
+  "sha256": "2089488d95ffa085604b0069c5a3fe2d0dc39bf21b1489897bc20ad6c0e0cd4d",
+  "signerSha256": "eca17e8afa84775e941e0e490741b01636e7941da545c508f85b8a256a4f346a",
+  "sizeBytes": 3213159,
+  "notes": "Navigasi dock mengambang, font Plus Jakarta Sans, animasi native, panduan Setelan Terbatas, aktivasi akses penggunaan melalui Shizuku, serta pemeriksaan update saat aplikasi dibuka."
+}

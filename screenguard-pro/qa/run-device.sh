@@ -57,7 +57,10 @@ if [ -f distribution/ScreenGuard-Pro-1.1.0.apk ]; then
   sleep 3
   adb shell pidof id.wynn.screenguard
   adb logcat -d -b crash > qa/output/production-crash.txt
-  if grep -q 'Process: id.wynn.screenguard$' qa/output/production-crash.txt; then exit 1; fi
+  if grep -Fq 'Process: id.wynn.screenguard,' qa/output/production-crash.txt; then exit 1; fi
   adb exec-out screencap -p > qa/output/production-onboarding.png
+  adb shell am instrument -w -e class id.wynn.screenguard.ProductionUpdateTest -e production true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/production-update.txt
+  grep -q 'OK (1 test)' qa/output/production-update.txt
+  adb pull /sdcard/Android/data/id.wynn.screenguard.debug/files/screenshots ./screenshots || true
 fi
 test "$ui_status" -eq 0 && test "$privileged_status" -eq 0

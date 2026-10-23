@@ -12,6 +12,8 @@ ScreenGuard Pro dilisensikan **GPL-3.0**; lihat `LICENSE`. Lisensi ini berlaku p
 | [Robolectric](https://github.com/robolectric/robolectric) | MIT | Tes storage Android, hanya test scope |
 | [ShizuWall](https://github.com/AhmetCanArslan/ShizuWall/tree/8a51d90ec7fed3d2e53e027fe997052403ec6859) | GPL-3.0 | Referensi OEM_DENY_3, per-UID firewall, dan batas perangkat |
 | [Hail](https://github.com/aistra0528/Hail/tree/60742d0608f2d0abb4fa7e8bbc1b66b3888d22bc) | GPL-3.0 | Referensi enabled state, suspend, dan verifikasi status paket |
+| [Plus Jakarta Sans](https://github.com/tokotype/PlusJakartaSans) | SIL Open Font License 1.1 | Font lokal, empat bobot statis diturunkan dari font variabel Google Fonts; teks OFL dibundel di APK |
+| [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | MIT (beserta pemberitahuan sumber vendor) | Skill desain lokal, bukan dependensi runtime APK; lihat `.agents/skills/ui-ux-pro-max/LICENSE` |
 
 Tidak ada dependensi biner terhadap ShizuWall atau Hail. Implementasi bridge bersifat khusus untuk ScreenGuard dan endpoint AIDL bertipe. Distribusi turunan subproyek ini harus memenuhi GPL-3.0 dan menyediakan source yang sesuai dengan APK. Nama/logo aplikasi pihak ketiga diambil dari paket terinstal, tidak didistribusikan sebagai aset aplikasi.
 
@@ -25,5 +27,3 @@ Dokumentasi resmi yang diperiksa:
 - [WorkManager periodic work](https://developer.android.com/develop/background-work/background-tasks/persistent/getting-started/define-work#schedule_periodic_work)
 - [Android app signing](https://developer.android.com/studio/publish/app-signing)
 
-| [Plus Jakarta Sans](https://github.com/tokotype/PlusJakartaSans) | SIL Open Font License 1.1 | Font lokal, empat bobot statis diturunkan dari font variabel Google Fonts; teks OFL dibundel di APK |
-| [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | MIT (beserta pemberitahuan sumber vendor) | Skill desain lokal, bukan dependensi runtime APK; lihat `.agents/skills/ui-ux-pro-max/LICENSE` |
