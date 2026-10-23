@@ -1,0 +1,81 @@
+name: ScreenGuard Pro — Activate published APK update
+on:
+  release:
+    types: [published]
+permissions:
+  contents: write
+concurrency:
+  group: screenguard-update-feed
+  cancel-in-progress: false
+jobs:
+  activate:
+    if: startsWith(github.event.release.tag_name, 'screenguard-v') && github.repository == 'WynnDev-rill/Wynn-Store'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+      - name: Verify signed release before publishing the stable feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          mkdir -p "$RUNNER_TEMP/sg-release"
+          export RELEASE_DIR="$RUNNER_TEMP/sg-release"
+          python3 - <<'PY'
+          import os,re
+          tag=os.environ['TAG']
+          if not re.fullmatch(r'screenguard-v[0-9]+\.[0-9]+\.[0-9]+',tag):
+              raise SystemExit('Invalid ScreenGuard version tag')
+          with open(os.environ['GITHUB_ENV'],'a') as out:
+              out.write('SG_VERSION='+tag.removeprefix('screenguard-v')+'\n')
+          PY
+      - name: Download, inspect, and activate the APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${TAG#screenguard-v}"
+          name="ScreenGuard-Pro-${version}.apk"
+          apk="$RUNNER_TEMP/sg-release/$name"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$name" --dir "$RUNNER_TEMP/sg-release"
+          test -s "$apk"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$apk" > "$RUNNER_TEMP/sg-release/signature.txt"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk" > "$RUNNER_TEMP/sg-release/badging.txt"
+          python3 - "$apk" "$version" <<'PY'
+          import base64,hashlib,json,os,re,subprocess,sys,pathlib
+          apk=pathlib.Path(sys.argv[1])
+          version=sys.argv[2]
+          repo=os.environ['GITHUB_REPOSITORY']
+          endpoint=f'repos/{repo}/contents/screenguard-pro/updates/stable.json'
+          old=json.loads(base64.b64decode(json.loads(subprocess.check_output(['gh','api',endpoint],text=True))['content']))
+          info=pathlib.Path(os.environ['RUNNER_TEMP']+'/sg-release/badging.txt').read_text()
+          signer_text=pathlib.Path(os.environ['RUNNER_TEMP']+'/sg-release/signature.txt').read_text()
+          m=re.search(r"package: name='([^']+)' versionCode='(\d+)' versionName='([^']+)'",info)
+          assert m, 'Could not parse APK package and version'
+          package,code,actual=m.group(1),int(m.group(2)),m.group(3)
+          assert package=='id.wynn.screenguard' and actual==version, 'APK identity differs from release tag'
+          assert code>old['versionCode'], 'Release is not newer than installed stable version'
+          assert apk.stat().st_size<100_000_000, 'Release is too large'
+          ms=re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-f]+)',signer_text)
+          assert ms, 'APK certificate could not be inspected'
+          signer=ms.group(1).lower()
+          assert signer==old['signerSha256'].lower(), 'Signing certificate mismatch; refusing update'
+          assert 'Verified using v2 scheme (APK Signature Scheme v2): true' in signer_text or 'Verified using v3 scheme (APK Signature Scheme v3): true' in signer_text, 'No modern APK signing scheme verified'
+          manifest={
+              'versionCode':code,'versionName':version,'packageName':package,'minSdk':30,
+              'apkUrl':f'https://github.com/{repo}/releases/download/screenguard-v{version}/ScreenGuard-Pro-{version}.apk',
+              'sha256':hashlib.sha256(apk.read_bytes()).hexdigest(),'signerSha256':signer,'sizeBytes':apk.stat().st_size,
+              'notes':'Pembaruan ScreenGuard Pro '+version+'; pengelolaan Bekukan lebih sederhana.'}
+          payload={'message':'chore(screenguard): publish stable update '+version,
+              'branch':'main','sha':json.loads(subprocess.check_output(['gh','api',endpoint],text=True))['sha'],
+              'content':base64.b64encode((json.dumps(manifest,indent=2)+'\n').encode()).decode()}
+          subprocess.run(['gh','api','--method','PUT',endpoint,'--input','-'],input=json.dumps(payload),text=True,check=True,stdout=subprocess.DEVNULL)
+          print('Stable update activated:',version,'code:',code,'certificate matches prior release')
+          PY
