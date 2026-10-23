@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -23,9 +24,15 @@ import id.wynn.screenguard.privilege.ShizukuStatus
 @Composable fun PermissionsScreen(usageAccess: Boolean, status: ShizukuStatus, back: (() -> Unit)?, requestShizuku: () -> Unit, done: () -> Unit, refresh: () -> Unit, connectionError: String? = null, grantUsage: (() -> Unit)? = null, busy: Boolean = false) {
     val context = LocalContext.current
     var confirmGrant by remember { mutableStateOf(false) }
-    var restrictedHelp by remember { mutableStateOf(false) }
+    var restrictedHelp by rememberSaveable { mutableStateOf(false) }
     val notifyPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { refresh() }
-    fun open(intent: Intent) { runCatching { context.startActivity(intent) }.onFailure { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))) } }
+    fun open(intent: Intent) {
+        val launched = runCatching { context.startActivity(intent) }.isSuccess
+        if (!launched && intent.action == Settings.ACTION_USAGE_ACCESS_SETTINGS) {
+            if (runCatching { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }.isSuccess) return
+        }
+        if (!launched) runCatching { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))) }
+    }
     Column {
         if (back != null) PageHeader("Akses & Perizinan", back)
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {

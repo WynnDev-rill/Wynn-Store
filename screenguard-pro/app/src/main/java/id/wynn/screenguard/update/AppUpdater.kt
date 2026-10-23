@@ -75,21 +75,14 @@ class AppUpdater(private val context: Context) {
                 apk.delete(); partial.delete()
                 open(next.apkUrl).useConnection { connection ->
                     require(connection.responseCode == 200) { "Unduhan gagal (${connection.responseCode})" }
-                    val digest = MessageDigest.getInstance("SHA-256")
-                    var count = 0L
+                    val job = currentCoroutineContext()
                     connection.inputStream.use { input -> partial.outputStream().use { output ->
-                        val buffer = ByteArray(32 * 1024)
-                        while (true) {
-                            currentCoroutineContext().ensureActive()
-                            val n = input.read(buffer); if (n < 0) break
-                            count += n
-                            require(count <= next.sizeBytes && count <= UpdateManifest.MAX_APK_SIZE) { "Ukuran unduhan tidak sesuai" }
-                            digest.update(buffer, 0, n); output.write(buffer, 0, n)
+                        ApkTransfer.copy(input, output, next.sizeBytes, next.sha256) { count ->
+                            job.ensureActive()
                             state.value = state.value.copy(progress = count.toFloat() / next.sizeBytes)
                         }
                     } }
-                    require(count == next.sizeBytes) { "Unduhan belum lengkap" }
-                    require(hex(digest.digest()) == next.sha256.lowercase()) { "Checksum APK berbeda; unduhan dibatalkan" }
+
                 }
                 require(partial.renameTo(apk)) { "Tidak dapat menyimpan update" }
                 verifyApk(next)
@@ -117,7 +110,8 @@ class AppUpdater(private val context: Context) {
                 Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive")
                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-        } catch (e: Exception) {
+        } catch (e: CancellationException) { throw e }
+        catch (e: Exception) {
             state.value = state.value.copy(ready = false, error = true, message = e.message ?: "Pemasangan tidak tersedia")
             null
         }
