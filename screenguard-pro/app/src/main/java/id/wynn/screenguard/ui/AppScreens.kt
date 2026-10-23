@@ -63,7 +63,7 @@ import id.wynn.screenguard.privilege.ShizukuStatus
     var query by rememberSaveable { mutableStateOf("") }
     val apps = device.apps.filter { !it.protected && it.label.contains(query, true) && (tab == 0 || state.rules[it.packageName]?.networkBlocked == true) }
     Column {
-        PageHeader("Kontrol Internet", back)
+        PageHeader("Kontrol Internet", null)
         LazyColumn(contentPadding = PaddingValues(20.dp, 8.dp, 20.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item { Text("Blokir akses internet untuk aplikasi tertentu.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             item { InfoBanner("Saat diblokir, seluruh koneksi Wi-Fi dan data seluler aplikasi dihentikan. Kontrol terpisah tidak disediakan API Android ini.", Icons.Outlined.Wifi) }
