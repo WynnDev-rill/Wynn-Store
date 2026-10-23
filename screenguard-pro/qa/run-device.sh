@@ -60,6 +60,18 @@ if grep -q 'Error' qa/output/preview-launch.txt; then exit 1; fi
 if grep -q 'Process: id.wynn.screenguard.preview' qa/output/preview-crash.txt; then exit 1; fi
 adb shell pidof id.wynn.screenguard.preview
 adb exec-out screencap -p > qa/output/preview-onboarding.png
+# A rerun can check out the commit from before this job published its release.
+# Smoke-test the actual public channel, rather than that stale checkout manifest.
+python3 - <<'PY'
+import json,pathlib,urllib.request
+url='https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/screenguard-pro/updates/stable.json'
+with urllib.request.urlopen(urllib.request.Request(url,headers={'Cache-Control':'no-cache'}),timeout=20) as response:
+    feed=json.load(response)
+apk=pathlib.Path('distribution')/('ScreenGuard-Pro-'+feed['versionName']+'.apk')
+assert apk.is_file(), 'Live stable APK is not available in this checkout'
+pathlib.Path('updates/stable.json').write_text(json.dumps(feed,indent=2)+'\n')
+print('Production smoke-test channel:',feed['versionName'],feed['sha256'])
+PY
 production_apk="$(python3 -c 'import json,pathlib; f=pathlib.Path("updates/stable.json"); print("distribution/ScreenGuard-Pro-"+json.loads(f.read_text())["versionName"]+".apk")')"
 if [ -f "$production_apk" ]; then
   python3 qa/verify-distribution.py

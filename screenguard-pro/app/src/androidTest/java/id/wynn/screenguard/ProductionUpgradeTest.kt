@@ -57,8 +57,21 @@ class ProductionUpgradeTest {
                 ui.swipe(ui.displayWidth / 2, ui.displayHeight * 4 / 5, ui.displayWidth / 2, ui.displayHeight / 3, 24)
                 ui.waitForIdle()
             }
-            checkNotNull(check) { "Old production Settings has no update check" }.click()
-            assertTrue("Settings update check did not offer the published release", ui.wait(Until.hasObject(offered), 60_000))
+            checkNotNull(check) { "Old production Settings has no update check" }
+            // Raw GitHub may still serve the preceding manifest immediately after publication.
+            // Retry the ORIGINAL client's real Settings action, with a bounded propagation window.
+            // Keep each failed window as evidence; never inject a manifest or bypass verification.
+            var found = false
+            for (attempt in 1..6) {
+                if (ui.hasObject(offered)) { found = true; break }
+                checkNotNull(ui.findObject(By.pkg(pkg).text("Periksa update"))).click()
+                found = ui.wait(Until.hasObject(offered), 30_000)
+                println("Original production Settings attempt $attempt: offered=$found")
+                if (found) break
+                val dir = File(context.getExternalFilesDir(null), "screenshots").apply { mkdirs() }
+                ui.dumpWindowHierarchy(File(dir, "settings-attempt-$attempt.xml"))
+            }
+            assertTrue("Settings update check did not offer the published release after propagation window", found)
         } else {
             // Public HTTPS can fail transiently during emulator startup. Reopening the ORIGINAL
             // APK retries its own onResume check; no feed or updater is injected or mocked.
