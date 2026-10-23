@@ -47,9 +47,10 @@ private val iconCache = android.util.LruCache<String, ImageBitmap>(64)
     }
 }
 @Composable fun BrandMark(size: Dp = 42.dp) { Image(painterResource(R.drawable.brand_mark), null, Modifier.size(size).clip(RoundedCornerShape(size * .24f))) }
-@Composable fun PageHeader(title: String, back: () -> Unit, action: (@Composable () -> Unit)? = null) {
-    Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        IconButton(back) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Kembali") }
+@Composable fun PageHeader(title: String, back: (() -> Unit)?, action: (@Composable () -> Unit)? = null) {
+    Row(Modifier.fillMaxWidth().padding(start = if (back == null) 20.dp else 4.dp, end = 16.dp,
+        top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (back != null) IconButton(back) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Kembali") }
         Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
         if (action != null) action() else Spacer(Modifier.width(16.dp))
     }
