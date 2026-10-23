@@ -48,8 +48,8 @@ import kotlinx.coroutines.delay
         app.enabled && !app.suspended && it.overrideUntil > System.currentTimeMillis() && it.sessionUntilElapsed > now
     } == true
     val visible = selected.filter { (it.label.contains(query, true) || it.packageName.contains(query, true)) &&
-        (filter == 0 || filter == 1 && !isOpen(it) || filter == 2 && isOpen(it)) }
-    LaunchedEffect(state.rules) { while (state.rules.values.any { it.overrideUntil > 0 }) { now = android.os.SystemClock.elapsedRealtime(); delay(1_000) } }
+        (filter == 0 || filter == 1 && (!it.enabled || it.suspended) || filter == 2 && isOpen(it)) }
+    LaunchedEffect(state.rules) { while (state.rules.values.any { it.overrideUntil > 0 && it.sessionUntilElapsed > now }) { now = android.os.SystemClock.elapsedRealtime(); delay(1_000) } }
     LaunchedEffect(initialTarget, device.loading) {
         if (initialTarget != null && !device.loading) {
             val app = device.apps.find { it.packageName == initialTarget }
@@ -78,7 +78,7 @@ import kotlinx.coroutines.delay
         } else {
             OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth().padding(horizontal = 20.dp), label = { Text("Cari di Bekukan") },
                 singleLine = true, leadingIcon = { Icon(Icons.Outlined.Search, null) }, shape = RoundedCornerShape(18.dp))
-            Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("Semua", "Dibekukan", "Terbuka").forEachIndexed { index, label -> FilterChip(filter == index, { filter = index }, label = { Text(label) }) }
             }
             if (visible.isEmpty()) Box(Modifier.weight(1f)) { EmptyState("Tidak ditemukan", "Coba kata pencarian atau filter lain.") }

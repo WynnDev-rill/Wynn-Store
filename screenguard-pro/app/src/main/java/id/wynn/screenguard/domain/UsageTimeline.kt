@@ -14,6 +14,7 @@ object UsageTimeline {
     fun sessions(events: List<UsageEvent>, from: Long, until: Long): List<UsageSession> {
         require(until >= from)
         val active = mutableMapOf<String, MutableSet<String>>()
+        val waiting = mutableMapOf<String, MutableSet<String>>()
         val started = mutableMapOf<String, Long>()
         val sessions = mutableListOf<UsageSession>()
         var interactive = true
@@ -27,22 +28,35 @@ object UsageTimeline {
         events.asSequence().filter { it.time <= until }.sortedBy { it.time }.forEach { e ->
             when (e.kind) {
                 UsageEvent.Kind.RESUME -> {
-                    if (!interactive || !unlocked) return@forEach
+                    if (!interactive || !unlocked) { waiting.getOrPut(e.packageName) { mutableSetOf() }.add(e.activity); return@forEach }
                     val activities = active.getOrPut(e.packageName) { mutableSetOf() }
                     if (activities.isEmpty()) started[e.packageName] = e.time
                     activities.add(e.activity)
                 }
                 UsageEvent.Kind.PAUSE -> {
-                    active[e.packageName]?.remove(e.activity)
+                    waiting[e.packageName]?.remove(e.activity)
+                    if (e.activity.isBlank()) { active[e.packageName]?.clear(); waiting.remove(e.packageName) }
+                    else active[e.packageName]?.remove(e.activity)
                     if (active[e.packageName]?.isEmpty() == true) close(e.packageName, e.time)
                 }
-                UsageEvent.Kind.SCREEN_ON -> interactive = true
-                UsageEvent.Kind.UNLOCK -> { unlocked = true; interactive = true }
+                UsageEvent.Kind.SCREEN_ON, UsageEvent.Kind.UNLOCK -> {
+                    interactive = true
+                    if (e.kind == UsageEvent.Kind.UNLOCK) unlocked = true
+                    if (unlocked) {
+                        waiting.forEach { (pkg, activities) -> if (activities.isNotEmpty()) {
+                            active.getOrPut(pkg) { mutableSetOf() }.addAll(activities)
+                            started.putIfAbsent(pkg, e.time)
+                        } }
+                        waiting.clear()
+                    }
+                }
                 UsageEvent.Kind.SCREEN_OFF, UsageEvent.Kind.LOCK -> {
+                    if (e.kind == UsageEvent.Kind.LOCK) active.forEach { (pkg, activities) -> waiting.getOrPut(pkg) { mutableSetOf() }.addAll(activities) }
+                    else waiting.clear()
                     active.keys.toList().forEach { close(it, e.time) }
                     if (e.kind == UsageEvent.Kind.SCREEN_OFF) interactive = false else unlocked = false
                 }
-                UsageEvent.Kind.SHUTDOWN, UsageEvent.Kind.STARTUP -> { active.clear(); started.clear(); interactive = true; unlocked = true }
+                UsageEvent.Kind.SHUTDOWN, UsageEvent.Kind.STARTUP -> { active.clear(); waiting.clear(); started.clear(); interactive = true; unlocked = true }
             }
         }
         active.keys.toList().forEach { close(it, until) }
@@ -69,7 +83,7 @@ object UsageTimeline {
         val ordered = events.filter { it.time <= until }.sortedBy { it.time }
         val display = ordered.any { it.kind == UsageEvent.Kind.SCREEN_ON || it.kind == UsageEvent.Kind.SCREEN_OFF }
         val unlocks = ordered.count { it.kind == UsageEvent.Kind.UNLOCK && it.time in from until until }
-        if (!display) return ScreenTime(unionDuration(sessions(ordered, from, until).map { it.start to it.end }), true, unlocks)
+        if (!display || ordered.none { it.kind == UsageEvent.Kind.SCREEN_ON || it.kind == UsageEvent.Kind.UNLOCK }) return ScreenTime(unionDuration(sessions(ordered, from, until).map { it.start to it.end }), true, unlocks)
         val intervals = mutableListOf<Pair<Long, Long>>()
         var interactive = false
         var unlocked = true

@@ -25,7 +25,7 @@ output = Path('dist'); output.mkdir(exist_ok=True)
 public_apk = output / name; public_apk.write_bytes(apk.read_bytes())
 manifest = dict(versionCode=code, versionName=version, packageName='id.wynn.screenguard', minSdk=30,
     apkUrl=f'https://github.com/{repo}/releases/download/{tag}/{name}', sha256=hashlib.sha256(apk.read_bytes()).hexdigest(),
-    signerSha256=signer, sizeBytes=apk.stat().st_size, notes='Peningkatan ScreenGuard Pro. Lihat catatan rilis dan kode sumber untuk perubahan lengkap.')
+    signerSha256=signer, sizeBytes=apk.stat().st_size, notes='Statistik layar dan aplikasi dihitung ulang dari kejadian Android; riwayat/per jam lebih jelas. Bekukan: pilih banyak aplikasi, pencarian, sisa akses, menu aplikasi dan bekukan sekarang. Notifikasi sesi manual dihapus; kategori pemantauan otomatis dapat disembunyikan. Ikon SG diseragamkan. Data pengaturan dan identitas aplikasi tetap dipertahankan.')
 metadata = output / 'update.json'; metadata.write_text(json.dumps(manifest, indent=2) + '\n')
 endpoint = f'repos/{repo}/contents/screenguard-pro/updates/stable.json'
 previous = subprocess.run(['gh', 'api', endpoint], text=True, capture_output=True)

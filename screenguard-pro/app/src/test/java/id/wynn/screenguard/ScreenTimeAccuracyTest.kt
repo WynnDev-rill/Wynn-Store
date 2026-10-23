@@ -39,6 +39,15 @@ class ScreenTimeAccuracyTest {
         val events=listOf(e(10,RESUME),e(40,LOCK),e(50,RESUME,"b"),e(80,SCREEN_OFF))
         assertEquals(mapOf("a" to 30L),UsageTimeline.calculate(events,0,100))
     }
+    @Test fun resumeBeforeUnlockIsNotLost() {
+        val events=listOf(e(0,LOCK),e(10,SCREEN_ON),e(15,RESUME),e(20,UNLOCK),e(80,PAUSE),e(90,SCREEN_OFF))
+        assertEquals(60L,UsageTimeline.calculate(events,0,100)["a"])
+    }
+    @Test fun missingDisplayStartUsesForegroundFallbackInsteadOfFalseZero() {
+        val events=listOf(e(10,RESUME),e(80,PAUSE),e(90,SCREEN_OFF))
+        val screen=UsageTimeline.screenTime(events,0,100)
+        assertEquals(70L,screen.durationMs);assertTrue(screen.estimated)
+    }
     @Test fun unionHandlesNestedAdjacentAndDisjointIntervals() {
         assertEquals(30L,UsageTimeline.unionDuration(listOf(0L to 10L,2L to 5L,10L to 20L,30L to 40L,50L to 50L)))
     }

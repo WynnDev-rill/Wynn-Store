@@ -41,6 +41,8 @@ if ! grep -q 'OK (1 test)' qa/output/privileged-test.txt; then
 fi
 adb logcat -d > qa/output/logcat.txt
 if [ "$privileged_status" -ne 0 ]; then exit "$privileged_status"; fi
+adb shell am instrument -w -e class id.wynn.screenguard.UsageDeviceAccuracyTest -e accuracy true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/usage-accuracy.txt
+grep -q 'OK (1 test)' qa/output/usage-accuracy.txt
 # Independently prove that refreeze survives killing the app process, not just closing an Activity.
 adb shell am instrument -w -e class id.wynn.screenguard.PrivilegedDeviceTest#armDaemonTimerForExternalForceStopCheck -e watchdog true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/watchdog-arm.txt
 grep -q 'OK (1 test)' qa/output/watchdog-arm.txt
@@ -82,3 +84,4 @@ if [ -f "$production_apk" ]; then
   adb pull /sdcard/Android/data/id.wynn.screenguard.debug/files/screenshots ./screenshots || true
 fi
 test "$ui_status" -eq 0 && test "$privileged_status" -eq 0
+bash qa/run-candidate-upgrade.sh
