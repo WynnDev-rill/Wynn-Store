@@ -149,10 +149,14 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
         graph.store.rule(app.packageName) { it.copy(gate = gate, freeze = if (gate.automaticOnly) FreezeMode.NONE else FreezeMode.DISABLE, overrideUntil = 0) }
         syncMonitor(); reconcile()
     } }
-    fun removeGate(app: InstalledApp) = secure { work {
-        graph.store.rule(app.packageName) { it.copy(gate = null, freeze = FreezeMode.NONE, dailyLimitMinutes = 0, windows = emptyList(), focus = false, overrideUntil = 0) }
-        syncMonitor(); reconcile()
-    } }
+    private suspend fun clearGate(pkg: String) {
+        graph.store.rule(pkg) { it.copy(gate = null, freeze = FreezeMode.NONE, dailyLimitMinutes = 0,
+            windows = emptyList(), focus = false, overrideUntil = 0) }
+        syncMonitor()
+        reconcile()
+    }
+    fun removeGate(app: InstalledApp) = secure { work { clearGate(app.packageName) } }
+
     fun closeAccess(app: InstalledApp) = work {
         graph.store.rule(app.packageName) { it.copy(overrideUntil = 0) }; reconcile()
     }
@@ -208,17 +212,38 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
     }
     fun cancelChallenge() { countdown?.cancel(); unlocking.value = null; completedQuestions.value = 0 }
     fun newChallenge() { challenge.value = MathChallenge.next(challengeGate.value.level); challengeError.value = null }
-    fun unlock(answer: String, launch: (String) -> Unit) {
-        val pkg = unlocking.value ?: return
+    /** Returns true only after the configured wait and every math question have passed. */
+    private fun challengePassed(answer: String): Boolean {
         val gate = challengeGate.value
-        if (SystemClock.elapsedRealtime() < waitDeadline) { challengeError.value = "Tunggu hingga jeda selesai."; return }
+        if (SystemClock.elapsedRealtime() < waitDeadline) {
+            challengeError.value = "Tunggu hingga jeda selesai."
+            return false
+        }
         if (gate.hasMath && completedQuestions.value < gate.questions) {
-            if (!challenge.value.accepts(answer)) { challengeError.value = "Belum tepat. Dahulukan perkalian."; return }
+            if (!challenge.value.accepts(answer)) {
+                challengeError.value = "Jawaban belum tepat."
+                return false
+            }
             completedQuestions.value += 1
             challengeError.value = null
-            if (completedQuestions.value < gate.questions) { newChallenge(); return }
+            if (completedQuestions.value < gate.questions) { newChallenge(); return false }
         }
-        work { grantTemporaryAccess(pkg, gate.accessMinutes, launch) }
+        return true
+    }
+    fun unlock(answer: String, launch: (String) -> Unit) {
+        val pkg = unlocking.value ?: return
+        if (!challengePassed(answer)) return
+        work { grantTemporaryAccess(pkg, challengeGate.value.accessMinutes, launch) }
+    }
+    fun releaseAfterChallenge(answer: String, done: () -> Unit) {
+        val pkg = unlocking.value ?: return
+        if (!challengePassed(answer)) return
+        secure { work {
+            check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku untuk memulihkan aplikasi" }
+            clearGate(pkg)
+            cancelChallenge()
+            done()
+        } }
     }
 
     private suspend fun grantTemporaryAccess(pkg: String, minutes: Int, launch: (String) -> Unit) {
