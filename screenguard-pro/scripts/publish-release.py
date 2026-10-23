@@ -27,6 +27,8 @@ metadata = output / 'update.json'; metadata.write_text(json.dumps(manifest, inde
 endpoint = f'repos/{repo}/contents/screenguard-pro/updates/stable.json'
 previous = subprocess.run(['gh', 'api', endpoint], text=True, capture_output=True)
 request = dict(message=f'chore(screenguard): publish update feed {version}', branch='main', content=base64.b64encode(metadata.read_bytes()).decode())
+if previous.returncode != 0 and '404' not in previous.stderr:
+    raise RuntimeError('Cannot read current update feed; refusing to publish')
 if previous.returncode == 0:
     old = json.loads(previous.stdout)
     old_metadata = json.loads(base64.b64decode(old['content']))

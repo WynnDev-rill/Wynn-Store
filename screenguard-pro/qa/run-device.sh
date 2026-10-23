@@ -25,6 +25,12 @@ adb shell am instrument -w id.wynn.screenguard.debug.test/androidx.test.runner.A
 if ! grep -q '^OK (' qa/output/ui-tests.txt; then ui_status=1; fi
 adb pull /sdcard/Android/data/id.wynn.screenguard.debug/files/screenshots ./screenshots || true
 
+# Verify system reduced-motion support with the actual dock interaction.
+adb shell settings put global animator_duration_scale 0
+adb shell am instrument -w -e class id.wynn.screenguard.NavigationUiTest#dockSupportsLargeTextAndSelectedSemantics id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/reduced-motion.txt
+adb shell settings put global animator_duration_scale 1
+grep -q 'OK (1 test)' qa/output/reduced-motion.txt
+
 privileged_status=0
 adb shell am instrument -w -e class id.wynn.screenguard.PrivilegedDeviceTest -e privileged true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/privileged-test.txt || privileged_status=$?
 if ! grep -q 'OK (1 test)' qa/output/privileged-test.txt; then
@@ -43,4 +49,15 @@ if grep -q 'Error' qa/output/preview-launch.txt; then exit 1; fi
 if grep -q 'Process: id.wynn.screenguard.preview' qa/output/preview-crash.txt; then exit 1; fi
 adb shell pidof id.wynn.screenguard.preview
 adb exec-out screencap -p > qa/output/preview-onboarding.png
+if [ -f distribution/ScreenGuard-Pro-1.1.0.apk ]; then
+  "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify distribution/ScreenGuard-Pro-1.1.0.apk
+  adb install -r distribution/ScreenGuard-Pro-1.1.0.apk
+  adb logcat -c
+  adb shell am start -W -n id.wynn.screenguard/id.wynn.screenguard.MainActivity > qa/output/production-launch.txt
+  sleep 3
+  adb shell pidof id.wynn.screenguard
+  adb logcat -d -b crash > qa/output/production-crash.txt
+  if grep -q 'Process: id.wynn.screenguard$' qa/output/production-crash.txt; then exit 1; fi
+  adb exec-out screencap -p > qa/output/production-onboarding.png
+fi
 test "$ui_status" -eq 0 && test "$privileged_status" -eq 0

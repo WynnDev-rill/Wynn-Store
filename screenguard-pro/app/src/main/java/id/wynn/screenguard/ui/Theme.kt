@@ -10,6 +10,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
 
 val Blue = Color(0xFF2366D1)
 val PaleBlue = Color(0xFFEAF3FF)
@@ -55,11 +56,11 @@ private val GuardTypography = Typography(
 )
 @Composable fun GuardTheme(dark: Boolean = false, content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = if (dark) DarkColors else LightColors, typography = GuardTypography,
-        shapes = Shapes(extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(8),
-            small = androidx.compose.foundation.shape.RoundedCornerShape(12),
-            medium = androidx.compose.foundation.shape.RoundedCornerShape(20),
-            large = androidx.compose.foundation.shape.RoundedCornerShape(28),
-            extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(32)), content = content)
+        shapes = Shapes(extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+            small = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+            medium = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+            large = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+            extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(32.dp)), content = content)
 }
 
 fun duration(ms: Long): String {
