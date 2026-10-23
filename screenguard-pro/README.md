@@ -1,5 +1,7 @@
 # ScreenGuard Pro
 
+Versi produksi terbaru: [unduh ScreenGuard Pro 1.2.0](distribution/ScreenGuard-Pro-1.2.0.apk), ditandatangani dengan sertifikat yang sama seperti 1.1.0. [Provenance build dan checksum](distribution/ScreenGuard-Pro-1.2.0.json).
+
 Native Android Kotlin + Jetpack Compose. Android 11+ / user utama (0), tanpa root atau VPN. Proyek ini terpisah dari proyek lain dalam Wynn Store.
 
 ## Versi 1.2

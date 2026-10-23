@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -28,7 +29,7 @@ class ScreenUiTest {
     private val data = DeviceData(apps, (6 downTo 0).map { d -> UsageDay(LocalDate.now().minusDays(d.toLong()), usage.mapValues { (_, v) -> v * (7 - d).toLong() / 7 }) }, true, false)
     private val state = GuardState(GuardSettings(onboardingDone = true), apps.associate { it.packageName to AppRule(it.packageName, dailyLimitMinutes = 60, windows = listOf(TimeWindow())) })
     private fun content(block: @androidx.compose.runtime.Composable () -> Unit) {
-        compose.setContent { GuardTheme { Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { block() } } }
+        compose.setContent { GuardTheme { Surface(Modifier.fillMaxSize().systemBarsPadding(), color = MaterialTheme.colorScheme.background) { block() } } }
     }
     private fun capture(name: String) {
         compose.waitForIdle()

@@ -1,0 +1,13 @@
+{
+  "versionName": "1.2.0",
+  "versionCode": 3,
+  "sourceCommit": "615d5a88a0d1f149536e1750bea8d30454e56922",
+  "buildRun": "https://github.com/WynnDev-rill/Wynn-Store/actions/runs/39897368980",
+  "buildArtifactId": 12476764690,
+  "unsignedSha256": "66c3e76c9191d14a0c32c193ab8e8f1b598da885782a792a4036701be8690908",
+  "sha256": "ed81850ab8f391ed7833373c9cd7f7568e15fda582c0e88dfa94ad3d95836b77",
+  "sizeBytes": 3434511,
+  "signerSha256": "eca17e8afa84775e941e0e490741b01636e7941da545c508f85b8a256a4f346a",
+  "package": "package: name='id.wynn.screenguard' versionCode='3' versionName='1.2.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+  "signing": "Same permanent production certificate as 1.1.0; private key kept outside repository and Actions logs."
+}
