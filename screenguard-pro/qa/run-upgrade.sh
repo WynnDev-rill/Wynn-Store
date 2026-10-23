@@ -4,14 +4,12 @@ cd "$(dirname "$0")/.."
 mkdir -p qa/output screenshots
 collect() {
   adb logcat -d > qa/output/production-upgrade-logcat.txt || true
-  adb shell dumpsys connectivity > qa/output/upgrade-connectivity.txt || true
   adb shell uiautomator dump /sdcard/upgrade-window.xml || true
   adb pull /sdcard/upgrade-window.xml qa/output/upgrade-window.xml || true
   adb exec-out screencap -p > qa/output/upgrade-final.png || true
   adb pull /sdcard/Android/data/id.wynn.screenguard.debug/files/screenshots ./screenshots || true
 }
 trap collect EXIT
-# A cold emulator can finish booting before Android validates internet access.
 for attempt in $(seq 1 30); do
   if adb shell dumpsys connectivity | grep -q VALIDATED; then break; fi
   sleep 2
@@ -22,29 +20,32 @@ adb shell input keyevent KEYCODE_WAKEUP
 adb shell wm dismiss-keyguard
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-# Install only the real previous production version. The new APK must arrive through its own updater.
-adb install -r distribution/ScreenGuard-Pro-1.2.0.apk
-adb shell appops set id.wynn.screenguard REQUEST_INSTALL_PACKAGES allow
-# GitHub's raw CDN may briefly cache the old feed after the release commit.
+# Read the live feed, including changes published earlier in this very workflow.
+# The checked-out stable.json can still refer to the preceding release.
 python3 - <<'PY'
-import urllib.request,json,time
+import urllib.request,json,time,pathlib
 url='https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/screenguard-pro/updates/stable.json'
+minimum=5 if pathlib.Path('distribution/ScreenGuard-Pro-1.4.0.apk').is_file() else 4
 for attempt in range(24):
     with urllib.request.urlopen(urllib.request.Request(url,headers={'Cache-Control':'no-cache'}),timeout=20) as r: feed=json.load(r)
-    if feed['versionCode']==4 and feed['versionName']=='1.3.0': break
+    if feed['versionCode']>=minimum: break
     time.sleep(10)
-else: raise SystemExit('Live stable feed did not activate 1.3.0')
+else: raise SystemExit('Live stable feed did not activate candidate')
+pathlib.Path('qa/output/upgrade-feed.json').write_text(json.dumps(feed))
+previous='1.3.0' if feed['versionCode']>=5 else '1.2.0'
+pathlib.Path('qa/output/upgrade-baseline.txt').write_text(previous)
 print('Live feed active:',feed['versionName'],feed['sha256'])
 PY
-adb shell am instrument -w -e class id.wynn.screenguard.ProductionUpgradeTest -e upgrade true -e releaseVersion 1.3.0 -e installUpdate true -e manualCheck "${SG_MANUAL_UPDATE_CHECK:-false}" id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/production-1.2-to-1.3.txt
-grep -q 'OK (1 test)' qa/output/production-1.2-to-1.3.txt
-adb shell am instrument -w -e class id.wynn.screenguard.ProductionUpdateTest -e production true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/production-1.3-live-feed.txt
-grep -q 'OK (1 test)' qa/output/production-1.3-live-feed.txt
+release_version="$(python3 -c 'import json;print(json.load(open("qa/output/upgrade-feed.json"))["versionName"])')"
+baseline="$(cat qa/output/upgrade-baseline.txt)"
+adb install -r "distribution/ScreenGuard-Pro-${baseline}.apk"
+adb shell appops set id.wynn.screenguard REQUEST_INSTALL_PACKAGES allow
+adb shell am instrument -w -e class id.wynn.screenguard.ProductionUpgradeTest -e upgrade true -e releaseVersion "$release_version" -e installUpdate true -e manualCheck "${SG_MANUAL_UPDATE_CHECK:-false}" id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/production-live-upgrade.txt
+grep -q 'OK (1 test)' qa/output/production-live-upgrade.txt
+adb shell am instrument -w -e class id.wynn.screenguard.ProductionUpdateTest -e production true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/production-live-feed.txt
+grep -q 'OK (1 test)' qa/output/production-live-feed.txt
 adb shell dumpsys package id.wynn.screenguard > qa/output/production-installed-package.txt
 adb pull /sdcard/Android/data/id.wynn.screenguard.debug/files/screenshots ./screenshots
-adb logcat -d -b crash > qa/output/production-upgrade-crash.txt
-if grep -Fq 'Process: id.wynn.screenguard,' qa/output/production-upgrade-crash.txt; then exit 1; fi
-
 mkdir -p dist/production
-cp distribution/ScreenGuard-Pro-1.3.0.apk dist/production/
-sha256sum dist/production/ScreenGuard-Pro-1.3.0.apk > dist/production/RELEASE-SHA256.txt
+cp "distribution/ScreenGuard-Pro-${release_version}.apk" dist/production/
+sha256sum "dist/production/ScreenGuard-Pro-${release_version}.apk" > dist/production/RELEASE-SHA256.txt

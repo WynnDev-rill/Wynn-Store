@@ -22,11 +22,14 @@ class GuardMonitorService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (!graph.store.state.value.needsMonitoring) { stopSelf(); return START_NOT_STICKY }
         val manager = getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(NotificationChannel("monitor", "Pemantauan ScreenGuard", NotificationManager.IMPORTANCE_LOW))
+        manager.createNotificationChannel(NotificationChannel(CHANNEL_ID, "Pemantauan senyap", NotificationManager.IMPORTANCE_MIN).apply {
+            description = "Batas dan jadwal otomatis. Dapat disembunyikan lewat pengaturan notifikasi Android."
+            setShowBadge(false)
+        })
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        fun notification(text: String) = NotificationCompat.Builder(this, "monitor").setSmallIcon(R.drawable.ic_guard)
+        fun notification(text: String) = NotificationCompat.Builder(this, CHANNEL_ID).setSmallIcon(R.drawable.ic_guard)
             .setContentTitle("ScreenGuard Pro aktif").setContentText(text).setContentIntent(open)
-            .setOngoing(true).setSilent(true).addAction(0, "Kelola / hentikan", open).build()
+            .setOngoing(true).setSilent(true).setOnlyAlertOnce(true).setPriority(NotificationCompat.PRIORITY_MIN).addAction(0, "Kelola / hentikan", open).build()
         ServiceCompat.startForeground(this, 42, notification("Memeriksa batas dan jadwal lokal"),
             if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE else 0)
         if (loop?.isActive != true) loop = scope.launch {
@@ -51,6 +54,7 @@ class GuardMonitorService : Service() {
     }
     override fun onDestroy() { scope.cancel(); super.onDestroy() }
     companion object {
+        const val CHANNEL_ID = "monitor-quiet"
         fun start(context: Context): Boolean = runCatching {
             ContextCompat.startForegroundService(context, Intent(context, GuardMonitorService::class.java)); true
         }.getOrDefault(false)
@@ -66,6 +70,8 @@ object MonitorScheduler {
 class PolicyWorker(context: Context, parameters: WorkerParameters) : CoroutineWorker(context, parameters) {
     override suspend fun doWork(): Result {
         val graph = applicationContext as GuardApplication
+        // Persist daily/hourly records before Android expires its event history.
+        if (graph.usage.hasAccess()) runCatching { graph.usage.range(2) }
         if (graph.store.state.value.rules.isEmpty()) return Result.success()
         return try {
             graph.gateway.refresh()

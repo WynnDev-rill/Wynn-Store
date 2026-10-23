@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import id.wynn.screenguard.domain.*
 
 @Composable fun DashboardScreen(state: GuardState, device: DeviceData, connected: Boolean,
-    navigate: (Page) -> Unit, selectApp: (InstalledApp) -> Unit, permissions: () -> Unit, selectDayApp: (InstalledApp, java.time.LocalDate) -> Unit = { app, _ -> selectApp(app) }) {
+    navigate: (Page) -> Unit, selectApp: (InstalledApp) -> Unit, permissions: () -> Unit, selectDayApp: (InstalledApp, java.time.LocalDate) -> Unit = { app, _ -> selectApp(app) }, refresh: () -> Unit = {}) {
     var selectedDate by rememberSaveable { mutableStateOf(java.time.LocalDate.now().toString()) }
     val selected = device.days.find { it.date.toString() == selectedDate } ?: device.days.lastOrNull()
     val today = device.days.lastOrNull()
@@ -36,6 +36,7 @@ import id.wynn.screenguard.domain.*
                 Column(Modifier.weight(1f)) {
                     Text("ScreenGuard Pro", style = MaterialTheme.typography.titleLarge)
                 }
+                IconButton(refresh, enabled = !device.loading) { Icon(Icons.Outlined.Refresh, "Perbarui statistik") }
                 IconButton(permissions) { Icon(Icons.Outlined.NotificationsNone, "Perizinan dan status") }
             }
         }
@@ -47,9 +48,9 @@ import id.wynn.screenguard.domain.*
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Text("Total waktu layar hari ini", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(if (!device.usageAccess) "—" else if (total == 0L) "0 mnt" else duration(total), style = MaterialTheme.typography.headlineLarge)
+                        Text(if (!device.usageAccess || today?.available != true) "—" else if (total == 0L) "0 mnt" else duration(total), style = MaterialTheme.typography.headlineLarge)
                         val delta = total - yesterday
-                        Text(if (yesterday == 0L) "Mulai kenali kebiasaan digitalmu" else "${if (delta <= 0) "↓" else "↑"} ${duration(kotlin.math.abs(delta))} dari kemarin",
+                        Text(if (today?.available != true || device.days.dropLast(1).lastOrNull()?.available != true || yesterday == 0L) "Mulai kenali kebiasaan digitalmu" else "${if (delta <= 0) "↓" else "↑"} ${duration(kotlin.math.abs(delta))} dari kemarin",
                             style = MaterialTheme.typography.bodySmall, color = if (delta <= 0) Success else MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Box(Modifier.size(64.dp).clip(RoundedCornerShape(22.dp)).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
@@ -71,22 +72,34 @@ import id.wynn.screenguard.domain.*
                     Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primaryContainer) {
                         Column(Modifier.padding(10.dp, 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("Rata-rata", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            Text(if (device.days.isEmpty()) "—" else duration(device.days.takeLast(7).sumOf { it.totalMs } / 7), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                            Text(if (device.days.none { it.available }) "—" else duration(device.days.takeLast(7).filter { it.available }.let { days -> days.sumOf { it.totalMs } / days.size.coerceAtLeast(1) }), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
-                Text(if (!device.usageAccess) "Akses penggunaan diperlukan" else selected?.let { "${dateLabel(it.date)} · ${duration(it.totalMs)}" } ?: "Memuat riwayat…", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(if (!device.usageAccess) "Akses penggunaan diperlukan" else selected?.let { "${dateLabel(it.date)} · ${if (it.available) duration(it.totalMs) else "Data tidak tersedia"}" } ?: "Memuat riwayat…", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 if (device.usageAccess) {
                     WeekChart(device.days.takeLast(7), chartHeight = 96.dp, selectedDate = selected?.date, onSelect = { selectedDate = it.date.toString() })
-                    if (device.days.isNotEmpty()) Text("Ketuk hari untuk melihat rinciannya", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(if (selected?.estimated == true) "Data hari ini sebagian; kejadian awal sudah tidak tersedia." else "Ketuk hari untuk melihat rinciannya. — berarti riwayat tidak tersedia.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+            }
+        }
+        item {
+            GuardCard(contentPadding = 16.dp, spacing = 8.dp) {
+                Text("Ringkasan hari ini", style = MaterialTheme.typography.titleMedium)
+                Text(if (today?.available == true) "${today.unlocks} kali membuka kunci · ${today.apps.count { it.value > 0 }} aplikasi digunakan" else "Menunggu riwayat penggunaan Android", style = MaterialTheme.typography.bodyMedium)
+                Text(when {
+                    today?.estimated == true -> "Riwayat hari ini belum lengkap. Angka mencakup data yang masih disediakan Android."
+                    today?.screenEstimated == true -> "Waktu layar dihitung dari gabungan sesi aplikasi; kejadian layar tidak disediakan perangkat."
+                    else -> "Waktu layar dihitung saat layar aktif dan tidak terkunci, termasuk launcher. Penggunaan aplikasi bersamaan tidak menggandakan total."
+                }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (device.refreshedAt > 0) Text("Diperbarui ${java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(device.refreshedAt))}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         item {
             GuardCard(contentPadding = 16.dp, spacing = 12.dp) {
                 SectionTitle(if (selected == null || selected.date == java.time.LocalDate.now()) "Paling banyak digunakan" else "Penggunaan ${selected?.date?.let(::dateLabel).orEmpty()}", "Semua") { navigate(Page.USAGE) }
-                if (top.isEmpty()) Text("Belum ada data penggunaan hari ini.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                else Column { top.forEach { (app, ms) -> UsageRow(app, ms, selected?.totalMs ?: 0, compact = true) { selectDayApp(app, selected?.date ?: java.time.LocalDate.now()) } } }
+                if (top.isEmpty()) Text(if (selected?.available == false) "Riwayat rinci hari ini tidak lagi tersedia dari Android." else "Belum ada penggunaan pada hari yang dipilih.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                else Column { top.forEach { (app, ms) -> UsageRow(app, ms, selected?.appTotalMs ?: 0, compact = true) { selectDayApp(app, selected?.date ?: java.time.LocalDate.now()) } } }
             }
         }
         item {

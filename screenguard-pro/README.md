@@ -1,15 +1,15 @@
 # ScreenGuard Pro
 
-Versi produksi terbaru: [unduh ScreenGuard Pro 1.2.0](distribution/ScreenGuard-Pro-1.2.0.apk), ditandatangani dengan sertifikat yang sama seperti 1.1.0. [Provenance build dan checksum](distribution/ScreenGuard-Pro-1.2.0.json).
+Versi pengembangan/rilis 1.4.0: perbaikan statistik, ikon, notifikasi senyap, dan kontrol Bekukan. [Rilis produksi tersedia](https://github.com/WynnDev-rill/Wynn-Store/releases?q=screenguard). [Catatan 1.4.0 dan metode statistik](docs/RELEASE-1.4.md).
 
 Native Android Kotlin + Jetpack Compose. Android 11+ / user utama (0), tanpa root atau VPN. Proyek ini terpisah dari proyek lain dalam Wynn Store.
 
-## Versi 1.2
+## Versi 1.4
 
 Empat menu: **Beranda, Bekukan, Jaringan, Pengaturan**. Tema putih-biru, font Plus Jakarta Sans lokal, dock mengambang, animasi yang mengikuti pengaturan Android, dan ikon launcher adaptive memakai gambar SG asli pengguna.
 
-- **Beranda**: total waktu layar, grafik tujuh hari yang bisa diketuk, daftar aplikasi, statistik aplikasi terperinci (mingguan/per jam/jumlah dibuka/sesi terlama). Semua berasal dari UsageStatsManager; tidak ada data contoh di produksi. Riwayat lama ditandai perkiraan dan detail yang dihapus Android tidak ditebak.
-- **Bekukan**: daftar seluruh aplikasi termasuk yang dinonaktifkan, pencarian nama/paket, filter unduhan/sistem/perlindungan. Ketuk aplikasi untuk memilih waktu tunggu, matematika atau kombinasi, tingkat soal, jumlah soal, dan durasi akses sementara. Aplikasi penting/tanpa launcher hanya ditampilkan sebagai informasi.
+- **Beranda**: total waktu layar, grafik tujuh hari yang bisa diketuk, daftar aplikasi, statistik aplikasi terperinci (mingguan/per jam/jumlah dibuka/sesi terlama). Semua berasal dari UsageStatsManager; tidak ada data contoh di produksi. Waktu layar dihitung terpisah dari durasi aplikasi bersamaan; riwayat yang tidak tersedia ditandai —. Snapshot harian/per jam disimpan lokal, dan agregat lama yang tidak akurat tidak digunakan kembali.
+- **Bekukan**: koleksi aplikasi pilihan, pencarian/filter status, tambah beberapa aplikasi sekaligus, sisa akses sementara, menu per aplikasi serta Bekukan sekarang/semua. Tantangan opsional diatur melalui ⋮. Aplikasi penting/tanpa launcher hanya ditampilkan sebagai informasi.
 - **Jaringan**: satu sakelar nyata untuk semua koneksi aplikasi melalui Shizuku/ConnectivityService OEM_DENY_3. API tidak memisahkan Wi-Fi/seluler; ROM yang tidak menyediakan API menunjukkan status tidak didukung. UID bersama ditolak.
 - **Pengaturan**: PIN untuk perubahan aturan, izin/Shizuku, tema, target harian, notifikasi, pemulihan semua aturan dan update GitHub terverifikasi. Tidak ada menu Fokus atau tantangan global duplikat.
 
@@ -18,8 +18,8 @@ Empat menu: **Beranda, Bekukan, Jaringan, Pengaturan**. Tema putih-biru, font Pl
 1. Instal APK produksi terbaru dari `distribution/` atau artifact rilis Actions. Gunakan sertifikat produksi yang sama untuk update dari 1.1.0 tanpa uninstall. APK `preview` memakai ID terpisah dan bukan pembaruan produksi.
 2. Instal [Shizuku](https://shizuku.rikka.app/download/), pairing Debugging Nirkabel dan mulai layanan. Berikan izin ScreenGuard. Pada HyperOS izinkan autostart dan baterai tanpa batasan untuk kedua aplikasi.
 3. Aktifkan akses penggunaan untuk statistik/batas harian. Bila Android memblokir izin karena **Setelan Terbatas**, gunakan panduan Info aplikasi di onboarding. Akses penggunaan melalui Shizuku hanya menargetkan paket ScreenGuard sendiri dan hasilnya diperiksa.
-4. Buka **Bekukan**, ketuk aplikasi, pilih tantangan lalu **Bekukan aplikasi**. `disable-user` menyimpan data aplikasi dan menghilangkan ikon launcher (sebagian launcher OEM perlu menyegarkan cache). Ketuk aplikasi yang dibekukan di ScreenGuard untuk menyelesaikan tantangan dan membuka sementara.
-5. Selama akses sementara aplikasi harus diaktifkan, sehingga ikon dapat muncul lagi. Sesudah durasi berakhir timer di daemon Shizuku membekukannya kembali, termasuk saat klien ScreenGuard di-force-stop. CPU tidur/Doze dapat menunda eksekusi. Timer tidak memakai wake lock.
+4. Buka **Bekukan → +**, pilih aplikasi, lalu **Bekukan**. Tantangan default tidak aktif; ubah melalui ⋮. Menu per aplikasi menyediakan pembekuan ulang dan batas/jadwal. `disable-user` menyimpan data aplikasi dan menghilangkan ikon launcher (sebagian launcher OEM perlu menyegarkan cache). Ketuk aplikasi yang dibekukan di ScreenGuard untuk menyelesaikan tantangan dan membuka sementara.
+5. Sesi manual tidak memerlukan notifikasi foreground klien. Selama akses sementara aplikasi harus diaktifkan, sehingga ikon dapat muncul lagi. Sesudah durasi berakhir timer di daemon Shizuku membekukannya kembali, termasuk saat klien ScreenGuard di-force-stop. CPU tidur/Doze dapat menunda eksekusi. Timer tidak memakai wake lock.
 6. Batas harian/jadwal opsional berada di editor aplikasi → **Batas & jadwal otomatis**. Menyimpan aturan mengaktifkan notifikasi pemantauan ±15 detik saat layar hidup/60 detik saat mati. Tantangan memberi jeda sementara sebelum aturan berlaku lagi. Ini bukan alarm tepat waktu.
 7. Sebelum uninstall, buka **Pengaturan → Pulihkan semua aplikasi**, periksa hasilnya. Jangan hapus data saat ada aplikasi yang masih dibekukan.
 

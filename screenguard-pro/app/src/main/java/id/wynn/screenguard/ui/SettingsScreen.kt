@@ -58,7 +58,13 @@ import id.wynn.screenguard.privilege.ShizukuStatus
             item { SectionTitle("Umum") }
             item { GuardCard {
                 SettingsRow(Icons.Outlined.Palette, "Tema Tampilan", trailing = if (state.settings.darkMode) "Gelap" else "Terang", onClick = { change { it.copy(darkMode = !it.darkMode) } })
-                SettingsRow(Icons.Outlined.NotificationsNone, "Notifikasi", "Kelola notifikasi pemantauan", onClick = { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) })
+                SettingsRow(Icons.Outlined.NotificationsNone, "Sembunyikan notifikasi pemantauan", "Matikan kategori Pemantauan senyap di pengaturan Android. Aturan tetap berjalan.", onClick = {
+                    val manager = context.getSystemService(android.app.NotificationManager::class.java)
+                    manager.createNotificationChannel(android.app.NotificationChannel(id.wynn.screenguard.service.GuardMonitorService.CHANNEL_ID, "Pemantauan senyap", android.app.NotificationManager.IMPORTANCE_MIN))
+                    context.startActivity(Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                        .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        .putExtra(Settings.EXTRA_CHANNEL_ID, id.wynn.screenguard.service.GuardMonitorService.CHANNEL_ID))
+                })
                 SettingsRow(Icons.Outlined.Flag, "Target waktu layar", trailing = duration(state.settings.dailyGoalMinutes * 60_000L), onClick = { secure { goal = state.settings.dailyGoalMinutes.toString(); dialog = "goal" } })
                 SettingsRow(Icons.Outlined.Info, "Tentang Aplikasi", trailing = "v${BuildConfig.VERSION_NAME}", onClick = { dialog = "about" })
             } }

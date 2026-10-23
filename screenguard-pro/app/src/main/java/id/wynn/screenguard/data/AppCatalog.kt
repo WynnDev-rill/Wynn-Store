@@ -30,10 +30,15 @@ class AppCatalog(private val context: Context) {
                 info.flags and ApplicationInfo.FLAG_SUSPENDED != 0,
                 PackageSafety.protected(info.packageName, info.uid, context.packageName, extra) || info.flags and ApplicationInfo.FLAG_PERSISTENT != 0,
                 counts.getOrDefault(info.uid, 0) > 1,
-                info.flags and ApplicationInfo.FLAG_SYSTEM != 0, info.packageName in launcherPackages)
+                info.flags and ApplicationInfo.FLAG_SYSTEM != 0, info.packageName in launcherPackages, runCatching { pm.getPackageInfo(info.packageName, 0).lastUpdateTime }.getOrDefault(0))
         }.sortedBy { it.label.lowercase() }
         cached = result; cachedAt = android.os.SystemClock.elapsedRealtime()
         return result
+    }
+    fun current(tracked: Set<String>): List<InstalledApp> {
+        if (cached.isEmpty() || android.os.SystemClock.elapsedRealtime() - cachedAt > 60_000) return list(tracked)
+        val statuses = managed(tracked).associateBy { it.packageName }
+        return cached.map { statuses[it.packageName] ?: it }
     }
     /** Monitoring only queries status for tracked packages; no full app/icon scan every 15s. */
     @Suppress("DEPRECATION") fun managed(tracked: Set<String>): List<InstalledApp> {

@@ -45,7 +45,7 @@ class ScreenUiTest {
     }
     @Test fun launcherUsesTheNativeAndroidAdaptiveIcon() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        org.junit.Assert.assertEquals(R.mipmap.ic_launcher, context.applicationInfo.icon)
+        org.junit.Assert.assertEquals(R.mipmap.screenguard_launcher, context.applicationInfo.icon)
         org.junit.Assert.assertTrue(context.packageManager.getApplicationIcon(context.packageName) is android.graphics.drawable.AdaptiveIconDrawable)
     }
     @Test fun dashboardContainsLiveNavigationAndWeeklyChart() {

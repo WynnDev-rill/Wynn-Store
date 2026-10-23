@@ -12,7 +12,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.time.ZonedDateTime
 
-data class DeviceData(val apps: List<InstalledApp> = emptyList(), val days: List<UsageDay> = emptyList(), val usageAccess: Boolean = false, val loading: Boolean = true)
+data class DeviceData(val apps: List<InstalledApp> = emptyList(), val days: List<UsageDay> = emptyList(), val usageAccess: Boolean = false, val loading: Boolean = true, val refreshedAt: Long = 0)
 
 class GuardViewModel(application: Application) : AndroidViewModel(application) {
     val graph = application as GuardApplication
@@ -56,7 +56,7 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
         if (loading?.isActive == true) return
         loading = viewModelScope.launch {
             runCatching {
-                val value = withContext(Dispatchers.IO) { DeviceData(graph.catalog.list(state.value.rules.keys), graph.usage.range(30), graph.usage.hasAccess(), false) }
+                val value = withContext(Dispatchers.IO) { DeviceData(graph.catalog.current(state.value.rules.keys), graph.usage.range(30), graph.usage.hasAccess(), false, System.currentTimeMillis()) }
                 device.value = value
             }.onFailure { device.value = device.value.copy(loading = false); message.value = it.message ?: "Gagal memuat data" }
         }
@@ -133,6 +133,23 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
         reconcile()
     } }
 
+    fun addFrozenApps(apps: List<InstalledApp>) = secure { work {
+        check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku terlebih dahulu" }
+        val eligible = apps.filter { FreezeCatalog.canAdd(it, state.value.rules[it.packageName]) }
+        check(eligible.isNotEmpty()) { "Tidak ada aplikasi yang dapat ditambahkan" }
+        graph.store.update { s -> s.copy(rules = s.rules + eligible.associate { app ->
+            app.packageName to (s.rules[app.packageName] ?: AppRule(app.packageName)).copy(gate = AccessGate(), freeze = FreezeMode.DISABLE, overrideUntil = 0, lastError = null)
+        }) }
+        reconcile()
+    } }
+    fun freezeAllNow() = work {
+        graph.store.update { s -> s.copy(rules = s.rules.mapValues { (_,r) ->
+            if (r.gate?.automaticOnly == false) r.copy(overrideUntil = 0) else r
+        }) }
+        reconcile()
+    }
+    fun refreshStatistics() { viewModelScope.launch { withContext(Dispatchers.IO) { graph.usage.invalidate() }; refresh() } }
+
     /** Opening from the curated list has no challenge unless the user opts in. */
     fun openTemporarily(app: InstalledApp, launch: (String) -> Unit) {
         val rule = state.value.rules[app.packageName] ?: return
@@ -176,6 +193,7 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
         val enabled = state.value.rules.values.any { it.gate?.automaticOnly == true && (it.dailyLimitMinutes > 0 || it.windows.isNotEmpty()) }
         graph.store.settings { it.copy(monitorEnabled = enabled) }
         if (enabled) check(GuardMonitorService.start(graph)) { "Android menolak pemantauan; buka aplikasi lalu simpan aturan kembali" }
+        else graph.stopService(android.content.Intent(graph, GuardMonitorService::class.java))
     }
     fun canLaunchWithoutChallenge(app: InstalledApp): Boolean {
         val rule = state.value.rules[app.packageName] ?: return true
@@ -252,11 +270,11 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
     private suspend fun grantTemporaryAccess(pkg: String, minutes: Int, launch: (String) -> Unit) {
         check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku untuk membuka aplikasi" }
         val rule = state.value.rules[pkg] ?: error("Aplikasi sudah dikeluarkan dari Bekukan")
-        check(rule.gate != null && !rule.gate.automaticOnly) { "Aplikasi tidak ada dalam daftar Bekukan" }
+        check(rule.gate != null) { "Aplikasi tidak ada dalam daftar Bekukan" }
         val wall = System.currentTimeMillis()
         val elapsed = SystemClock.elapsedRealtime()
         graph.store.rule(pkg) {
-            it.copy(freeze = FreezeMode.DISABLE,
+            it.copy(freeze = if (rule.gate?.automaticOnly == true) FreezeMode.NONE else FreezeMode.DISABLE,
                 overrideUntil = wall + minutes * 60_000L,
                 sessionStartedWall = wall, sessionStartedElapsed = elapsed,
                 sessionUntilElapsed = elapsed + minutes * 60_000L, sessionBoot = graph.usage.bootCount())
@@ -264,7 +282,7 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
         reconcile()
         val actual = withContext(Dispatchers.IO) { graph.catalog.managed(setOf(pkg)).firstOrNull() }
         check(actual?.enabled == true && !actual.suspended) { state.value.rules[pkg]?.lastError ?: "Android belum mengaktifkan aplikasi" }
-        check(GuardMonitorService.start(graph)) { "Layanan penguncian ulang gagal dijalankan. Akses sementara perlu dipantau." }
+        if (state.value.needsMonitoring) check(GuardMonitorService.start(graph)) { "Layanan pemantauan gagal dijalankan" }
         launch(pkg)
     }
     fun sessionOpen(rule: AppRule): Boolean = AccessSession.isOpen(rule, System.currentTimeMillis(), SystemClock.elapsedRealtime(), graph.usage.bootCount())
