@@ -39,7 +39,10 @@ import id.wynn.screenguard.domain.*
                 Text("${apps.size} aplikasi", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             } }
             if (!ready) item { InfoBanner("Hubungkan Shizuku untuk menerapkan pembekuan.", Icons.Outlined.Bolt, action = permissions) }
-            if (apps.isEmpty()) item { EmptyState("Tidak ada aplikasi", "Coba kata pencarian atau filter lain.") }
+            if (apps.isEmpty()) item {
+                if (device.loading) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text("Memuat aplikasi terpasang…", style = MaterialTheme.typography.bodyMedium) }
+                else EmptyState("Tidak ada aplikasi", "Coba kata pencarian atau filter lain.")
+            }
             items(apps, key = { it.packageName }) { app ->
                 val rule = state.rules[app.packageName]
                 val safe = !app.protected && app.launchable

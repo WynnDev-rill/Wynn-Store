@@ -43,6 +43,15 @@ class AccessGateTest {
         assertEquals(15, migrated.rules.getValue("com.example.other").dailyLimitMinutes)
         assertEquals(migrated, GuardMigration.migrate(migrated))
     }
+    @Test fun idleLegacyFocusSelectionNeverSilentlyFreezesAnApplication() {
+        val idle = GuardState(GuardSettings(monitorEnabled = true), mapOf("com.example.app" to AppRule("com.example.app", focus = true)), 1)
+        val migrated = GuardMigration.migrate(idle, wall)
+        assertNull(migrated.rules.getValue("com.example.app").gate)
+        assertFalse(migrated.rules.getValue("com.example.app").focus)
+        assertFalse(migrated.settings.monitorEnabled)
+        val active = idle.copy(settings = idle.settings.copy(focusUntil = wall + 60_000))
+        assertNotNull(GuardMigration.migrate(active, wall).rules.getValue("com.example.app").gate)
+    }
     @Test fun challengeDifficultyAndInvalidAnswersAreHandled() {
         MathLevel.entries.forEach { level -> repeat(50) {
             val c = MathChallenge.next(level)

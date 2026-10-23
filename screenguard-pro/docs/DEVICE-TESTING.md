@@ -5,11 +5,11 @@ Build/tes JVM dan screenshot emulator tidak membuktikan kompatibilitas firewall 
 1. Instal APK; periksa onboarding saat izin belum ada. Statistik kosong harus dijelaskan, bukan diisi contoh. Grant/revoke akses penggunaan dan kembali ke ScreenGuard.
 2. Mulai Shizuku; izinkan ScreenGuard. Status harus terhubung. Hentikan Shizuku dan coba kontrol: tidak boleh menampilkan keberhasilan palsu.
 3. Blokir aplikasi pengujian; tutup dan buka lagi, periksa internet melalui Wi-Fi lalu seluler, IPv4/IPv6 jika tersedia. Lepas blokir dan ulangi. Uji juga setelah pergantian jaringan. Jangan menyimpulkan dari cache konten.
-4. Tangguhkan paket; periksa Android menolak launch. Buka dari ScreenGuard dengan tantangan salah lalu benar. Sesudah jeda lima menit, batas otomatis harus berlaku lagi jika sudah terlampaui.
-5. Nonaktifkan paket; pastikan ikon hilang dan paket masih mempunyai datanya. Buka dari daftar ScreenGuard; pastikan ikon dan peluncuran kembali berfungsi.
-6. Tetapkan batas satu menit; aktifkan pemantauan, gunakan aplikasi, lalu periksa penangguhan pada pemeriksaan berikutnya. Periksa jam lintas tengah malam, pilihan hari mulai, fokus 25 menit, dan penghentian pemantauan.
-7. Pasang PIN, tutup/rotasi aplikasi, coba mengubah aturan/tema/PIN dan membuka kunci. Lima PIN salah harus memicu waktu tunggu. Matematika tidak menggantikan PIN orang tua.
-8. Restart, mulai kembali Shizuku, buka ScreenGuard, dan periksa pemulihan aturan. Uji juga setelah force-stop, pembaruan APK, revoke permission, dan mode baterai HyperOS. Force-stop tidak bisa dipulihkan diam-diam oleh aplikasi biasa.
+4. Bekukan paket dari daftar Bekukan; pastikan ikon hilang dan data tetap ada. Cari paket yang nonaktif melalui filter/pencarian ScreenGuard.
+5. Uji tunggu, soal Ringan/Sedang/Menantang dan kombinasi 1–5 soal. Jawaban salah dan tunggu belum selesai tidak boleh membuka paket. Set akses 1 menit; setelah tantangan aplikasi terbuka, lalu harus dibekukan kembali. Ikon boleh muncul selama sesi aktif.
+6. Tetapkan batas satu menit/jadwal pada editor aplikasi, gunakan aplikasi dan periksa disable-user pada pemeriksaan berikutnya. Periksa lintas tengah malam, pilihan hari mulai, dan perubahan dari Selalu menjadi Sesuai batas & jadwal. Mengosongkan semua aturan otomatis menghentikan pemantauan bila tidak ada sesi aktif.
+7. Pasang PIN, tutup/rotasi aplikasi, coba mengubah aturan/tema/PIN dan memulihkan. Lima PIN salah harus memicu waktu tunggu. Tantangan biasa dapat diselesaikan tanpa PIN pengaturan. Perubahan jam/reboot tidak boleh memperpanjang sesi.
+8. Force-stop klien ScreenGuard saat akses sementara berjalan: daemon Shizuku harus membekukan ulang. Ulangi dengan menghentikan Shizuku: jangan mengklaim timer tetap hidup; mulai Shizuku kembali dan periksa rekonsiliasi. Restart, mulai Shizuku, periksa aturan. Uji pembaruan APK tanpa uninstall, revoke izin dan penghemat baterai HyperOS. Klien biasa tidak dapat memulihkan dirinya dari force-stop; timer terpisah yang diuji.
 9. Uji ‘Pulihkan semua aplikasi’; pastikan aplikasi yang dikunci alat lain tidak disentuh. Baru kemudian uninstall.
 10. Periksa 320/360/411dp, landscape/tablet, ukuran font 1.5×/2×, mode gelap, TalkBack, skala animasi 0×, keyboard terbuka, serta label aplikasi panjang.
 

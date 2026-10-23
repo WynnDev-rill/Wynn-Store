@@ -49,19 +49,22 @@ enum class Page { HOME, FREEZE, NETWORK, SETTINGS, USAGE, APP_STATS, UNLOCK, PER
     val remaining by vm.remaining.collectAsStateWithLifecycle()
     val unlocking by vm.unlocking.collectAsStateWithLifecycle()
     var pageName by rememberSaveable { mutableStateOf(Page.HOME.name) }
-    val page = Page.valueOf(pageName)
+    val page = runCatching { Page.valueOf(pageName) }.getOrDefault(Page.HOME)
     var previousPage by rememberSaveable { mutableStateOf(Page.HOME.name) }
     val pageStateHolder = rememberSaveableStateHolder()
     var detailPackage by rememberSaveable { mutableStateOf<String?>(null) }
     var detailDate by rememberSaveable { mutableStateOf(java.time.LocalDate.now().toString()) }
     var detailReturn by rememberSaveable { mutableStateOf(Page.HOME.name) }
-    var gateApp by remember { mutableStateOf<InstalledApp?>(null) }
-    var editor by remember { mutableStateOf<InstalledApp?>(null) }
+    var gatePackage by rememberSaveable { mutableStateOf<String?>(null) }
+    var editorPackage by rememberSaveable { mutableStateOf<String?>(null) }
+    val gateApp = device.apps.find { it.packageName == gatePackage }
+    val editor = device.apps.find { it.packageName == editorPackage }
     var createPin by remember { mutableStateOf(false) }
     LaunchedEffect(update.available?.versionCode, state.settings.onboardingDone) {
         val version = update.available?.versionCode ?: return@LaunchedEffect
         if (state.settings.onboardingDone && version != offeredVersion) { offeredVersion = version; updateSheet = true }
     }
+    LaunchedEffect(page, unlocking) { if (page == Page.UNLOCK && unlocking == null) pageName = Page.FREEZE.name }
     LaunchedEffect(state.rules) { vm.refresh() }
     val context = LocalContext.current
     SideEffect {
@@ -87,8 +90,9 @@ enum class Page { HOME, FREEZE, NETWORK, SETTINGS, USAGE, APP_STATS, UNLOCK, PER
     }
     fun select(app: InstalledApp) {
         val rule = state.rules[app.packageName]
-        if (rule?.gate == null) vm.secure { gateApp = app }
+        if (rule?.gate == null) vm.secure { gatePackage = app.packageName }
         else if (app.enabled && !app.suspended && vm.canLaunchWithoutChallenge(app)) launchApp(app.packageName)
+        else if (status != ShizukuStatus.READY) permissions()
         else vm.prepareUnlock(app) { pageName = Page.UNLOCK.name }
     }
     BackHandler(page != Page.HOME && state.settings.onboardingDone && !busy) { back() }
@@ -109,10 +113,13 @@ enum class Page { HOME, FREEZE, NETWORK, SETTINGS, USAGE, APP_STATS, UNLOCK, PER
                             Page.HOME -> DashboardScreen(state, device, status == ShizukuStatus.READY, ::navigate, ::details, ::permissions, ::detailsAt)
                             Page.USAGE -> UsageScreen(device, ::back, { navigate(Page.FREEZE) }, ::details)
                             Page.APP_STATS -> device.apps.find { it.packageName == detailPackage }?.let { app ->
-                                AppStatsScreen(app, device, ::back, { pkg, date -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { vm.graph.usage.details(pkg, date) } }, { vm.secure { gateApp = app } }, detailDate)
+                                AppStatsScreen(app, device, ::back, { pkg, date -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { vm.graph.usage.details(pkg, date) } }, { vm.secure { gatePackage = app.packageName } }, detailDate)
+                            } ?: Column {
+                                PageHeader("Statistik aplikasi", ::back)
+                                if (!device.loading) EmptyState("Aplikasi tidak ditemukan", "Aplikasi mungkin sudah dihapus dari perangkat.")
                             }
                             Page.NETWORK -> NetworkScreen(state, device, status, supported, busy, ::back, vm::setNetwork, ::permissions) { navigate(Page.FREEZE) }
-                            Page.FREEZE -> FreezeScreen(state, device, status == ShizukuStatus.READY, busy, ::back, { app -> vm.secure { gateApp = app } }, ::select, ::permissions)
+                            Page.FREEZE -> FreezeScreen(state, device, status == ShizukuStatus.READY, busy, ::back, { app -> vm.secure { gatePackage = app.packageName } }, ::select, ::permissions)
                             Page.UNLOCK -> UnlockScreen(device.apps.find { it.packageName == unlocking }, gate, challenge, completed, remaining, challengeError, busy, ::back, vm::newChallenge) { answer -> vm.unlock(answer) { pkg -> pageName = Page.FREEZE.name; launchApp(pkg) } }
                             Page.SETTINGS -> SettingsScreen(state, status, ::back, vm::secure, ::permissions, vm::settings, { vm.secure { createPin = true } }, vm::removePin, vm::restore, update, autoUpdate, { vm.checkUpdates(true); if (update.available != null) updateSheet = true }, { enabled -> vm.secure { vm.updater.automatic(enabled) } })
                             Page.PERMISSIONS -> PermissionsScreen(device.usageAccess, status, ::back, vm.graph.gateway::requestPermission, ::back, vm::refresh, connectionError, vm::grantUsageThroughShizuku, busy)
@@ -125,10 +132,10 @@ enum class Page { HOME, FREEZE, NETWORK, SETTINGS, USAGE, APP_STATS, UNLOCK, PER
         }
         if (updateSheet && update.available != null && !pinPrompt && !busy) UpdateSheet(update, { updateSheet = false }, vm::downloadUpdate, { vm.installUpdate { context.startActivity(it) } }, vm::cancelUpdate)
         gateApp?.let { app -> GateEditor(app, state.rules[app.packageName] ?: AppRule(app.packageName), status == ShizukuStatus.READY,
-            { gateApp = null }, { config -> vm.configureGate(app, config); gateApp = null },
-            { vm.removeGate(app); gateApp = null }, { vm.closeAccess(app); gateApp = null },
-            { gateApp = null; editor = app }) }
-        editor?.let { app -> RuleEditor(app, state.rules[app.packageName] ?: AppRule(app.packageName), { editor = null }) { limit, window -> vm.saveRule(app, limit, window) } }
+            { gatePackage = null }, { config -> vm.configureGate(app, config); gatePackage = null },
+            { vm.removeGate(app); gatePackage = null }, { vm.closeAccess(app); gatePackage = null },
+            { gatePackage = null; editorPackage = app.packageName }) }
+        editor?.let { app -> RuleEditor(app, state.rules[app.packageName] ?: AppRule(app.packageName), { editorPackage = null }) { limit, window -> vm.saveRule(app, limit, window) } }
         if (createPin) PinCreateDialog({ createPin = false }, vm::savePin)
         if (pinPrompt) {
             var input by remember { mutableStateOf("") }

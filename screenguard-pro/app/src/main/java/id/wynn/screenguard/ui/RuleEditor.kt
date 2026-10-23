@@ -22,7 +22,7 @@ import id.wynn.screenguard.domain.*
     var scheduled by rememberSaveable(app.packageName) { mutableStateOf(rule.windows.isNotEmpty()) }
     var start by rememberSaveable(app.packageName) { mutableIntStateOf(rule.windows.firstOrNull()?.startMinute ?: 1320) }
     var end by rememberSaveable(app.packageName) { mutableIntStateOf(rule.windows.firstOrNull()?.endMinute ?: 360) }
-    var days by remember(app.packageName) { mutableStateOf(rule.windows.firstOrNull()?.days ?: (1..7).toSet()) }
+    var days by rememberSaveable(app.packageName) { mutableStateOf(rule.windows.firstOrNull()?.days ?: (1..7).toSet()) }
     var error by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     AlertDialog(onDismissRequest = dismiss, title = { Text("Atur ${app.label}") }, text = {

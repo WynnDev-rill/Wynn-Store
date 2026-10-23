@@ -92,16 +92,16 @@ object AccessSession {
 
 /** Convert manual freezes and Focus selections once, keeping recovery ownership and network rules. */
 object GuardMigration {
-    fun migrate(state: GuardState): GuardState {
+    fun migrate(state: GuardState, nowWall: Long = System.currentTimeMillis()): GuardState {
         if (state.schemaVersion >= 2) return state
-        return state.copy(schemaVersion = 2, settings = state.settings.copy(focusUntil = 0),
+        return state.copy(schemaVersion = 2, settings = state.settings.copy(focusUntil = 0, monitorEnabled = state.settings.monitorEnabled && state.rules.values.any { it.dailyLimitMinutes > 0 || it.windows.isNotEmpty() }),
             rules = state.rules.mapValues { (_, r) ->
-                if (r.freeze != FreezeMode.NONE || r.focus) r.copy(
+                if (r.freeze != FreezeMode.NONE || r.focus && state.settings.monitorEnabled && state.settings.focusUntil > nowWall) r.copy(
                     gate = AccessGate(mode = if (state.settings.unlockMode == UnlockMode.WAIT) GateMode.WAIT else GateMode.MATH,
                         waitSeconds = state.settings.waitSeconds.coerceIn(5, 120)),
                     freeze = FreezeMode.DISABLE, focus = false, overrideUntil = 0)
-                else if (r.dailyLimitMinutes > 0 || r.windows.isNotEmpty()) r.copy(gate = AccessGate(automaticOnly = true))
-                else r
+                else if (r.dailyLimitMinutes > 0 || r.windows.isNotEmpty()) r.copy(gate = AccessGate(automaticOnly = true), focus = false)
+                else r.copy(focus = false)
             })
     }
 }

@@ -58,7 +58,7 @@ import id.wynn.screenguard.domain.*
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Target harian: ${duration(goal)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("${if (goal > 0) total * 100 / goal else 0}%", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    Text(if (device.usageAccess) "${if (goal > 0) total * 100 / goal else 0}%" else "—", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 }
                 LinearProgressIndicator(progress = { (if (goal > 0) total.toFloat() / goal else 0f).coerceIn(0f, 1f) },
                     Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(4.dp)), color = MaterialTheme.colorScheme.primary, trackColor = MaterialTheme.colorScheme.primaryContainer, drawStopIndicator = {})
@@ -75,14 +75,16 @@ import id.wynn.screenguard.domain.*
                         }
                     }
                 }
-                Text(selected?.let { "${dateLabel(it.date)} · ${duration(it.totalMs)}" } ?: "Belum ada data", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                WeekChart(device.days.takeLast(7), chartHeight = 96.dp, selectedDate = selected?.date, onSelect = { selectedDate = it.date.toString() })
-                Text("Ketuk hari untuk melihat rinciannya", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(if (!device.usageAccess) "Akses penggunaan diperlukan" else selected?.let { "${dateLabel(it.date)} · ${duration(it.totalMs)}" } ?: "Memuat riwayat…", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                if (device.usageAccess) {
+                    WeekChart(device.days.takeLast(7), chartHeight = 96.dp, selectedDate = selected?.date, onSelect = { selectedDate = it.date.toString() })
+                    if (device.days.isNotEmpty()) Text("Ketuk hari untuk melihat rinciannya", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
         item {
             GuardCard(contentPadding = 16.dp, spacing = 12.dp) {
-                SectionTitle(if (selected?.date == java.time.LocalDate.now()) "Paling banyak digunakan" else "Penggunaan ${selected?.date?.let(::dateLabel).orEmpty()}", "Semua") { navigate(Page.USAGE) }
+                SectionTitle(if (selected == null || selected.date == java.time.LocalDate.now()) "Paling banyak digunakan" else "Penggunaan ${selected?.date?.let(::dateLabel).orEmpty()}", "Semua") { navigate(Page.USAGE) }
                 if (top.isEmpty()) Text("Belum ada data penggunaan hari ini.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 else Column { top.forEach { (app, ms) -> UsageRow(app, ms, selected?.totalMs ?: 0, compact = true) { selectDayApp(app, selected?.date ?: java.time.LocalDate.now()) } } }
             }

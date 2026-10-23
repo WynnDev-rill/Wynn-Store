@@ -28,7 +28,7 @@ A foreground access session is necessarily enabled and may reappear in the launc
 
 Shizuku daemon survives force-stopping the ScreenGuard client, **not** Shizuku server termination or reboot. If Shizuku stops during an open lease, refreeze waits for reconnection/reconciliation. Closed disabled apps stay disabled. On stock non-root Android the user must restart Shizuku after boot. The UI exposes disconnected/error status; emergency ADB recovery is documented separately. HyperOS battery/launcher caching behavior still needs physical-device verification.
 
-Schema migration preserves network rules, ownership, existing limits/windows and PIN. Legacy manual freezes and Focus selections become per-app guards; legacy automatic-only rules retain automatic behavior. There are no destructive database resets or account/server migrations.
+Schema migration preserves network rules, ownership, existing limits/windows and PIN. Legacy manual freezes and actively running Focus selections become per-app guards; idle Focus selections are cleared without freezing new apps; legacy automatic-only rules retain automatic behavior. There are no destructive database resets or account/server migrations.
 
 ## Signing and release provenance
 

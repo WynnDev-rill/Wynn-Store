@@ -36,6 +36,19 @@ class SecurityAndStorageTest {
         assertTrue(recreated.state.value.rules.getValue("com.example.app").ownedDisable)
         assertEquals(setOf(1, 2), recreated.state.value.rules.getValue("com.example.app").windows.first().days)
     }
+    @Test fun originalProductionJsonMigratesWithoutLosingDisableOwnership() = runTest {
+        val context = RuntimeEnvironment.getApplication() as Context
+        val file = File(context.filesDir, "guard-state.json")
+        file.writeText("""{"settings":{"onboardingDone":true},"rules":{"com.example.target":{"packageName":"com.example.target","freeze":"DISABLE","ownedDisable":true,"networkBlocked":true}}}""")
+        val store = GuardStore(context)
+        val rule = store.state.value.rules.getValue("com.example.target")
+        assertNotNull(rule.gate); assertTrue(rule.ownedDisable); assertTrue(rule.networkBlocked)
+        store.settings { it.copy(darkMode = true) }
+        val recreated = GuardStore(context)
+        assertEquals(2, recreated.state.value.schemaVersion)
+        assertEquals(rule, recreated.state.value.rules.getValue("com.example.target"))
+        assertTrue(recreated.state.value.settings.darkMode)
+    }
     @Test fun corruptStateIsReportedAndNeverOverwrittenSilently() = runTest {
         val context = RuntimeEnvironment.getApplication() as Context
         val file = File(context.filesDir, "guard-state.json"); file.writeText("damaged")

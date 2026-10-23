@@ -37,6 +37,7 @@ class NavigationUiTest {
         runBlocking { app.store.settings { it.copy(onboardingDone = true, pinHash = "", pinSalt = "") } }
         val vm = GuardViewModel(app)
         compose.setContent { ScreenGuardApp(vm) }
+        compose.onAllNodes(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Role, androidx.compose.ui.semantics.Role.Tab)).assertCountEquals(4)
         capture("10-floating-dock-home")
         compose.onNodeWithContentDescription("Bekukan").performClick()
         capture("11-floating-dock-usage")

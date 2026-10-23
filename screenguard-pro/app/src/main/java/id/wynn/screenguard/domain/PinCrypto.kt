@@ -24,7 +24,7 @@ object PinCrypto {
 }
 
 data class MathChallenge(val a: Int, val b: Int, val c: Int) {
-    val question: String get() = "$a + $b × $c = ?"
+    val question: String get() = if (c == 1) "$a + $b = ?" else "$a + $b × $c = ?"
     fun accepts(value: String) = value.trim().toIntOrNull() == a + b * c
     companion object {
         fun next(level: MathLevel = MathLevel.MEDIUM): MathChallenge = SecureRandom().let {

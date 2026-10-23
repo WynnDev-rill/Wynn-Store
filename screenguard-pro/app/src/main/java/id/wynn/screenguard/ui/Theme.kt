@@ -65,6 +65,6 @@ private val GuardTypography = Typography(
 
 fun duration(ms: Long): String {
     val minutes = (ms.coerceAtLeast(0) / 60_000).toInt()
-    return when { minutes == 0 -> "<1 mnt"; minutes < 60 -> "$minutes mnt"; else -> "${minutes / 60}j ${minutes % 60}m" }
+    return when { ms <= 0 -> "0 mnt"; minutes == 0 -> "<1 mnt"; minutes < 60 -> "$minutes mnt"; else -> "${minutes / 60}j ${minutes % 60}m" }
 }
 fun timeLabel(minute: Int) = "%02d:%02d".format(minute / 60, minute % 60)

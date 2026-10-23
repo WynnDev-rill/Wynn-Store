@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -40,7 +41,7 @@ private val iconCache = android.util.LruCache<String, ImageBitmap>(64)
     val bitmap by produceState<ImageBitmap?>(null, app.packageName) {
         value = iconCache.get(app.packageName) ?: withContext(Dispatchers.IO) { runCatching { context.packageManager.getApplicationIcon(app.packageName).toBitmap(112, 112).asImageBitmap().also { iconCache.put(app.packageName, it) } }.getOrNull() }
     }
-    Box(Modifier.size(size).clip(RoundedCornerShape(size * .23f)).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(size).clearAndSetSemantics {}.clip(RoundedCornerShape(size * .23f)).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
         if (bitmap != null) Image(bitmap!!, contentDescription = null, modifier = Modifier.fillMaxSize())
         else Text(app.label.take(1).uppercase(), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
     }
@@ -54,6 +55,13 @@ private val iconCache = android.util.LruCache<String, ImageBitmap>(64)
     }
 }
 @Composable fun SectionTitle(title: String, trailing: String? = null, action: (() -> Unit)? = null) {
+    if (LocalDensity.current.fontScale > 1.3f && trailing != null && action != null) {
+        Column(Modifier.fillMaxWidth()) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            TextButton(action, Modifier.align(Alignment.End)) { Text(trailing) }
+        }
+        return
+    }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
         if (trailing != null && action != null) TextButton(action) { Text(trailing) }
@@ -77,10 +85,16 @@ private val iconCache = android.util.LruCache<String, ImageBitmap>(64)
     }
 }
 @Composable fun PillTabs(tabs: List<String>, selected: Int, select: (Int) -> Unit) {
+    if (LocalDensity.current.fontScale > 1.3f) {
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            tabs.forEachIndexed { i, title -> FilterChip(selected == i, { select(i) }, label = { Text(title) }, shape = RoundedCornerShape(24.dp)) }
+        }
+        return
+    }
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(3.dp)) {
         tabs.forEachIndexed { i, title ->
             val selectedColor by animateColorAsState(if (selected == i) MaterialTheme.colorScheme.primary else Color.Transparent, tween(180), label = "tab color")
-            Surface(onClick = { select(i) }, modifier = Modifier.weight(1f).heightIn(min = 44.dp).semantics { this.selected = selected == i },
+            Surface(onClick = { select(i) }, modifier = Modifier.weight(1f).heightIn(min = 48.dp).semantics { this.selected = selected == i },
                 shape = RoundedCornerShape(22.dp), color = selectedColor) {
                 Box(Modifier.padding(horizontal = 5.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
                     Text(title, style = MaterialTheme.typography.labelLarge, color = if (selected == i) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)

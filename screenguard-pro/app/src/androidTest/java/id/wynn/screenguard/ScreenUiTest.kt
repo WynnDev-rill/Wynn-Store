@@ -35,7 +35,16 @@ class ScreenUiTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val file = File(context.getExternalFilesDir(null), "screenshots/$name.png")
         file.parentFile!!.mkdirs()
-        file.outputStream().use { compose.onAllNodes(isRoot()).onLast().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        compose.onAllNodes(isRoot()).onLast().captureToImage()
+        val instrument = InstrumentationRegistry.getInstrumentation()
+        instrument.waitForIdleSync()
+        androidx.test.uiautomator.UiDevice.getInstance(instrument).waitForIdle()
+        androidx.test.uiautomator.UiDevice.getInstance(instrument).takeScreenshot(file)
+    }
+    @Test fun launcherUsesTheNativeAndroidAdaptiveIcon() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        org.junit.Assert.assertEquals(R.mipmap.ic_launcher, context.applicationInfo.icon)
+        org.junit.Assert.assertTrue(context.packageManager.getApplicationIcon(context.packageName) is android.graphics.drawable.AdaptiveIconDrawable)
     }
     @Test fun dashboardContainsLiveNavigationAndWeeklyChart() {
         var page: Page? = null

@@ -12,6 +12,7 @@ ScreenGuard Pro dilisensikan **GPL-3.0**; lihat `LICENSE`. Lisensi ini berlaku p
 | [Robolectric](https://github.com/robolectric/robolectric) | MIT | Tes storage Android, hanya test scope |
 | [ShizuWall](https://github.com/AhmetCanArslan/ShizuWall/tree/8a51d90ec7fed3d2e53e027fe997052403ec6859) | GPL-3.0 | Referensi OEM_DENY_3, per-UID firewall, dan batas perangkat |
 | [Hail](https://github.com/aistra0528/Hail/tree/60742d0608f2d0abb4fa7e8bbc1b66b3888d22bc) | GPL-3.0 | Referensi enabled state, suspend, dan verifikasi status paket |
+| [Canta](https://github.com/samolego/Canta/tree/9b30d1bc1c8627f9866cdf7939f9fa28400b3605) | LGPL-3.0 | Research reference for Shizuku identity/user and package-management boundaries; no Canta source or binaries embedded |
 | [Plus Jakarta Sans](https://github.com/tokotype/PlusJakartaSans) | SIL Open Font License 1.1 | Font lokal, empat bobot statis diturunkan dari font variabel Google Fonts; teks OFL dibundel di APK |
 | [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | MIT (beserta pemberitahuan sumber vendor) | Skill desain lokal, bukan dependensi runtime APK; lihat `.agents/skills/ui-ux-pro-max/LICENSE` |
 
@@ -27,3 +28,5 @@ Dokumentasi resmi yang diperiksa:
 - [WorkManager periodic work](https://developer.android.com/develop/background-work/background-tasks/persistent/getting-started/define-work#schedule_periodic_work)
 - [Android app signing](https://developer.android.com/studio/publish/app-signing)
 
+
+Launcher SG artwork supplied by the user is embedded unchanged (JPEG payload), with native Android adaptive masking. The old shield vector is retained only for monochrome notification/service status.
