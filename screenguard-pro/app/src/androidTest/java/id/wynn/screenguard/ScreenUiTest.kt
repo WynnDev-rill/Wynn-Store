@@ -38,6 +38,7 @@ class ScreenUiTest {
         compose.onAllNodes(isRoot()).onLast().captureToImage()
         val instrument = InstrumentationRegistry.getInstrumentation()
         instrument.waitForIdleSync()
+        EmulatorUiRecovery.dismissLauncherDialog(androidx.test.uiautomator.UiDevice.getInstance(instrument))
         androidx.test.uiautomator.UiDevice.getInstance(instrument).waitForIdle()
         androidx.test.uiautomator.UiDevice.getInstance(instrument).takeScreenshot(file)
     }

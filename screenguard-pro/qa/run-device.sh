@@ -39,6 +39,8 @@ if ! grep -q 'OK (1 test)' qa/output/privileged-test.txt; then
   adb pull /sdcard/guard-window.xml qa/output/permission-window.xml || true
   adb exec-out screencap -p > qa/output/permission-screen.png
 fi
+adb logcat -d > qa/output/logcat.txt
+if [ "$privileged_status" -ne 0 ]; then exit "$privileged_status"; fi
 # Independently prove that refreeze survives killing the app process, not just closing an Activity.
 adb shell am instrument -w -e class id.wynn.screenguard.PrivilegedDeviceTest#armDaemonTimerForExternalForceStopCheck -e watchdog true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/watchdog-arm.txt
 grep -q 'OK (1 test)' qa/output/watchdog-arm.txt
@@ -60,7 +62,12 @@ production_apk="$(python3 -c 'import json,pathlib; f=pathlib.Path("updates/stabl
 if [ -f "$production_apk" ]; then
   python3 qa/verify-distribution.py
   # Upgrade previous production APK in place; a signature mismatch must fail the run.
-  if [ "$production_apk" != "distribution/ScreenGuard-Pro-1.1.0.apk" ]; then adb install -r distribution/ScreenGuard-Pro-1.1.0.apk; fi
+  if [ "$production_apk" != "distribution/ScreenGuard-Pro-1.1.0.apk" ]; then
+    adb install -r distribution/ScreenGuard-Pro-1.1.0.apk
+    release_version="$(python3 -c 'import json; print(json.load(open("updates/stable.json"))["versionName"])')"
+    adb shell am instrument -w -e class id.wynn.screenguard.ProductionUpgradeTest -e upgrade true -e releaseVersion "$release_version" id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/production-upgrade.txt
+    grep -q 'OK (1 test)' qa/output/production-upgrade.txt
+  fi
   "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify "$production_apk"
   adb install -r "$production_apk"
   adb logcat -c

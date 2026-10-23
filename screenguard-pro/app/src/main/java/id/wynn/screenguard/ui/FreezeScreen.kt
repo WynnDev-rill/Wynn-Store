@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import id.wynn.screenguard.domain.*
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable fun FreezeScreen(state: GuardState, device: DeviceData, ready: Boolean, busy: Boolean, back: () -> Unit,
     edit: (InstalledApp) -> Unit, select: (InstalledApp) -> Unit, permissions: () -> Unit = {}) {
     var filter by rememberSaveable { mutableIntStateOf(0) }
@@ -33,7 +34,7 @@ import id.wynn.screenguard.domain.*
             item { OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), label = { Text("Cari aplikasi") }, singleLine = true,
                 leadingIcon = { Icon(Icons.Outlined.Search, null) }, shape = RoundedCornerShape(20.dp)) }
             item { PillTabs(listOf("Semua", "Unduhan", "Sistem"), filter) { filter = it } }
-            item { Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            item { FlowRow(verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 FilterChip(guarded, { guarded = !guarded }, label = { Text("Dilindungi (${state.rules.values.count { it.gate != null }})") },
                     leadingIcon = { Icon(Icons.Outlined.Shield, null, Modifier.size(18.dp)) })
                 Text("${apps.size} aplikasi", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

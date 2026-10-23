@@ -21,7 +21,7 @@ assert f"versionCode='{feed['versionCode']}'" in package
 assert f"versionName='{feed['versionName']}'" in package
 build_version = re.search(r'versionName = "([^"]+)"', Path('app/build.gradle.kts').read_text()).group(1)
 if build_version == feed['versionName']:
-    out = Path('dist'); out.mkdir(exist_ok=True)
+    out = Path('dist/production'); out.mkdir(parents=True, exist_ok=True)
     shutil.copy2(apk, out / apk.name)
     (out / 'RELEASE-SHA256.txt').write_text(f'{feed["sha256"]}  {apk.name}\n')
     print(f'Current privately signed release verified: {apk.name}')

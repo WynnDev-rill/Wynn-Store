@@ -29,6 +29,7 @@ class NavigationUiTest {
         // Synchronize the rendered Compose layer before capturing the actual Android window.
         compose.onAllNodes(isRoot()).onLast().captureToImage()
         instrument.waitForIdleSync()
+        EmulatorUiRecovery.dismissLauncherDialog(UiDevice.getInstance(instrument))
         UiDevice.getInstance(instrument).waitForIdle()
         UiDevice.getInstance(instrument).takeScreenshot(file)
     }

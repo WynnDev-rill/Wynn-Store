@@ -31,11 +31,16 @@ class PrivilegedDeviceTest {
         val ui = UiDevice.getInstance(instrument)
         ui.wakeUp()
         ui.executeShellCommand("wm dismiss-keyguard")
-        context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        check(ui.wait(Until.hasObject(By.pkg(context.packageName)), 20_000)) { "Main activity did not become visible" }
+        EmulatorUiRecovery.dismissLauncherDialog(ui)
+        fun openMain() = context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))
+        openMain()
+        var visible = ui.wait(Until.hasObject(By.pkg(context.packageName)), 20_000)
+        if (!visible && EmulatorUiRecovery.dismissLauncherDialog(ui)) { openMain(); visible = ui.wait(Until.hasObject(By.pkg(context.packageName)), 15_000) }
+        check(visible) { "Main activity did not become visible" }
         ui.waitForIdle()
         withTimeout(20_000) { while (!Shizuku.pingBinder()) delay(200) }
         if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+            EmulatorUiRecovery.dismissLauncherDialog(ui)
             instrument.runOnMainSync { graph.gateway.requestPermission() }
             val allow = ui.wait(Until.findObject(By.res("android", "button1").pkg("moe.shizuku.privileged.api")), 25_000)
             checkNotNull(allow) { "Shizuku permission dialog did not appear" }.click()
