@@ -137,11 +137,14 @@ data class InstalledApp(val packageName: String, val label: String, val uid: Int
  */
 object FreezeCatalog {
     fun selected(state: GuardState, apps: List<InstalledApp>): List<InstalledApp> =
-        apps.filter { state.rules[it.packageName]?.gate?.automaticOnly == false }
-            .sortedBy { it.label.lowercase() }
+        apps.filter { app ->
+            val rule = state.rules[app.packageName]
+            rule?.gate?.automaticOnly == false || rule?.ownedDisable == true || rule?.ownedSuspension == true
+        }.sortedBy { it.label.lowercase() }
 
     fun canAdd(app: InstalledApp, rule: AppRule?): Boolean =
-        !app.protected && app.launchable && app.enabled && !app.suspended && rule?.gate == null
+        !app.protected && app.launchable && app.enabled && !app.suspended && rule?.gate == null &&
+            rule?.ownedDisable != true && rule?.ownedSuspension != true
 }
 
 object PackageSafety {
