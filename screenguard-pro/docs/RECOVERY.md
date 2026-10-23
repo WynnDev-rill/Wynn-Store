@@ -2,7 +2,7 @@
 
 Pertama: nyalakan kembali Shizuku, beri izin, buka ScreenGuard, lalu **Pengaturan → Pulihkan semua aplikasi**. Tunggu hasil dan periksa aplikasi yang masih gagal. Jangan menghapus data ScreenGuard sebelum pulih: kepemilikan aturan diperlukan untuk menentukan apa yang harus dilepas.
 
-Jika ScreenGuard tidak dapat dibuka atau sudah dihapus, gunakan ADB dari perangkat tepercaya. Ganti `com.example.app` dengan paket aplikasi yang memang dikunci dan `0` dengan ID profil yang benar:
+Jika ScreenGuard tidak dapat dibuka atau sudah dihapus, **hentikan server Shizuku dahulu** untuk membatalkan timer pembekuan yang masih hidup. Kemudian gunakan ADB dari perangkat tepercaya. Ganti `com.example.app` dengan paket aplikasi yang memang dikunci dan `0` dengan ID profil yang benar:
 
 ```sh
 adb shell pm enable --user 0 com.example.app

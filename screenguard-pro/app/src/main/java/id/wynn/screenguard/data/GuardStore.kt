@@ -21,7 +21,11 @@ class GuardStore(context: Context) {
     private val mutable: MutableStateFlow<GuardState>
     val state get() = mutable.asStateFlow()
     init {
-        val result = runCatching { if (file.baseFile.exists()) json.decodeFromString<GuardState>(file.openRead().bufferedReader().use { it.readText() }) else GuardState() }
+        val result = runCatching { if (file.baseFile.exists()) file.openRead().bufferedReader().use { reader ->
+            val text = reader.readText()
+            val decoded = json.decodeFromString<GuardState>(text)
+            GuardMigration.migrate(if ("\"schemaVersion\"" in text) decoded else decoded.copy(schemaVersion = 1))
+        } else GuardState() }
         loadError = result.exceptionOrNull()?.let { "Data lokal tidak terbaca. Jangan hapus data aplikasi; pulihkan aplikasi melalui panduan pemulihan." }
         mutable = MutableStateFlow(result.getOrDefault(GuardState()))
     }

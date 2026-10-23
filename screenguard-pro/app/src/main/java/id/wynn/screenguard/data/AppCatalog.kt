@@ -23,13 +23,14 @@ class AppCatalog(private val context: Context) {
         val extra = (admins + listOfNotNull(dialer, sms, home, ime)).toSet()
         val all = pm.getInstalledApplications(PackageManager.MATCH_DISABLED_COMPONENTS)
         val counts = all.groupingBy { it.uid }.eachCount()
-        val result = all.filter { info -> info.packageName in tracked ||
-            (info.flags and ApplicationInfo.FLAG_SYSTEM == 0) || pm.getLaunchIntentForPackage(info.packageName) != null
-        }.map { info ->
+        val launcherPackages = pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), PackageManager.MATCH_DISABLED_COMPONENTS)
+            .map { it.activityInfo.packageName }.toSet()
+        val result = all.map { info ->
             InstalledApp(info.packageName, info.loadLabel(pm).toString(), info.uid, info.category, info.enabled,
                 info.flags and ApplicationInfo.FLAG_SUSPENDED != 0,
                 PackageSafety.protected(info.packageName, info.uid, context.packageName, extra) || info.flags and ApplicationInfo.FLAG_PERSISTENT != 0,
-                counts.getOrDefault(info.uid, 0) > 1)
+                counts.getOrDefault(info.uid, 0) > 1,
+                info.flags and ApplicationInfo.FLAG_SYSTEM != 0, info.packageName in launcherPackages)
         }.sortedBy { it.label.lowercase() }
         cached = result; cachedAt = android.os.SystemClock.elapsedRealtime()
         return result

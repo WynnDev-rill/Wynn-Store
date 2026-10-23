@@ -20,7 +20,7 @@ class GuardMonitorService : Service() {
     private var loop: Job? = null
     override fun onBind(intent: Intent?) = null
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!graph.store.state.value.settings.monitorEnabled) { stopSelf(); return START_NOT_STICKY }
+        if (!graph.store.state.value.needsMonitoring) { stopSelf(); return START_NOT_STICKY }
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(NotificationChannel("monitor", "Pemantauan ScreenGuard", NotificationManager.IMPORTANCE_LOW))
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
@@ -31,13 +31,13 @@ class GuardMonitorService : Service() {
             if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE else 0)
         if (loop?.isActive != true) loop = scope.launch {
             var lastText = ""
-            while (isActive && graph.store.state.value.settings.monitorEnabled) {
+            while (isActive && graph.store.state.value.needsMonitoring) {
                 val errors = runCatching { graph.controller.reconcile() }.getOrElse { listOf(it.message ?: "Pemantauan gagal") }
                 val text = when {
                     graph.gateway.status.value != ShizukuStatus.READY -> "Aktifkan Shizuku; aturan belum dapat diterapkan"
-                    !graph.usage.hasAccess() -> "Izin penggunaan diperlukan untuk batas harian"
+                    graph.store.state.value.settings.monitorEnabled && !graph.usage.hasAccess() -> "Izin penggunaan diperlukan untuk batas harian"
                     errors.isNotEmpty() -> "${errors.size} aturan perlu diperiksa di aplikasi"
-                    else -> "Batas dan jadwal berjalan • ketuk untuk mengelola"
+                    else -> "Akses sementara dan aturan lokal berjalan"
                 }
                 if (text != lastText) {
                     if (Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(this@GuardMonitorService, android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) manager.notify(42, notification(text))
@@ -79,7 +79,7 @@ class RestoreReceiver : BroadcastReceiver() {
         if (intent.action !in setOf(Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED)) return
         val graph = context.applicationContext as GuardApplication
         MonitorScheduler.schedule(context)
-        if (graph.store.state.value.settings.monitorEnabled) GuardMonitorService.start(context)
+        if (graph.store.state.value.needsMonitoring) GuardMonitorService.start(context)
         // On stock non-root Android Shizuku must be started again by the user after boot.
         // Do not silently claim protection when the privileged process is absent.
         WorkManager.getInstance(context).enqueueUniqueWork("guard-restore", ExistingWorkPolicy.REPLACE, OneTimeWorkRequestBuilder<PolicyWorker>().build())

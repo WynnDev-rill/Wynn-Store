@@ -8,3 +8,6 @@ signing.properties
 captures/
 screenshots/
 qa/output/
+
+__pycache__/
+*.pyc

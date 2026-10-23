@@ -20,7 +20,7 @@ Searches reviewed:
 
 ## Navigation and state
 
-Five persistent dock destinations: Beranda, Aplikasi, Internet, Fokus, Pengaturan. Freeze belongs to Aplikasi, reachable through its header and dashboard quick action. Unlock/permission flows hide the dock. Back returns to the relevant parent; tab changes preserve search, filters and scroll state with SaveableStateHolder.
+Four persistent dock destinations: Beranda, Bekukan, Jaringan, Pengaturan. Statistics and the full usage list are secondary Beranda destinations. Per-app wait/math challenges, manual freezes and optional automatic limits belong to Bekukan. Unlock/permission flows hide the dock. Back returns to the relevant parent; tab changes preserve search, filters and scroll state with SaveableStateHolder.
 
 Selected dock item shows icon plus text when space allows; at large font sizes/small widths all icons retain accessible labels and selected tab semantics. Content reserves dock and gesture-bar space.
 
@@ -39,3 +39,7 @@ Permission failure guides users through Android's Restricted Settings; no claime
 ## Verification
 
 Automated UI interaction, tab-state retention, restricted-settings help, compact dock at 2x text, dark/landscape screens, screenshot captures, JVM update validation, Android lint and optimized APK cold launch. Physical HyperOS remains a separate device check.
+
+## 1.2 reviewed refinements
+
+Relevant UI UX Pro Max queries: `digital wellbeing app freezing four floating tabs interactive usage chart accessible --domain ux`, `bottom sheet lists animation accessibility --stack jetpack-compose`. Native semantics replace web ARIA guidance; choices wrap instead of shrinking text. Charts expose selected-day buttons with date/duration labels; horizontal scrolling retains 48dp day targets on small displays. No slogan in the home header. The user-supplied original raster brand artwork intentionally overrides generic vector-only advice; native adaptive launcher layers apply system masks while preserving the supplied full-color artwork. Gate controls use a native modal sheet, retained per-app state, explicit wait/math progress, and standard system motion scaling.

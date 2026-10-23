@@ -23,7 +23,7 @@ class ShizukuGateway(context: Context, private val scope: CoroutineScope) : Priv
     private val mutex = Mutex()
     private var pending = CompletableDeferred<IGuardService>()
     private val args = Shizuku.UserServiceArgs(ComponentName(context, GuardUserService::class.java))
-        .daemon(false).processNameSuffix("guard").debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE).tag("screenguard-service")
+        .daemon(true).processNameSuffix("guard").debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE).tag("screenguard-service")
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             val value = IGuardService.Stub.asInterface(binder) ?: return
@@ -67,6 +67,7 @@ class ShizukuGateway(context: Context, private val scope: CoroutineScope) : Priv
     }
     suspend fun grantOwnUsageAccess() = execute { it.grantOwnUsageAccess() }
     override suspend fun network(pkg: String, uid: Int, blocked: Boolean) = execute { it.network(pkg, uid, blocked) }
+    override suspend fun scheduleRefreeze(pkg: String, userId: Int, deadlineElapsed: Long) = execute { it.scheduleRefreeze(pkg, userId, deadlineElapsed) }
     override suspend fun freeze(pkg: String, userId: Int, mode: Int, enabled: Boolean) = execute { it.freeze(pkg, userId, mode, enabled) }
     private suspend fun execute(action: (IGuardService) -> String) = withContext(Dispatchers.IO) {
         mutex.withLock {

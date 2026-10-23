@@ -38,12 +38,12 @@ class NavigationUiTest {
         val vm = GuardViewModel(app)
         compose.setContent { ScreenGuardApp(vm) }
         capture("10-floating-dock-home")
-        compose.onNodeWithContentDescription("Aplikasi").performClick()
+        compose.onNodeWithContentDescription("Bekukan").performClick()
         capture("11-floating-dock-usage")
         compose.onNodeWithText("Cari aplikasi").performTextInput("my saved search")
-        compose.onNodeWithContentDescription("Internet").performClick()
+        compose.onNodeWithContentDescription("Jaringan").performClick()
         compose.onNodeWithText("Kontrol Internet").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Aplikasi").performClick()
+        compose.onNodeWithContentDescription("Bekukan").performClick()
         compose.onNodeWithText("my saved search").assertIsDisplayed()
         compose.onNodeWithContentDescription("Beranda").performClick()
         compose.onNodeWithText("ScreenGuard Pro").assertIsDisplayed()
@@ -65,7 +65,7 @@ class NavigationUiTest {
                 }
             }
         }
-        compose.onNodeWithContentDescription("Internet").assertIsSelected()
+        compose.onNodeWithContentDescription("Jaringan").assertIsSelected()
         compose.onNodeWithContentDescription("Pengaturan").performClick()
         assertEquals(Page.SETTINGS, selected)
         capture("13-dock-large-text-dark")

@@ -25,7 +25,7 @@ import androidx.core.view.WindowCompat
 import id.wynn.screenguard.domain.*
 import id.wynn.screenguard.privilege.ShizukuStatus
 
-enum class Page { HOME, USAGE, NETWORK, FREEZE, UNLOCK, SCHEDULE, SETTINGS, PERMISSIONS }
+enum class Page { HOME, FREEZE, NETWORK, SETTINGS, USAGE, APP_STATS, UNLOCK, PERMISSIONS }
 
 @Composable fun ScreenGuardApp(vm: GuardViewModel) {
     val update by vm.updater.state.collectAsStateWithLifecycle()
@@ -43,6 +43,8 @@ enum class Page { HOME, USAGE, NETWORK, FREEZE, UNLOCK, SCHEDULE, SETTINGS, PERM
     val pinError by vm.pinError.collectAsStateWithLifecycle()
     val pinWorking by vm.pinWorking.collectAsStateWithLifecycle()
     val challenge by vm.challenge.collectAsStateWithLifecycle()
+    val gate by vm.challengeGate.collectAsStateWithLifecycle()
+    val completed by vm.completedQuestions.collectAsStateWithLifecycle()
     val challengeError by vm.challengeError.collectAsStateWithLifecycle()
     val remaining by vm.remaining.collectAsStateWithLifecycle()
     val unlocking by vm.unlocking.collectAsStateWithLifecycle()
@@ -50,15 +52,17 @@ enum class Page { HOME, USAGE, NETWORK, FREEZE, UNLOCK, SCHEDULE, SETTINGS, PERM
     val page = Page.valueOf(pageName)
     var previousPage by rememberSaveable { mutableStateOf(Page.HOME.name) }
     val pageStateHolder = rememberSaveableStateHolder()
-    var detail by remember { mutableStateOf<InstalledApp?>(null) }
+    var detailPackage by rememberSaveable { mutableStateOf<String?>(null) }
+    var detailDate by rememberSaveable { mutableStateOf(java.time.LocalDate.now().toString()) }
+    var detailReturn by rememberSaveable { mutableStateOf(Page.HOME.name) }
+    var gateApp by remember { mutableStateOf<InstalledApp?>(null) }
     var editor by remember { mutableStateOf<InstalledApp?>(null) }
-    var picker by remember { mutableStateOf(false) }
     var createPin by remember { mutableStateOf(false) }
-    var scheduleTab by rememberSaveable { mutableIntStateOf(2) }
     LaunchedEffect(update.available?.versionCode, state.settings.onboardingDone) {
         val version = update.available?.versionCode ?: return@LaunchedEffect
         if (state.settings.onboardingDone && version != offeredVersion) { offeredVersion = version; updateSheet = true }
     }
+    LaunchedEffect(state.rules) { vm.refresh() }
     val context = LocalContext.current
     SideEffect {
         (context as? android.app.Activity)?.window?.let { window ->
@@ -68,10 +72,25 @@ enum class Page { HOME, USAGE, NETWORK, FREEZE, UNLOCK, SCHEDULE, SETTINGS, PERM
             }
         }
     }
-    fun back() { pageName = when (page) { Page.UNLOCK -> Page.FREEZE.name; Page.FREEZE -> Page.USAGE.name; Page.PERMISSIONS -> previousPage; else -> Page.HOME.name } }
-    fun navigate(next: Page) { if (next == Page.SETTINGS || next == Page.SCHEDULE) vm.secure { pageName = next.name } else pageName = next.name }
+    fun back() {
+        if (page == Page.UNLOCK) vm.cancelChallenge()
+        pageName = when (page) { Page.UNLOCK -> Page.FREEZE.name; Page.APP_STATS -> detailReturn; Page.PERMISSIONS -> previousPage; else -> Page.HOME.name }
+    }
+    fun navigate(next: Page) { if (next == Page.SETTINGS) vm.secure { pageName = next.name } else pageName = next.name }
     fun permissions() { previousPage = pageName; pageName = Page.PERMISSIONS.name }
-    fun openSchedule(tab: Int) { vm.secure { scheduleTab = tab; pageName = Page.SCHEDULE.name } }
+    fun details(app: InstalledApp) { detailDate = java.time.LocalDate.now().toString(); detailPackage = app.packageName; detailReturn = pageName; pageName = Page.APP_STATS.name }
+    fun detailsAt(app: InstalledApp, date: java.time.LocalDate) { details(app); detailDate = date.toString() }
+    fun launchApp(pkg: String) {
+        val intent = context.packageManager.getLaunchIntentForPackage(pkg)
+        if (intent == null) vm.message.value = "Aplikasi aktif, tetapi tidak menyediakan peluncur Android."
+        else runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.onFailure { vm.message.value = "Tidak dapat membuka aplikasi: ${it.message}" }
+    }
+    fun select(app: InstalledApp) {
+        val rule = state.rules[app.packageName]
+        if (rule?.gate == null) vm.secure { gateApp = app }
+        else if (app.enabled && !app.suspended && vm.canLaunchWithoutChallenge(app)) launchApp(app.packageName)
+        else vm.prepareUnlock(app) { pageName = Page.UNLOCK.name }
+    }
     BackHandler(page != Page.HOME && state.settings.onboardingDone && !busy) { back() }
     GuardTheme(state.settings.darkMode) {
         Scaffold(modifier = Modifier.imePadding(), containerColor = MaterialTheme.colorScheme.background, bottomBar = {
@@ -85,18 +104,16 @@ enum class Page { HOME, USAGE, NETWORK, FREEZE, UNLOCK, SCHEDULE, SETTINGS, PERM
                         (fadeIn(tween(220, 40)) + slideInHorizontally(tween(280)) { width -> if (targetState.ordinal > initialState.ordinal) width / 16 else -width / 16 }) togetherWith
                             (fadeOut(tween(120)) + slideOutHorizontally(tween(180)) { width -> if (targetState.ordinal > initialState.ordinal) -width / 24 else width / 24 })
                     }) { current ->
-                        pageStateHolder.SaveableStateProvider(if (current == Page.SCHEDULE) "${current.name}:$scheduleTab" else current.name) {
+                        pageStateHolder.SaveableStateProvider(if (current == Page.APP_STATS) "${current.name}:$detailPackage:$detailDate" else current.name) {
                         when (current) {
-                            Page.HOME -> DashboardScreen(state, device, status == ShizukuStatus.READY, ::navigate, { detail = it }, ::permissions, { openSchedule(2) }, { openSchedule(1) })
-                            Page.USAGE -> UsageScreen(device, ::back, { navigate(Page.FREEZE) }) { detail = it }
+                            Page.HOME -> DashboardScreen(state, device, status == ShizukuStatus.READY, ::navigate, ::details, ::permissions, ::detailsAt)
+                            Page.USAGE -> UsageScreen(device, ::back, { navigate(Page.FREEZE) }, ::details)
+                            Page.APP_STATS -> device.apps.find { it.packageName == detailPackage }?.let { app ->
+                                AppStatsScreen(app, device, ::back, { pkg, date -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { vm.graph.usage.details(pkg, date) } }, { vm.secure { gateApp = app } }, detailDate)
+                            }
                             Page.NETWORK -> NetworkScreen(state, device, status, supported, busy, ::back, vm::setNetwork, ::permissions) { navigate(Page.FREEZE) }
-                            Page.FREEZE -> FreezeScreen(state, device, status == ShizukuStatus.READY, busy, ::back, vm::freeze) { app -> vm.prepareUnlock(app) { pageName = Page.UNLOCK.name } }
-                            Page.UNLOCK -> UnlockScreen(device.apps.find { it.packageName == unlocking }, state.settings, challenge, remaining, challengeError, busy, ::back, vm::newChallenge) { answer -> vm.unlock(answer) { pkg ->
-                                val intent = context.packageManager.getLaunchIntentForPackage(pkg)
-                                if (intent == null) vm.message.value = "Aplikasi dipulihkan, tetapi tidak menyediakan ikon peluncur."
-                                else runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.onFailure { vm.message.value = it.message ?: "Tidak dapat membuka aplikasi" }
-                            } }
-                            Page.SCHEDULE -> ScheduleScreen(state, device.apps, ::back, { app -> vm.secure { editor = app } }, { vm.secure { picker = true } }, vm::monitor, vm::focus, scheduleTab)
+                            Page.FREEZE -> FreezeScreen(state, device, status == ShizukuStatus.READY, busy, ::back, { app -> vm.secure { gateApp = app } }, ::select, ::permissions)
+                            Page.UNLOCK -> UnlockScreen(device.apps.find { it.packageName == unlocking }, gate, challenge, completed, remaining, challengeError, busy, ::back, vm::newChallenge) { answer -> vm.unlock(answer) { pkg -> pageName = Page.FREEZE.name; launchApp(pkg) } }
                             Page.SETTINGS -> SettingsScreen(state, status, ::back, vm::secure, ::permissions, vm::settings, { vm.secure { createPin = true } }, vm::removePin, vm::restore, update, autoUpdate, { vm.checkUpdates(true); if (update.available != null) updateSheet = true }, { enabled -> vm.secure { vm.updater.automatic(enabled) } })
                             Page.PERMISSIONS -> PermissionsScreen(device.usageAccess, status, ::back, vm.graph.gateway::requestPermission, ::back, vm::refresh, connectionError, vm::grantUsageThroughShizuku, busy)
                         }
@@ -107,27 +124,11 @@ enum class Page { HOME, USAGE, NETWORK, FREEZE, UNLOCK, SCHEDULE, SETTINGS, PERM
             }
         }
         if (updateSheet && update.available != null && !pinPrompt && !busy) UpdateSheet(update, { updateSheet = false }, vm::downloadUpdate, { vm.installUpdate { context.startActivity(it) } }, vm::cancelUpdate)
-        detail?.let { app -> AlertDialog(onDismissRequest = { detail = null }, title = { Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) { AppIcon(app); Text(app.label) } }, text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(app.packageName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Hari ini: ${device.days.lastOrNull()?.apps?.get(app.packageName)?.let(::duration) ?: "0 mnt"}")
-                Text(vm.reason(app), color = MaterialTheme.colorScheme.primary)
-                Button({ vm.secure { editor = app; detail = null } }, Modifier.fillMaxWidth(), enabled = !app.protected) { Text("Atur batas & jadwal") }
-                FilledTonalButton({ detail = null; navigate(Page.NETWORK) }, Modifier.fillMaxWidth()) { Text("Kontrol internet") }
-                FilledTonalButton({ detail = null; navigate(Page.FREEZE) }, Modifier.fillMaxWidth()) { Text("Bekukan / buka aplikasi") }
-                if (app.protected) Text("Aplikasi penting dilindungi dari perubahan.", style = MaterialTheme.typography.bodySmall)
-            }
-        }, confirmButton = { TextButton({ detail = null }) { Text("Tutup") } }) }
-        if (picker) {
-            var search by remember { mutableStateOf("") }
-            AlertDialog(onDismissRequest = { picker = false }, title = { Text("Pilih aplikasi") }, text = {
-                Column {
-                    OutlinedTextField(search, { search = it }, Modifier.fillMaxWidth(), label = { Text("Cari aplikasi") }, singleLine = true)
-                    LazyColumn(Modifier.heightIn(max = 360.dp)) { items(device.apps.filter { !it.protected && it.label.contains(search, true) }, key = { it.packageName }) { app -> TextButton({ editor = app; picker = false }, Modifier.fillMaxWidth()) { AppIcon(app, 30.dp); Spacer(Modifier.width(12.dp)); Text(app.label, Modifier.weight(1f)) } } }
-                }
-            }, confirmButton = { TextButton({ picker = false }) { Text("Batal") } })
-        }
-        editor?.let { app -> RuleEditor(app, state.rules[app.packageName] ?: AppRule(app.packageName), { editor = null }) { limit, window, focus -> vm.saveRule(app, limit, window, focus) } }
+        gateApp?.let { app -> GateEditor(app, state.rules[app.packageName] ?: AppRule(app.packageName), status == ShizukuStatus.READY,
+            { gateApp = null }, { config -> vm.configureGate(app, config); gateApp = null },
+            { vm.removeGate(app); gateApp = null }, { vm.closeAccess(app); gateApp = null },
+            { gateApp = null; editor = app }) }
+        editor?.let { app -> RuleEditor(app, state.rules[app.packageName] ?: AppRule(app.packageName), { editor = null }) { limit, window -> vm.saveRule(app, limit, window) } }
         if (createPin) PinCreateDialog({ createPin = false }, vm::savePin)
         if (pinPrompt) {
             var input by remember { mutableStateOf("") }

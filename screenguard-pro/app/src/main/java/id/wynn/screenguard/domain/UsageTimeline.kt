@@ -5,16 +5,21 @@ package id.wynn.screenguard.domain
 data class UsageEvent(val time: Long, val packageName: String, val activity: String, val kind: Kind) {
     enum class Kind { RESUME, PAUSE, SCREEN_OFF, SHUTDOWN, STARTUP }
 }
+data class UsageSession(val packageName: String, val start: Long, val end: Long, val openedAt: Long)
+
 object UsageTimeline {
-    fun calculate(events: List<UsageEvent>, from: Long, until: Long): Map<String, Long> {
+    fun calculate(events: List<UsageEvent>, from: Long, until: Long): Map<String, Long> =
+        sessions(events, from, until).groupBy { it.packageName }.mapValues { (_, sessions) -> sessions.sumOf { it.end - it.start } }
+
+    fun sessions(events: List<UsageEvent>, from: Long, until: Long): List<UsageSession> {
         require(until >= from)
         val active = mutableMapOf<String, MutableSet<String>>()
         val started = mutableMapOf<String, Long>()
-        val totals = mutableMapOf<String, Long>()
+        val sessions = mutableListOf<UsageSession>()
         fun close(pkg: String, at: Long) {
             val start = started.remove(pkg) ?: return
             val duration = (at.coerceAtMost(until) - start.coerceAtLeast(from)).coerceAtLeast(0)
-            totals[pkg] = totals.getOrDefault(pkg, 0) + duration
+            if (duration > 0) sessions += UsageSession(pkg, start.coerceAtLeast(from), at.coerceAtMost(until), start)
             active.remove(pkg)
         }
         events.asSequence().filter { it.time <= until }.sortedBy { it.time }.forEach { e ->
@@ -33,6 +38,6 @@ object UsageTimeline {
             }
         }
         active.keys.toList().forEach { close(it, until) }
-        return totals.filterValues { it > 0 }
+        return sessions
     }
 }

@@ -33,10 +33,8 @@ import id.wynn.screenguard.privilege.ShizukuStatus
         LazyColumn(contentPadding = PaddingValues(20.dp, 8.dp, 20.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item { SectionTitle("Keamanan") }
             item { GuardCard {
-                SettingsRow(Icons.Outlined.Lock, "PIN Orang Tua", "Lindungi perubahan dan pembukaan aplikasi", if (state.settings.hasPin) "Aktif" else "Atur", pin)
-                SettingsRow(Icons.Outlined.Password, "Ubah PIN", "6 digit, disimpan sebagai hash", onClick = pin)
+                SettingsRow(Icons.Outlined.Lock, "PIN Orang Tua", "Lindungi perubahan aturan dan pemulihan", if (state.settings.hasPin) "Aktif" else "Atur", pin)
                 if (state.settings.hasPin) SettingsRow(Icons.Outlined.LockOpen, "Hapus PIN", onClick = { secure { dialog = "removePin" } })
-                SettingsRow(Icons.Outlined.Calculate, "Tantangan membuka", trailing = if (state.settings.unlockMode == UnlockMode.MATH) "Matematika" else "${state.settings.waitSeconds} detik", onClick = { secure { dialog = "unlock" } })
             } }
             item { SectionTitle("Akses & Integrasi") }
             item { GuardCard {
@@ -69,12 +67,7 @@ import id.wynn.screenguard.privilege.ShizukuStatus
     }
     when (dialog) {
         "removePin" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Hapus PIN orang tua?") }, text = { Text("Perubahan aturan tidak lagi memerlukan PIN.") }, confirmButton = { TextButton({ removePin(); dialog = null }) { Text("Hapus PIN") } }, dismissButton = { TextButton({ dialog = null }) { Text("Batal") } })
-        "restore" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Pulihkan semua aplikasi?") }, text = { Text("Semua batas, jadwal, fokus, dan blokir internet ScreenGuard akan dilepas. Lakukan sebelum menghapus ScreenGuard.") }, confirmButton = { TextButton({ restore(); dialog = null }) { Text("Pulihkan") } }, dismissButton = { TextButton({ dialog = null }) { Text("Batal") } })
-        "unlock" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Tantangan membuka") }, text = { Column {
-            Text("Berlaku untuk pembukaan sementara selama 5 menit.")
-            TextButton({ change { it.copy(unlockMode = UnlockMode.MATH) }; dialog = null }) { Text("Tantangan matematika") }
-            listOf(30, 60, 120).forEach { seconds -> TextButton({ change { it.copy(unlockMode = UnlockMode.WAIT, waitSeconds = seconds) }; dialog = null }) { Text("Tunggu $seconds detik") } }
-        } }, confirmButton = { TextButton({ dialog = null }) { Text("Tutup") } })
+        "restore" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Pulihkan semua aplikasi?") }, text = { Text("Semua tantangan, batas, jadwal, dan blokir internet ScreenGuard akan dilepas. Lakukan sebelum menghapus ScreenGuard.") }, confirmButton = { TextButton({ restore(); dialog = null }) { Text("Pulihkan") } }, dismissButton = { TextButton({ dialog = null }) { Text("Batal") } })
         "goal" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("Target harian") }, text = { OutlinedTextField(goal, { goal = it.filter(Char::isDigit).take(4) }, label = { Text("Menit (1–1440)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)) }, confirmButton = { TextButton({ goal.toIntOrNull()?.takeIf { it in 1..1440 }?.let { minutes -> change { it.copy(dailyGoalMinutes = minutes) }; dialog = null } }, enabled = goal.toIntOrNull() in 1..1440) { Text("Simpan") } }, dismissButton = { TextButton({ dialog = null }) { Text("Batal") } })
         "about" -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text("ScreenGuard Pro") }, text = { Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("v${BuildConfig.VERSION_NAME} · Android 11+\nAplikasi native Kotlin dan Jetpack Compose. Tanpa akun, server pribadi, analitik, iklan, atau VPN. Izin internet hanya dipakai untuk memeriksa dan mengunduh update resmi dari GitHub.")

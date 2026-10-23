@@ -32,8 +32,11 @@ class RecoveryTest {
     private class Backend(val beforeFreeze: (() -> Unit)? = null) : PrivilegedBackend {
         val calls = mutableListOf<Pair<Int, Boolean>>()
         var failNetwork = false
+        var failTimer = false
+        val operations = mutableListOf<String>()
+        override suspend fun scheduleRefreeze(pkg: String, userId: Int, deadlineElapsed: Long) { operations += if (deadlineElapsed == 0L) "cancel" else "arm"; if (failTimer) error("Timer unavailable") }
         override suspend fun network(pkg: String, uid: Int, blocked: Boolean) { if (failNetwork) error("Firewall unavailable") }
-        override suspend fun freeze(pkg: String, userId: Int, mode: Int, enabled: Boolean) { beforeFreeze?.invoke(); calls += mode to enabled }
+        override suspend fun freeze(pkg: String, userId: Int, mode: Int, enabled: Boolean) { beforeFreeze?.invoke(); operations += if (enabled) "disable" else "enable"; calls += mode to enabled }
     }
     @Test fun firewallFailureCannotPreventRestoringDisabledApp() = runTest {
         val context = context(disabled = true)
@@ -60,4 +63,30 @@ class RecoveryTest {
         val errors = PolicyController(store, AppCatalog(context), UsageRepository(context), backend).reconcile()
         assertTrue(errors.isEmpty()); assertEquals(listOf(1 to true), backend.calls)
     }
+    @Test fun failureToArmTimerCannotEnableClosedApp() = runTest {
+        val context = context(disabled = true)
+        val store = GuardStore(context)
+        org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofSeconds(1))
+        val wall = System.currentTimeMillis(); val elapsed = android.os.SystemClock.elapsedRealtime()
+        store.rule(pkg) { it.copy(gate = AccessGate(), freeze = FreezeMode.DISABLE, ownedDisable = true,
+            overrideUntil = wall + 300_000, sessionStartedWall = wall, sessionStartedElapsed = elapsed,
+            sessionUntilElapsed = elapsed + 300_000, sessionBoot = UsageRepository(context).bootCount()) }
+        val backend = Backend().apply { failTimer = true }
+        val errors = PolicyController(store, AppCatalog(context), UsageRepository(context), backend).reconcile()
+        assertTrue(errors.any { it.contains("Timer unavailable") })
+        assertEquals("arm", backend.operations.first())
+        assertFalse(backend.calls.contains(2 to false))
+        assertTrue(store.state.value.rules.getValue(pkg).ownedDisable)
+    }
+    @Test fun restoreCancelsDaemonLeaseBeforeEnablingAndReleasesOwnership() = runTest {
+        val context = context(disabled = true)
+        val store = GuardStore(context)
+        store.rule(pkg) { it.copy(gate = AccessGate(), freeze = FreezeMode.DISABLE, ownedDisable = true) }
+        val backend = Backend()
+        assertTrue(PolicyController(store, AppCatalog(context), UsageRepository(context), backend).restoreAll().isEmpty())
+        assertEquals(listOf("cancel", "enable"), backend.operations)
+        assertNull(store.state.value.rules.getValue(pkg).gate)
+        assertFalse(store.state.value.rules.getValue(pkg).ownedDisable)
+    }
+
 }

@@ -13,6 +13,40 @@ import kotlin.system.exitProcess
 /** Typed Shizuku IPC; no arbitrary shell string or general-purpose command endpoint. */
 class GuardUserService(private val context: Context) : IGuardService.Stub() {
     private val pm = context.packageManager
+    private val timers = java.util.concurrent.ScheduledThreadPoolExecutor(1).apply { removeOnCancelPolicy = true }
+    private data class Lease(val deadline: Long, val task: java.util.concurrent.ScheduledFuture<*>)
+    private val leases = mutableMapOf<String, Lease>()
+    private val deadlines = mutableMapOf<String, Long>()
+
+    /** A daemon Shizuku process owns this timer, independent of the UI/foreground service. */
+    @Synchronized override fun scheduleRefreeze(packageName: String, userId: Int, deadlineElapsed: Long): String = result {
+        val info = validate(packageName)
+        require(userId == info.uid / 100000)
+        if (deadlineElapsed == 0L) {
+            leases.remove(packageName)?.task?.cancel(false)
+            deadlines.remove(packageName)
+        } else {
+            val delay = deadlineElapsed - android.os.SystemClock.elapsedRealtime()
+            require(delay in 1..1_800_000) { "Durasi akses tidak valid" }
+            deadlines[packageName] = deadlineElapsed
+            if (leases[packageName]?.deadline != deadlineElapsed) {
+                leases.remove(packageName)?.task?.cancel(false)
+                arm(packageName, userId, deadlineElapsed, delay, 0)
+            }
+        }
+    }
+    @Synchronized private fun arm(pkg: String, user: Int, deadline: Long, delay: Long, attempt: Int) {
+        val task = timers.schedule({
+            synchronized(this) {
+                if (leases[pkg]?.deadline == deadline) {
+                    val result = freeze(pkg, user, 2, true)
+                    if (result != "OK" && attempt < 3) arm(pkg, user, deadline, 5_000, attempt + 1)
+                    else leases.remove(pkg)
+                }
+            }
+        }, delay, TimeUnit.MILLISECONDS)
+        leases[pkg] = Lease(deadline, task)
+    }
     private fun connectivity(): Any {
         val binder = Class.forName("android.os.ServiceManager").getMethod("getService", String::class.java).invoke(null, "connectivity") as IBinder
         return requireNotNull(Class.forName("android.net.IConnectivityManager\$Stub").getMethod("asInterface", IBinder::class.java).invoke(null, binder)) { "Layanan Connectivity tidak tersedia" }
@@ -47,6 +81,7 @@ class GuardUserService(private val context: Context) : IGuardService.Stub() {
         val info = validate(packageName)
         require(userId == info.uid / 100000 && userId >= 0) { "Profil Android tidak cocok" }
         require(mode == 1 || mode == 2)
+        if (mode == 2 && !enabled) require(deadlines[packageName]?.let { it > android.os.SystemClock.elapsedRealtime() } != false) { "Durasi akses berakhir; mulai tantangan kembali" }
         val action = if (mode == 1) { if (enabled) "suspend" else "unsuspend" } else { if (enabled) "disable-user" else "enable" }
         val output = command(listOf("/system/bin/cmd", "package", action, "--user", userId.toString(), packageName))
         require(!output.contains("Error", true) && !output.contains("Exception", true) && !output.contains("Failed", true)) { output }

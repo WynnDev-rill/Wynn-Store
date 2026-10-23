@@ -35,7 +35,7 @@ class ScreenUiTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val file = File(context.getExternalFilesDir(null), "screenshots/$name.png")
         file.parentFile!!.mkdirs()
-        file.outputStream().use { compose.onRoot().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        file.outputStream().use { compose.onAllNodes(isRoot()).onLast().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
     }
     @Test fun dashboardContainsLiveNavigationAndWeeklyChart() {
         var page: Page? = null
@@ -59,23 +59,54 @@ class ScreenUiTest {
         compose.onNodeWithContentDescription("Blokir internet YouTube").assertIsNotEnabled()
         capture("03-network")
     }
-    @Test fun freezeHasRealModeChoice() {
-        content { FreezeScreen(state, data, true, false, {}, { _, _ -> }, {}) }
+    @Test fun freezeSearchAndDownloadSystemFiltersReallyWork() {
+        val filtered = data.copy(apps = apps.mapIndexed { i, app -> app.copy(system = i == 0) })
+        var selected: InstalledApp? = null
+        content { FreezeScreen(state, filtered, true, false, {}, {}, { selected = it }) }
         capture("04-freeze")
-        compose.onAllNodesWithText("Bekukan").onFirst().performClick()
-        compose.onNodeWithText("Tangguhkan").assertIsDisplayed()
-        compose.onNodeWithText("Nonaktifkan").assertIsDisplayed()
+        compose.onNodeWithText("Unduhan").performClick()
+        compose.onNodeWithText("YouTube").assertDoesNotExist()
+        compose.onNodeWithText("TikTok").performClick()
+        org.junit.Assert.assertEquals(apps[1].packageName, selected?.packageName)
+        compose.onNodeWithText("Sistem").performClick()
+        compose.onNodeWithText("YouTube").assertExists()
+        compose.onNodeWithText("TikTok").assertDoesNotExist()
     }
     @Test fun waitChallengeCannotUnlockEarly() {
-        content { UnlockScreen(apps[0], GuardSettings(unlockMode = UnlockMode.WAIT), MathChallenge(17, 8, 2), 10, null, false, {}, {}, {}) }
-        compose.onAllNodesWithText("Buka Aplikasi").filterToOne(hasClickAction()).assertIsNotEnabled()
+        content { UnlockScreen(apps[0], AccessGate(mode = GateMode.WAIT), MathChallenge(17, 8, 2), 0, 10, null, false, {}, {}, {}) }
+        compose.onNodeWithText("Buka 5 menit").assertIsNotEnabled()
         capture("05-unlock")
     }
-    @Test fun scheduleShowsSavedLimitsAndMonitoring() {
-        content { ScheduleScreen(state, apps, {}, {}, {}, {}, {}) }
-        compose.onNodeWithText("Pemantauan otomatis").assertIsDisplayed()
-        compose.onNodeWithText("YouTube").assertExists()
-        capture("06-schedule")
+    @Test fun combinedChallengeShowsMathOnlyAfterWaiting() {
+        val remaining = androidx.compose.runtime.mutableIntStateOf(5)
+        content { UnlockScreen(apps[0], AccessGate(), MathChallenge(17, 8, 2), 1, remaining.intValue, null, false, {}, {}, {}) }
+        compose.onNodeWithText("Masukkan jawaban").assertDoesNotExist()
+        compose.runOnIdle { remaining.intValue = 0 }
+        compose.onNodeWithText("Selesaikan soal 2 dari 2.").assertExists()
+        compose.onNodeWithText("Masukkan jawaban").assertExists()
+        capture("06-combined-math")
+    }
+    @Test fun weeklyChartChangesTheSelectedDayAndAppDurations() {
+        content { DashboardScreen(state, data, true, {}, {}, {}) }
+        val date = data.days.first().date
+        compose.onNodeWithContentDescription("$date: ${duration(data.days.first().totalMs)}").performClick().assertIsSelected()
+        compose.onNodeWithText("Penggunaan ${dateLabel(date)}").assertExists()
+    }
+    @Test fun applicationStatisticsExposeRealDetailFieldsAndSelectedDay() {
+        content { AppStatsScreen(apps[0], data, {}, { _, date -> id.wynn.screenguard.data.AppDayDetail(date, List(24) { if (it == 12) 600_000L else 0 }, 3, 600_000, true) }, {}) }
+        compose.onNodeWithText("Statistik aplikasi").assertExists()
+        compose.onNodeWithText("Penggunaan per jam").assertExists()
+        compose.onNodeWithText("3 kali").assertExists()
+        capture("08-app-statistics")
+    }
+    @Test fun gateEditorWrapsChoicesAndAllowsAllThreeModes() {
+        content { GateEditor(apps[0], AppRule(apps[0].packageName), true, {}, {}, {}, {}, {}) }
+        compose.onNodeWithText("Tunggu").performClick()
+        compose.onNodeWithText("Jumlah soal").assertDoesNotExist()
+        compose.onNodeWithText("Matematika").performClick()
+        compose.onNodeWithText("Jumlah soal").assertExists()
+        compose.onNodeWithText("Kombinasi").performClick()
+        capture("09-gate-editor")
     }
     @Test fun settingsHasSecurityAndRecovery() {
         content { SettingsScreen(state, ShizukuStatus.READY, {}, { it() }, {}, {}, {}, {}, {}) }

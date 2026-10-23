@@ -7,7 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -18,14 +19,15 @@ import androidx.compose.ui.unit.dp
 import id.wynn.screenguard.domain.*
 
 @Composable fun DashboardScreen(state: GuardState, device: DeviceData, connected: Boolean,
-    navigate: (Page) -> Unit, selectApp: (InstalledApp) -> Unit, permissions: () -> Unit,
-    focusAction: (() -> Unit)? = null, scheduleAction: (() -> Unit)? = null) {
+    navigate: (Page) -> Unit, selectApp: (InstalledApp) -> Unit, permissions: () -> Unit, selectDayApp: (InstalledApp, java.time.LocalDate) -> Unit = { app, _ -> selectApp(app) }) {
+    var selectedDate by rememberSaveable { mutableStateOf(java.time.LocalDate.now().toString()) }
+    val selected = device.days.find { it.date.toString() == selectedDate } ?: device.days.lastOrNull()
     val today = device.days.lastOrNull()
     val total = today?.totalMs ?: 0
     val yesterday = device.days.dropLast(1).lastOrNull()?.totalMs ?: 0
     val goal = state.settings.dailyGoalMinutes * 60_000L
     val byPackage = device.apps.associateBy { it.packageName }
-    val top = today?.apps.orEmpty().entries.sortedByDescending { it.value }.mapNotNull { (pkg, ms) -> byPackage[pkg]?.let { it to ms } }.take(5)
+    val top = selected?.apps.orEmpty().entries.sortedByDescending { it.value }.mapNotNull { (pkg, ms) -> byPackage[pkg]?.let { it to ms } }.take(5)
     val largeText = LocalDensity.current.fontScale >= 1.3f
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 8.dp, 20.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
@@ -33,7 +35,6 @@ import id.wynn.screenguard.domain.*
                 BrandMark(42.dp)
                 Column(Modifier.weight(1f)) {
                     Text("ScreenGuard Pro", style = MaterialTheme.typography.titleLarge)
-                    Text("Fokus hari ini, lebih baik esok hari.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 IconButton(permissions) { Icon(Icons.Outlined.NotificationsNone, "Perizinan dan status") }
             }
@@ -74,14 +75,16 @@ import id.wynn.screenguard.domain.*
                         }
                     }
                 }
-                WeekChart(device.days.takeLast(7), chartHeight = 68.dp)
+                Text(selected?.let { "${dateLabel(it.date)} · ${duration(it.totalMs)}" } ?: "Belum ada data", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                WeekChart(device.days.takeLast(7), chartHeight = 96.dp, selectedDate = selected?.date, onSelect = { selectedDate = it.date.toString() })
+                Text("Ketuk hari untuk melihat rinciannya", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         item {
             GuardCard(contentPadding = 16.dp, spacing = 12.dp) {
-                SectionTitle("Paling banyak digunakan", "Semua") { navigate(Page.USAGE) }
+                SectionTitle(if (selected?.date == java.time.LocalDate.now()) "Paling banyak digunakan" else "Penggunaan ${selected?.date?.let(::dateLabel).orEmpty()}", "Semua") { navigate(Page.USAGE) }
                 if (top.isEmpty()) Text("Belum ada data penggunaan hari ini.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                else Column { top.forEach { (app, ms) -> UsageRow(app, ms, total, compact = true) { selectApp(app) } } }
+                else Column { top.forEach { (app, ms) -> UsageRow(app, ms, selected?.totalMs ?: 0, compact = true) { selectDayApp(app, selected?.date ?: java.time.LocalDate.now()) } } }
             }
         }
         item {
@@ -89,19 +92,11 @@ import id.wynn.screenguard.domain.*
             Spacer(Modifier.height(10.dp))
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (largeText) {
-                    QuickAction("Blokir Internet", Icons.Outlined.Lock, Modifier.fillMaxWidth()) { navigate(Page.NETWORK) }
-                    QuickAction("Mode Fokus", Icons.Outlined.TrackChanges, Modifier.fillMaxWidth()) { focusAction?.invoke() ?: navigate(Page.SCHEDULE) }
-                    QuickAction("Jadwal", Icons.Outlined.CalendarMonth, Modifier.fillMaxWidth()) { scheduleAction?.invoke() ?: navigate(Page.SCHEDULE) }
                     QuickAction("Bekukan Aplikasi", Icons.Outlined.AcUnit, Modifier.fillMaxWidth()) { navigate(Page.FREEZE) }
-                } else {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        QuickAction("Blokir Internet", Icons.Outlined.Lock, Modifier.weight(1f)) { navigate(Page.NETWORK) }
-                        QuickAction("Mode Fokus", Icons.Outlined.TrackChanges, Modifier.weight(1f)) { focusAction?.invoke() ?: navigate(Page.SCHEDULE) }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        QuickAction("Jadwal", Icons.Outlined.CalendarMonth, Modifier.weight(1f)) { scheduleAction?.invoke() ?: navigate(Page.SCHEDULE) }
-                        QuickAction("Bekukan Aplikasi", Icons.Outlined.AcUnit, Modifier.weight(1f)) { navigate(Page.FREEZE) }
-                    }
+                    QuickAction("Blokir Internet", Icons.Outlined.Wifi, Modifier.fillMaxWidth()) { navigate(Page.NETWORK) }
+                } else Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    QuickAction("Bekukan Aplikasi", Icons.Outlined.AcUnit, Modifier.weight(1f)) { navigate(Page.FREEZE) }
+                    QuickAction("Blokir Internet", Icons.Outlined.Wifi, Modifier.weight(1f)) { navigate(Page.NETWORK) }
                 }
             }
         }

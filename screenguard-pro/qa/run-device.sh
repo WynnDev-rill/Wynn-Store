@@ -32,13 +32,20 @@ adb shell settings put global animator_duration_scale 1
 grep -q 'OK (1 test)' qa/output/reduced-motion.txt
 
 privileged_status=0
-adb shell am instrument -w -e class id.wynn.screenguard.PrivilegedDeviceTest -e privileged true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/privileged-test.txt || privileged_status=$?
+adb shell am instrument -w -e class id.wynn.screenguard.PrivilegedDeviceTest#shellShizukuActuallyBlocksNetworkSuspendsDisablesAndRestores -e privileged true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/privileged-test.txt || privileged_status=$?
 if ! grep -q 'OK (1 test)' qa/output/privileged-test.txt; then
   privileged_status=1
   adb shell uiautomator dump /sdcard/guard-window.xml || true
   adb pull /sdcard/guard-window.xml qa/output/permission-window.xml || true
   adb exec-out screencap -p > qa/output/permission-screen.png
 fi
+# Independently prove that refreeze survives killing the app process, not just closing an Activity.
+adb shell am instrument -w -e class id.wynn.screenguard.PrivilegedDeviceTest#armDaemonTimerForExternalForceStopCheck -e watchdog true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/watchdog-arm.txt
+grep -q 'OK (1 test)' qa/output/watchdog-arm.txt
+adb shell am force-stop id.wynn.screenguard.debug
+sleep 12
+adb shell pm list packages -d | tr -d '\r' | tee qa/output/watchdog-disabled.txt | grep -Fx 'package:id.wynn.guardfixture'
+adb shell pm enable --user 0 id.wynn.guardfixture
 adb logcat -d > qa/output/logcat.txt
 adb install -r app/build/outputs/apk/preview/app-preview.apk
 adb logcat -c
@@ -49,9 +56,13 @@ if grep -q 'Error' qa/output/preview-launch.txt; then exit 1; fi
 if grep -q 'Process: id.wynn.screenguard.preview' qa/output/preview-crash.txt; then exit 1; fi
 adb shell pidof id.wynn.screenguard.preview
 adb exec-out screencap -p > qa/output/preview-onboarding.png
-if [ -f distribution/ScreenGuard-Pro-1.1.0.apk ]; then
-  "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify distribution/ScreenGuard-Pro-1.1.0.apk
-  adb install -r distribution/ScreenGuard-Pro-1.1.0.apk
+production_apk="$(python3 -c 'import json,pathlib; f=pathlib.Path("updates/stable.json"); print("distribution/ScreenGuard-Pro-"+json.loads(f.read_text())["versionName"]+".apk")')"
+if [ -f "$production_apk" ]; then
+  python3 qa/verify-distribution.py
+  # Upgrade previous production APK in place; a signature mismatch must fail the run.
+  if [ "$production_apk" != "distribution/ScreenGuard-Pro-1.1.0.apk" ]; then adb install -r distribution/ScreenGuard-Pro-1.1.0.apk; fi
+  "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify "$production_apk"
+  adb install -r "$production_apk"
   adb logcat -c
   adb shell am start -W -n id.wynn.screenguard/id.wynn.screenguard.MainActivity > qa/output/production-launch.txt
   sleep 3

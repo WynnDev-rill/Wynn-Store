@@ -36,14 +36,22 @@ class PolicyController(private val store: GuardStore, private val catalog: AppCa
                         errors += "${app.label}: $networkError"
                     }
                 }
-                val decision = PolicyEngine.decide(rule, snapshot.settings, used.getOrDefault(pkg, 0), ZonedDateTime.now())
-                val disable = decision.blocked && rule.freeze == FreezeMode.DISABLE
+                val decision = PolicyEngine.decide(rule, snapshot.settings, used.getOrDefault(pkg, 0), ZonedDateTime.now(),
+                    android.os.SystemClock.elapsedRealtime(), usage.bootCount())
+                val sessionOpen = AccessSession.isOpen(rule, System.currentTimeMillis(), android.os.SystemClock.elapsedRealtime(), usage.bootCount())
+                if (sessionOpen) {
+                    // Arm before enabling. Failure leaves the application closed.
+                    gateway.scheduleRefreeze(pkg, app.uid / 100000, rule.sessionUntilElapsed)
+                } else if (rule.gate != null || rule.ownedDisable || rule.overrideUntil > 0) {
+                    gateway.scheduleRefreeze(pkg, app.uid / 100000, 0)
+                }
+                val disable = decision.blocked && (rule.gate != null || rule.freeze == FreezeMode.DISABLE)
                 val suspend = decision.blocked && !disable
                 // Write-ahead ownership: a crash after a successful system call can be recovered.
                 // Refuse to adopt apps already disabled/suspended by another tool.
                 if (!disable && rule.ownedDisable) {
-                    gateway.freeze(pkg, app.uid / 100000, 2, false)
-                    store.rule(pkg) { it.copy(ownedDisable = false) }
+                    if (!app.enabled) gateway.freeze(pkg, app.uid / 100000, 2, false)
+                    if (rule.gate == null) store.rule(pkg) { it.copy(ownedDisable = false) }
                     rule = store.state.value.rules.getValue(pkg)
                 }
                 if (!suspend && rule.ownedSuspension) {
@@ -60,6 +68,9 @@ class PolicyController(private val store: GuardStore, private val catalog: AppCa
                     if (!rule.ownedSuspension) store.rule(pkg) { it.copy(ownedSuspension = true) }
                     if (!app.suspended) gateway.freeze(pkg, app.uid / 100000, 1, true)
                 }
+                if (rule.gate != null && !sessionOpen && rule.overrideUntil != 0L) {
+                    store.rule(pkg) { it.copy(overrideUntil = 0, sessionUntilElapsed = 0, sessionStartedElapsed = 0, sessionStartedWall = 0) }
+                }
                 if (rule.lastError != networkError) store.rule(pkg) { it.copy(lastError = networkError) }
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
@@ -74,7 +85,7 @@ class PolicyController(private val store: GuardStore, private val catalog: AppCa
 
     suspend fun restoreAll(): List<String> {
         store.update { s -> s.copy(settings = s.settings.copy(monitorEnabled = false, focusUntil = 0),
-            rules = s.rules.mapValues { (_, r) -> r.copy(networkBlocked = false, freeze = FreezeMode.NONE, dailyLimitMinutes = 0, windows = emptyList(), focus = false, overrideUntil = 0) }) }
+            rules = s.rules.mapValues { (_, r) -> r.copy(gate = null, networkBlocked = false, freeze = FreezeMode.NONE, dailyLimitMinutes = 0, windows = emptyList(), focus = false, overrideUntil = 0) }) }
         return reconcile(forceNetwork = true)
     }
 }

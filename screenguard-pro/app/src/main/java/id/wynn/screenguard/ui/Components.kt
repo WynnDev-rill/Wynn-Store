@@ -45,7 +45,7 @@ private val iconCache = android.util.LruCache<String, ImageBitmap>(64)
         else Text(app.label.take(1).uppercase(), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
     }
 }
-@Composable fun BrandMark(size: Dp = 42.dp) { Image(painterResource(R.drawable.ic_guard), null, Modifier.size(size)) }
+@Composable fun BrandMark(size: Dp = 42.dp) { Image(painterResource(R.drawable.brand_mark), null, Modifier.size(size).clip(RoundedCornerShape(size * .24f))) }
 @Composable fun PageHeader(title: String, back: () -> Unit, action: (@Composable () -> Unit)? = null) {
     Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(back) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Kembali") }
@@ -108,27 +108,40 @@ private val iconCache = android.util.LruCache<String, ImageBitmap>(64)
         Icon(Icons.Outlined.ChevronRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
-@Composable fun WeekChart(days: List<UsageDay>, modifier: Modifier = Modifier, labels: Boolean = true, chartHeight: Dp = 96.dp) {
+fun dateLabel(date: java.time.LocalDate): String = when (date) {
+    java.time.LocalDate.now() -> "Hari ini"
+    java.time.LocalDate.now().minusDays(1) -> "Kemarin"
+    else -> date.format(java.time.format.DateTimeFormatter.ofPattern("d MMM", java.util.Locale.forLanguageTag("id")))
+}
+
+@Composable fun WeekChart(days: List<UsageDay>, modifier: Modifier = Modifier, labels: Boolean = true, chartHeight: Dp = 96.dp,
+    selectedDate: java.time.LocalDate? = null, onSelect: ((UsageDay) -> Unit)? = null) {
     val color = MaterialTheme.colorScheme.primary
     val reveal = remember { Animatable(0f) }
-    LaunchedEffect(days) { reveal.animateTo(1f, tween(480, easing = FastOutSlowInEasing)) }
+    LaunchedEffect(Unit) { reveal.animateTo(1f, tween(480, easing = FastOutSlowInEasing)) }
     val max = days.maxOfOrNull { it.totalMs }?.coerceAtLeast(3_600_000) ?: 3_600_000
-    val text = days.joinToString { "${it.date}: ${if (it.totalMs == 0L) "0 menit" else duration(it.totalMs)}" }
-    Column(modifier.semantics(mergeDescendants = true) { contentDescription = "Penggunaan harian. $text" }) {
-        Canvas(Modifier.fillMaxWidth().height(if (labels) chartHeight else 62.dp)) {
-            val count = days.size.coerceAtLeast(1)
-            val spacing = size.width / count
-            val width = (spacing * .38f).coerceAtMost(21.dp.toPx())
-            repeat(3) { n -> val y = size.height * n / 2; drawLine(color.copy(alpha = .08f), Offset(0f, y), Offset(size.width, y), 1.dp.toPx()) }
-            days.forEachIndexed { index, day ->
-                val height = (day.totalMs.toFloat() / max * (size.height - 4.dp.toPx()) * reveal.value).coerceAtLeast(2.dp.toPx())
-                drawRoundRect(Brush.verticalGradient(listOf(color.copy(alpha = .36f), color.copy(alpha = .8f))),
-                    Offset(spacing * (index + .5f) - width / 2, size.height - height), androidx.compose.ui.geometry.Size(width, height), androidx.compose.ui.geometry.CornerRadius(4.dp.toPx()))
+    val names = listOf("Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min")
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        val chartWidth = if (onSelect != null) maxOf(maxWidth, 48.dp * days.size) else maxWidth
+        Row(Modifier.horizontalScroll(rememberScrollState()).width(chartWidth), horizontalArrangement = Arrangement.SpaceEvenly) {
+            days.forEach { day ->
+                val selected = selectedDate == day.date
+                val action = if (onSelect != null) Modifier.clickable(role = Role.Button) { onSelect(day) } else Modifier
+                Column(Modifier.weight(1f).then(action).semantics(mergeDescendants = true) {
+                    contentDescription = "${day.date}: ${if (day.totalMs == 0L) "0 menit" else duration(day.totalMs)}"
+                    if (onSelect != null) this.selected = selected
+                }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Canvas(Modifier.fillMaxWidth().height(if (labels) chartHeight else 62.dp)) {
+                        repeat(3) { n -> val y = size.height * n / 2; drawLine(color.copy(alpha = .1f), Offset(0f, y), Offset(size.width, y), 1.dp.toPx()) }
+                        val height = (day.totalMs.toFloat() / max * (size.height - 4.dp.toPx()) * reveal.value).coerceAtLeast(2.dp.toPx())
+                        val width = minOf(size.width * .42f, 22.dp.toPx())
+                        drawRoundRect(Brush.verticalGradient(listOf(color.copy(alpha = if (selected) .8f else .38f), color.copy(alpha = if (selected) 1f else .7f))),
+                            Offset((size.width - width) / 2, size.height - height), androidx.compose.ui.geometry.Size(width, height), androidx.compose.ui.geometry.CornerRadius(5.dp.toPx()))
+                    }
+                    if (labels) Text(names[day.date.dayOfWeek.value - 1], Modifier.padding(vertical = 12.dp), style = MaterialTheme.typography.bodySmall,
+                        color = if (selected) color else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+                }
             }
-        }
-        if (labels) Row(Modifier.fillMaxWidth().padding(top = 10.dp)) {
-            val names = listOf("Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min")
-            days.forEach { day -> Text(names[day.date.dayOfWeek.value - 1], Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
         }
     }
 }

@@ -39,6 +39,8 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
     val pinError = MutableStateFlow<String?>(null)
     val pinWorking = MutableStateFlow(false)
     val challenge = MutableStateFlow(MathChallenge.next())
+    val completedQuestions = MutableStateFlow(0)
+    val challengeGate = MutableStateFlow(AccessGate())
     val challengeError = MutableStateFlow<String?>(null)
     val remaining = MutableStateFlow(0)
     val unlocking = MutableStateFlow<String?>(null)
@@ -48,6 +50,7 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
     private var countdown: Job? = null
     private var loading: Job? = null
     init { refresh() }
+    fun recover() { viewModelScope.launch { runCatching { graph.controller.reconcile() }; loading?.join(); refresh() } }
     fun refresh() {
         graph.gateway.refresh()
         if (loading?.isActive == true) return
@@ -120,32 +123,41 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
             throw e
         }
     } }
-    fun freeze(app: InstalledApp, mode: FreezeMode) = secure { work {
-        check(!app.protected) { "Aplikasi penting dilindungi" }
+    fun configureGate(app: InstalledApp, gate: AccessGate) = secure { work {
+        check(!app.protected && app.launchable) { "Aplikasi penting atau tanpa peluncur dilindungi" }
         check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku terlebih dahulu" }
-        graph.store.rule(app.packageName) { it.copy(freeze = mode, overrideUntil = 0) }; reconcile()
+        val existing = state.value.rules[app.packageName]
+        check(app.enabled && !app.suspended || existing?.ownedDisable == true || existing?.ownedSuspension == true) { "Aplikasi dikunci alat lain; pulihkan melalui alat tersebut dahulu" }
+        graph.store.rule(app.packageName) { it.copy(gate = gate, freeze = if (gate.automaticOnly) FreezeMode.NONE else FreezeMode.DISABLE, overrideUntil = 0) }
+        syncMonitor(); reconcile()
     } }
-    fun saveRule(app: InstalledApp, minutes: Int, window: TimeWindow?, focus: Boolean) = secure { work {
+    fun removeGate(app: InstalledApp) = secure { work {
+        graph.store.rule(app.packageName) { it.copy(gate = null, freeze = FreezeMode.NONE, dailyLimitMinutes = 0, windows = emptyList(), focus = false, overrideUntil = 0) }
+        syncMonitor(); reconcile()
+    } }
+    fun closeAccess(app: InstalledApp) = work {
+        graph.store.rule(app.packageName) { it.copy(overrideUntil = 0) }; reconcile()
+    }
+    fun saveRule(app: InstalledApp, minutes: Int, window: TimeWindow?) = secure { work {
         check(!app.protected)
-        graph.store.rule(app.packageName) { it.copy(dailyLimitMinutes = minutes, windows = listOfNotNull(window), focus = focus, overrideUntil = 0) }
+        check(minutes == 0 || device.value.usageAccess) { "Berikan akses penggunaan untuk batas harian" }
+        check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku terlebih dahulu" }
+        graph.store.rule(app.packageName) { it.copy(dailyLimitMinutes = minutes, windows = listOfNotNull(window), focus = false, overrideUntil = 0,
+            freeze = FreezeMode.NONE, gate = if (minutes > 0 || window != null) (it.gate ?: AccessGate()).copy(automaticOnly = true) else null) }
+        syncMonitor()
         reconcile()
     } }
-    fun settings(change: (GuardSettings) -> GuardSettings) = secure { work { graph.store.settings(change); reconcile() } }
-    fun monitor(enabled: Boolean) = secure { work {
-        if (enabled) {
-            check(device.value.usageAccess) { "Berikan akses penggunaan dahulu" }
-            check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku dahulu" }
-        }
+    private suspend fun syncMonitor() {
+        val enabled = state.value.rules.values.any { it.gate?.automaticOnly == true && (it.dailyLimitMinutes > 0 || it.windows.isNotEmpty()) }
         graph.store.settings { it.copy(monitorEnabled = enabled) }
-        if (enabled && !GuardMonitorService.start(graph)) { graph.store.settings { it.copy(monitorEnabled = false) }; error("Android menolak layanan. Buka aplikasi dan coba lagi.") }
-        reconcile()
-    } }
-    fun focus(minutes: Int) = secure { work {
-        check(state.value.rules.values.any { it.focus }) { "Pilih aplikasi fokus pada Batas Aplikasi dahulu" }
-        check(device.value.usageAccess && status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Aktifkan izin penggunaan dan Shizuku dahulu" }
-        graph.store.settings { it.copy(focusUntil = if (minutes == 0) 0 else System.currentTimeMillis() + minutes * 60_000L, monitorEnabled = true) }
-        check(GuardMonitorService.start(graph)) { "Layanan pemantauan gagal dimulai" }; reconcile()
-    } }
+        if (enabled) check(GuardMonitorService.start(graph)) { "Android menolak pemantauan; buka aplikasi lalu simpan aturan kembali" }
+    }
+    fun canLaunchWithoutChallenge(app: InstalledApp): Boolean {
+        val rule = state.value.rules[app.packageName] ?: return true
+        return sessionOpen(rule) || rule.gate?.automaticOnly == true && !PolicyEngine.decide(rule, state.value.settings,
+            device.value.days.lastOrNull()?.apps?.get(app.packageName) ?: 0, ZonedDateTime.now(), SystemClock.elapsedRealtime(), graph.usage.bootCount()).blocked
+    }
+    fun settings(change: (GuardSettings) -> GuardSettings) = secure { work { graph.store.settings(change); reconcile() } }
     fun savePin(pin: String, confirm: String) = secure { work {
         check(pin == confirm) { "Konfirmasi PIN berbeda" }; check(PinCrypto.valid(pin)) { "Gunakan tepat 6 angka" }
         val (salt, hash) = withContext(Dispatchers.Default) { PinCrypto.create(pin) }
@@ -158,35 +170,49 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
         message.value = if (errors.isEmpty()) "Semua aturan ScreenGuard sudah dipulihkan" else "Belum sepenuhnya pulih:\n${errors.joinToString("\n")}" 
     } }
     fun onboarded() = work { graph.store.settings { it.copy(onboardingDone = true) } }
-    fun prepareUnlock(app: InstalledApp, navigate: () -> Unit) = secure {
-        unlocking.value = app.packageName; challenge.value = MathChallenge.next(); challengeError.value = null
-        waitDeadline = SystemClock.elapsedRealtime() + state.value.settings.waitSeconds * 1000L
+    fun prepareUnlock(app: InstalledApp, navigate: () -> Unit) {
+        val rule = state.value.rules[app.packageName] ?: return
+        val gate = rule.gate ?: AccessGate(mode = if (state.value.settings.unlockMode == UnlockMode.WAIT) GateMode.WAIT else GateMode.MATH)
+        challengeGate.value = gate
+        unlocking.value = app.packageName; challenge.value = MathChallenge.next(gate.level)
+        completedQuestions.value = 0; challengeError.value = null
+        waitDeadline = SystemClock.elapsedRealtime() + if (gate.hasWait) gate.waitSeconds * 1000L else 0
+        remaining.value = if (gate.hasWait) gate.waitSeconds else 0
         countdown?.cancel()
         countdown = viewModelScope.launch {
-            while (isActive) { remaining.value = ((waitDeadline - SystemClock.elapsedRealtime()).coerceAtLeast(0) / 1000 + 1).toInt(); if (SystemClock.elapsedRealtime() >= waitDeadline) { remaining.value = 0; break }; delay(250) }
+            while (isActive) {
+                remaining.value = ((waitDeadline - SystemClock.elapsedRealtime()).coerceAtLeast(0) + 999).div(1000).toInt()
+                if (remaining.value == 0) break
+                delay(200)
+            }
         }
         navigate()
     }
-    fun newChallenge() { challenge.value = MathChallenge.next(); challengeError.value = null }
-    fun unlock(answer: String, launch: (String) -> Unit) = secure {
-        val pkg = unlocking.value ?: return@secure
-        val settings = state.value.settings
-        if ((settings.unlockMode == UnlockMode.MATH && !challenge.value.accepts(answer)) ||
-            (settings.unlockMode == UnlockMode.WAIT && SystemClock.elapsedRealtime() < waitDeadline)) {
-            challengeError.value = if (settings.unlockMode == UnlockMode.MATH) "Jawaban belum tepat. Dahulukan perkalian." else "Waktu tunggu belum selesai."
-        } else work {
+    fun cancelChallenge() { countdown?.cancel(); unlocking.value = null; completedQuestions.value = 0 }
+    fun newChallenge() { challenge.value = MathChallenge.next(challengeGate.value.level); challengeError.value = null }
+    fun unlock(answer: String, launch: (String) -> Unit) {
+        val pkg = unlocking.value ?: return
+        val gate = challengeGate.value
+        if (SystemClock.elapsedRealtime() < waitDeadline) { challengeError.value = "Tunggu hingga jeda selesai."; return }
+        if (gate.hasMath && completedQuestions.value < gate.questions) {
+            if (!challenge.value.accepts(answer)) { challengeError.value = "Belum tepat. Dahulukan perkalian."; return }
+            completedQuestions.value += 1
+            challengeError.value = null
+            if (completedQuestions.value < gate.questions) { newChallenge(); return }
+        }
+        work {
             check(status.value == id.wynn.screenguard.privilege.ShizukuStatus.READY) { "Hubungkan Shizuku untuk membuka aplikasi" }
-            graph.store.rule(pkg) { it.copy(freeze = FreezeMode.NONE, overrideUntil = System.currentTimeMillis() + 5 * 60_000) }
+            val wall = System.currentTimeMillis(); val elapsed = SystemClock.elapsedRealtime()
+            graph.store.rule(pkg) { it.copy(gate = it.gate ?: gate, freeze = if (it.gate?.automaticOnly == true) FreezeMode.NONE else FreezeMode.DISABLE,
+                overrideUntil = wall + gate.accessMinutes * 60_000L,
+                sessionStartedWall = wall, sessionStartedElapsed = elapsed,
+                sessionUntilElapsed = elapsed + gate.accessMinutes * 60_000L, sessionBoot = graph.usage.bootCount()) }
             reconcile()
-            val rule = state.value.rules[pkg]
-            check(rule?.ownedDisable != true && rule?.ownedSuspension != true) { rule?.lastError ?: "Aplikasi belum berhasil dipulihkan" }
             val actual = withContext(Dispatchers.IO) { graph.catalog.managed(setOf(pkg)).firstOrNull() }
-            check(actual?.enabled == true && !actual.suspended) { "Android belum membuka aplikasi; periksa statusnya kembali" }
+            check(actual?.enabled == true && !actual.suspended) { state.value.rules[pkg]?.lastError ?: "Android belum membuka aplikasi; periksa statusnya kembali" }
+            GuardMonitorService.start(graph) // Daemon timer already armed; foreground service is a second recovery path.
             launch(pkg)
-            if (rule?.lastError == null) message.value = "Aplikasi dipulihkan. Batas dan jadwal mendapat jeda 5 menit."
         }
     }
-    fun reason(app: InstalledApp): String = state.value.rules[app.packageName]?.let {
-        PolicyEngine.decide(it, state.value.settings, device.value.days.lastOrNull()?.apps?.get(app.packageName) ?: 0, ZonedDateTime.now()).reason
-    } ?: "Tersedia"
+    fun sessionOpen(rule: AppRule): Boolean = AccessSession.isOpen(rule, System.currentTimeMillis(), SystemClock.elapsedRealtime(), graph.usage.bootCount())
 }

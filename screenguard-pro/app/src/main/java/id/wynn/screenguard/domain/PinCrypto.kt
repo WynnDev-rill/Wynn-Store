@@ -27,6 +27,12 @@ data class MathChallenge(val a: Int, val b: Int, val c: Int) {
     val question: String get() = "$a + $b × $c = ?"
     fun accepts(value: String) = value.trim().toIntOrNull() == a + b * c
     companion object {
-        fun next(): MathChallenge = SecureRandom().let { MathChallenge(it.nextInt(30) + 10, it.nextInt(9) + 2, it.nextInt(6) + 2) }
+        fun next(level: MathLevel = MathLevel.MEDIUM): MathChallenge = SecureRandom().let {
+            when (level) {
+                MathLevel.EASY -> MathChallenge(it.nextInt(10) + 1, it.nextInt(9) + 1, 1)
+                MathLevel.MEDIUM -> MathChallenge(it.nextInt(30) + 10, it.nextInt(8) + 2, it.nextInt(5) + 2)
+                MathLevel.HARD -> MathChallenge(it.nextInt(80) + 20, it.nextInt(11) + 10, it.nextInt(8) + 3)
+            }
+        }
     }
 }
