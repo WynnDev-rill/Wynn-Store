@@ -2,8 +2,8 @@
 import '../styles/global.css';
 import Icon from './Icon.astro';
 interface Props { title?: string; description?: string; home?:boolean; }
-const {title='Kalimantan: Di balik asap',description='Dokumenter interaktif tentang kebakaran hutan dan lahan di Kalimantan. Telusuri sejarah, gambut, peta data KLHK, arsip satelit, dan pemulihan.',home=false}=Astro.props;
-const chapters=[['cerita','Bentang yang berubah'],['riwayat','Riwayat api'],['gambut','Di bawah permukaan'],['peta','Peta kebakaran'],['dampak','Yang ikut hilang'],['pulih','Merawat kembali'],['arsip','Arsip pengamatan']];
+const {title='Kalimantan: Di balik asap',description='Dokumenter interaktif tentang kebakaran hutan dan lahan di Kalimantan. Fokus Oktober 2026: laporan terbaru, deteksi hotspot, mekanisme gambut, dampak dan operasi pengendalian.',home=false}=Astro.props;
+const chapters=[['cerita','Bentang yang berubah'],['riwayat','Kronologi Oktober 2026'],['gambut','Di bawah permukaan'],['peta','Peta kebakaran'],['dampak','Yang ikut hilang'],['pulih','Merawat kembali'],['arsip','Arsip pengamatan']];
 ---
 <!doctype html>
 <html lang="id">
@@ -29,7 +29,7 @@ const chapters=[['cerita','Bentang yang berubah'],['riwayat','Riwayat api'],['ga
 <p class="small muted">Baca berurutan, atau mulai dari bagian yang ingin kamu pahami.</p>
 </dialog>
 <slot/>
-<footer class="site-footer"><div class="footer-top"><a class="brand" href="/">Di balik asap</a><p>Memahami api.<br/>Merawat yang masih ada.</p></div><div class="footer-bottom"><p>Dokumenter independen · Wynn Studio · 2026</p><a href="/sumber/">Sumber, metode & kredit <Icon name="external" size={14}/></a><a href="/#main">Kembali ke awal <span aria-hidden="true">↑</span></a></div><p class="footer-note">Cakupan data: 2019–2023. Riset diperiksa 24 Oktober 2026. Bukan layanan peringatan kebakaran atau peta kondisi terkini.</p></footer>
+<footer class="site-footer"><div class="footer-top"><a class="brand" href="/">Di balik asap</a><p>Memahami api.<br/>Merawat yang masih ada.</p></div><div class="footer-bottom"><p>Dokumenter independen · Wynn Studio · 2026</p><a href="/sumber/">Sumber, metode & kredit <Icon name="external" size={14}/></a><a href="/#main">Kembali ke awal <span aria-hidden="true">↑</span></a></div><p class="footer-note">Fokus laporan Oktober 2026; arsip luas 2019–2023. Diperiksa 24 Oktober 2026. Bukan layanan peringatan kebakaran atau peta kondisi terkini.</p></footer>
 <script>
 import '../scripts/site';
 </script>

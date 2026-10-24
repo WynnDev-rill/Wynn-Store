@@ -1,27 +1,36 @@
-# Pemeriksaan rilis — 24 Oktober 2026
+# Audit revisi — 24 Oktober 2026
 
-## Hasil
+Versi ini mengutamakan laporan karhutla Oktober 2026. Rincian perbandingan dengan OHZI, Minh Pham, The Pudding dan NASA terdapat pada [REVISION-2026.md](REVISION-2026.md); peninjauan sepuluh referensi ada di [DESIGN-REFERENCES.md](DESIGN-REFERENCES.md).
 
-- Build Astro + pemeriksaan TypeScript: nol error, warning tipe, atau hint.
-- Empat tes data: lulus. Seluruh 25 nilai, geometri tiap provinsi, presisi edisi sumber, CSV, dan sitasi diperiksa.
-- Empat belas skenario browser: lulus. Termasuk keyboard/menu, 25 kombinasi peta, perbandingan citra, empat keadaan Three.js, filter, dialog/focus/Escape, video NASA benar-benar diputar, dan isi tanpa JavaScript.
-- Audit axe WCAG 2 A/AA dan 2.1 AA: nol temuan otomatis pada halaman utama dan sumber.
-- Lebar viewport: 320, 360, 390, 768, 1024, 1440 px; tidak ada overflow horizontal halaman. Tabel memiliki scroll lokal. Mobile mencakup emulasi touch dan reduced motion, bukan pengujian pada HP fisik.
-- Screenshot desktop dan mobile ditinjau. Teks gambut yang semula redup diperbaiki; model dibuat sticky pada mobile; label peta mobile disederhanakan dan outline terpilih diperjelas; kontras label diperbaiki hingga lolos audit otomatis.
-- Citra, foto, video, dan bibliografi dicek. Foto Sebangau dipastikan bukan bukti keberhasilan restorasi; citra Landsat ditandai warna semu. Tidak ada kesaksian rekaan atau statistik kematian tanpa dasar.
+## Hasil yang dapat diulang
 
-## Temuan rilis yang diperbaiki
+- **17 skenario browser lulus**, termasuk kedua snapshot terbaru, 25 kombinasi peta arsip, navigasi keyboard/touch, dialog dan pengembalian fokus, video NASA yang benar-benar diputar, empat kondisi gambut, perubahan kamera 3D, serta akses tanpa JavaScript.
+- **4 tes data lulus**: presisi transkripsi KLHK, kelengkapan batas provinsi, kesamaan JSON/CSV historis, dan seluruh referensi sitasi.
+- **Nol temuan otomatis axe** untuk WCAG 2 A/AA dan 2.1 AA pada beranda dan halaman sumber. Ini bukan sertifikasi aksesibilitas menyeluruh.
+- **Nol error JavaScript** dalam pengujian desktop. Tidak ada overflow halaman pada lebar 320, 360, 390, 768, 1024, dan 1440 px.
+- Build Astro, pemeriksaan tipe, tautan/aset lokal dan skrip dengan CSP ketat lulus. Peringatan ukuran bundle Three.js tetap ada; modul tersebut dimuat saat mendekati bab gambut.
+- **LCP 1.180 ms; CLS 0,00316** pada satu pengukuran laboratorium Chromium 133, viewport 390×844, CPU diperlambat 4×, unduhan 200.000 byte/detik dan latensi 150 ms. Bukan pengukuran Android fisik atau data lapangan. Video dan Three.js tidak dimuat pada layar awal.
 
-Preview semula tidak menyertakan header produksi. Saat uji Cloud Browser, script peta kecil yang otomatis di-inline oleh Astro diblokir CSP. Solusi: `assetsInlineLimit: 0`, menjaga script eksternal tanpa melonggarkan CSP. Pengujian browser kini melayani header CSP yang sama; build juga memeriksa semua script HTML, tautan lokal, dan kandidat gambar responsif agar masalah ini tidak lolos lagi.
+## Audit visual dan revisi
 
-Dialog arsip kini menghentikan dan membersihkan video secara sinkron saat ditutup, termasuk Escape, serta mengembalikan fokus ke pemicu.
+Screenshot desktop/mobile diperiksa setelah implementasi. Dibandingkan model awal di [gambut.webp](screenshots/gambut.webp), revisi memiliki variasi kanopi, akar, tekstur penampang, pemisahan lapisan dan framing kamera saat digulir. Bayangan lantai yang terlalu kasar diganti dengan kontak lembut; kontras header diperbaiki dengan menghilangkan transisi warna yang menghasilkan frame berkombinasi kontras rendah.
 
-## Performa
+Komposisi hero, tipografi isi, keterbacaan model pada mobile, peta terbaru, serta pemisahan arsip telah diperiksa pada screenshot. Gerak menggunakan gulir alami, reduced motion tersedia, dan render 3D berhenti ketika tidak berubah atau berada di luar layar. Detail prosedural bersifat ilustratif, bukan rekonstruksi dokumenter atau aset fotorealistis setara produksi OHZI.
 
-Satu pengukuran lab Chromium 133, viewport 390×844, CPU 4× lebih lambat, jaringan 200.000 byte/detik dan latensi 150 ms: LCP 1,48 detik, CLS 0,0122. Server lab tidak mengompresi aset; hasil ini bukan angka lapangan Android atau skor Lighthouse.
+## Bukti visual
 
-Pengukuran menemukan browser memuat gambar perbandingan lebih awal meskipun `loading=lazy`. Kandidat gambar responsif mengurangi dua gambar tersebut dari sekitar 1,19 MB menjadi 215 KB pada viewport uji. Halaman siap muat pada pengukuran lab turun dari sekitar 8,70 menjadi 3,85 detik. Three.js dan video tidak dimuat pada layar pembuka. Video tetap 4,13 MB, hanya diminta saat pengguna membuka/memutarnya.
+| Pembuka desktop | Model mobile |
+|---|---|
+| ![Pembuka edisi Oktober](screenshots/revision-desktop-hero-final.webp) | ![Model gambut mobile](screenshots/revision-mobile-gambut-final.webp) |
 
-Bundle awal JavaScript sekitar 14,4 KB sebelum gzip; Three.js sekitar 568 KB / 142 KB gzip, dimuat terpisah ketika mendekati bab gambut. Renderer memakai DPR maksimal 1,5 dan hanya menggambar transisi/perubahan; fallback SVG dan narasi tetap ada bila WebGL gagal. Ada peringatan ukuran chunk Vite untuk bundle 3D yang sengaja dimuat lazy; ini bukan error build.
+- [Kamera dan penampang desktop](screenshots/revision-desktop-camera-depth.webp)
+- [Peta cuplikan terbaru](screenshots/revision-desktop-peta-final.webp)
+- [Laporan pembuka mobile](screenshots/revision-mobile-cerita-final.webp)
 
-Data dan bukti mentah: BROWSER-QA.json, PERFORMANCE-QA.json, BUNDLE-SIZES.json. Beberapa screenshot ada di screenshots/. Jalankan `npm run test:browser` untuk membuat ulang seluruh screenshot dan pemeriksaan fungsional.
+## Batas yang masih berlaku
+
+Tidak ada klaim peringkat objektif di atas seluruh situs web. Standar rilis dinilai lewat fungsi, aksesibilitas otomatis, ketepatan sumber, performa terukur dan perbandingan visual berdasarkan dimensi tertentu. Perangkat fisik, penilai eksternal dan seluruh kombinasi teknologi bantu belum diuji. Cloud Browser menonaktifkan WebGL sehingga jalur 3D diperiksa dengan Chromium software rendering; fallback tetap tersedia.
+
+Data terbaru memakai rilis Kemenhut sampai 24 Oktober dan snapshot SiPongi sampai 23 Oktober pukul 21.00 WIB, bukan feed langsung. Citra/foto/video tetap arsip bertanggal, tidak diberi label kejadian 2026. Hotspot adalah deteksi termal, bukan kejadian kebakaran atau luas terbakar.
+
+Hasil mentah: [BROWSER-QA.json](BROWSER-QA.json), [PERFORMANCE-QA.json](PERFORMANCE-QA.json), [BUNDLE-SIZES.json](BUNDLE-SIZES.json). Jalankan `npm test`, `npm run build`, dan `npm run test:browser` untuk mengulang pemeriksaan; Playwright memerlukan Chromium yang tersedia.

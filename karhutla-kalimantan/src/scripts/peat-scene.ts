@@ -1,6 +1,7 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
-/** An illustrative cutaway, not a measurement, forecast, or reconstruction. */
+/** Schematic cutaway. Textures and geometry are illustrative, not measurements. */
 export function initPeatScene(container: HTMLElement) {
   const scene = new THREE.Scene();
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' });
@@ -8,306 +9,348 @@ export function initPeatScene(container: HTMLElement) {
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.5;
+  renderer.toneMappingExposure = 1.18;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.shadowMap.autoUpdate = false;
   renderer.domElement.setAttribute('aria-hidden', 'true');
   renderer.domElement.style.cssText = 'display:block;width:100%;height:100%;pointer-events:none';
   container.appendChild(renderer.domElement);
 
   const camera = new THREE.OrthographicCamera(-5, 5, 4, -4, 0.1, 60);
-  camera.position.set(7.5, 6.4, 9.2);
-  camera.lookAt(0, 0.4, 0);
-  scene.add(new THREE.HemisphereLight(0xf1f9f1, 0x51402f, 2.8));
-  const sun = new THREE.DirectionalLight(0xfff2d4, 3.6);
-  sun.position.set(-4, 9, 6);
+  scene.add(new THREE.HemisphereLight(0xe9f1e7, 0x4f4030, 1.85));
+  const sun = new THREE.DirectionalLight(0xffefcf, 3.6);
+  sun.position.set(-4.5, 10, 6); sun.castShadow = true;
+  sun.shadow.mapSize.setScalar(container.clientWidth < 560 ? 512 : 1024);
+  Object.assign(sun.shadow.camera, { left: -5, right: 5, top: 5, bottom: -5, near: 0.5, far: 24 });
+  sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.035; sun.shadow.radius = 3;
   scene.add(sun);
-  const rim = new THREE.DirectionalLight(0xb3e2ed, 1.7);
-  rim.position.set(5, 4, -6);
-  scene.add(rim);
+  const rim = new THREE.DirectionalLight(0xb0d4cc, 1.3);
+  rim.position.set(4, 4, -6); scene.add(rim);
 
-  const world = new THREE.Group();
-  scene.add(world);
-  const materials: THREE.Material[] = [];
-  const geometries: THREE.BufferGeometry[] = [];
+  const world = new THREE.Group(), surface = new THREE.Group(), hydrology = new THREE.Group();
+  world.add(surface, hydrology); scene.add(world);
+  const materials = new Set<THREE.Material>();
+  const geometries = new Set<THREE.BufferGeometry>();
+  const textures = new Set<THREE.Texture>();
+  let seed = 17419;
+  const random = () => { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return (seed >>> 0) / 4294967296; };
   const standard = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) => {
-    const material = new THREE.MeshStandardMaterial({ color, roughness: 0.94, ...extra });
-    materials.push(material);
-    return material;
+    const material = new THREE.MeshStandardMaterial({ color, roughness: 0.96, ...extra }); materials.add(material); return material;
   };
-  const mesh = (geometry: THREE.BufferGeometry, material: THREE.Material, parent: THREE.Object3D = world) => {
-    geometries.push(geometry);
+  const mesh = (geometry: THREE.BufferGeometry, material: THREE.Material, parent: THREE.Object3D = world, shadow = true) => {
+    geometries.add(geometry);
     const object = new THREE.Mesh(geometry, material);
-    parent.add(object);
-    return object;
+    object.castShadow = shadow; object.receiveShadow = shadow; parent.add(object); return object;
+  };
+  const mergedMesh = (parts: THREE.BufferGeometry[], material: THREE.Material, parent: THREE.Object3D = surface) => {
+    // Primitives have mixed indexed/non-indexed representations; normalize first.
+    const normalized = parts.map((part) => part.index ? part.toNonIndexed() : part);
+    const merged = mergeGeometries(normalized, false);
+    if (!merged) throw new Error('Unable to construct peat illustration geometry');
+    new Set([...parts, ...normalized]).forEach((part) => part.dispose()); return mesh(merged, material, parent);
+  };
+  const transform = (geometry: THREE.BufferGeometry, position: THREE.Vector3, scale = new THREE.Vector3(1, 1, 1), rotation = new THREE.Euler()) => {
+    geometry.applyMatrix4(new THREE.Matrix4().compose(position, new THREE.Quaternion().setFromEuler(rotation), scale)); return geometry;
+  };
+  const cylinderBetween = (a: THREE.Vector3, b: THREE.Vector3, radius: number, endRadius = radius * 0.6, segments = 5) => {
+    const direction = b.clone().sub(a);
+    const geometry = new THREE.CylinderGeometry(endRadius, radius, direction.length(), segments);
+    geometry.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.clone().normalize()));
+    geometry.translate(...a.clone().add(b).multiplyScalar(0.5).toArray()); return geometry;
   };
 
-  // Slightly irregular strata make the accumulated organic material legible.
-  const layerColors = [0x272b23, 0x403529, 0x51402e, 0x665038, 0x7a6143];
-  const boundaries = [-1.62, -1.21, -0.77, -0.3, 0.15, 0.6];
-  const contour = (x: number, level: number) => Math.sin(x * 1.8 + level * 2) * 0.032 + Math.cos(x * 3.1 - level) * 0.018;
+  // Small deterministic textures add organic fibres without remote assets.
+  const soilCanvas = document.createElement('canvas'); soilCanvas.width = 512; soilCanvas.height = 256;
+  const soilContext = soilCanvas.getContext('2d');
+  if (!soilContext) throw new Error('Unable to create illustration texture');
+  const pixels = soilContext.createImageData(512, 256);
+  for (let y = 0; y < 256; y++) for (let x = 0; x < 512; x++) {
+    const base = 160 + random() * 48 + Math.sin(y * 0.26 + Math.sin(x * 0.02) * 0.6) * 12;
+    const i = (y * 512 + x) * 4;
+    pixels.data[i] = base + 8; pixels.data[i + 1] = base + 3; pixels.data[i + 2] = base - 7; pixels.data[i + 3] = 255;
+  }
+  soilContext.putImageData(pixels, 0, 0);
+  for (let i = 0; i < 290; i++) {
+    const x = random() * 512, y = random() * 256, length = 3 + random() * 35;
+    soilContext.strokeStyle = i % 3 ? 'rgba(72,57,37,.28)' : 'rgba(245,226,184,.38)';
+    soilContext.lineWidth = 0.4 + random() * 1.2;
+    soilContext.beginPath(); soilContext.moveTo(x, y);
+    soilContext.bezierCurveTo(x + length * 0.3, y - 2, x + length * 0.8, y + 4, x + length, y + random() * 5); soilContext.stroke();
+  }
+  const soilTexture = new THREE.CanvasTexture(soilCanvas);
+  soilTexture.colorSpace = THREE.SRGBColorSpace; soilTexture.wrapS = soilTexture.wrapT = THREE.RepeatWrapping;
+  soilTexture.repeat.set(0.8, 0.7); soilTexture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 4); textures.add(soilTexture);
+  const roughTexture = soilTexture.clone(); roughTexture.colorSpace = THREE.NoColorSpace; textures.add(roughTexture);
+
+  const layers: THREE.Group[] = [];
+  const layerColors = [0x35352a, 0x53432d, 0x6a4d33, 0x80613f, 0x8f754c];
+  const boundaries = [-1.55, -1.16, -0.73, -0.27, 0.16, 0.59];
+  const contour = (x: number, level: number) => Math.sin(x * 2.1 + level * 1.7) * 0.031 + Math.cos(x * 4.3 - level) * 0.014;
+  const rootMaterial = standard(0xb9a779, { roughness: 1 });
   for (let layer = 0; layer < 5; layer++) {
+    const group = new THREE.Group(); world.add(group); layers.push(group);
     const shape = new THREE.Shape();
-    const low = boundaries[layer]!;
-    const high = boundaries[layer + 1]!;
-    shape.moveTo(-2.8, low + contour(-2.8, layer));
-    for (let i = 0; i <= 24; i++) {
-      const x = -2.8 + (5.6 * i) / 24;
-      shape.lineTo(x, low + contour(x, layer));
+    for (let i = 0; i <= 40; i++) {
+      const x = -2.8 + (5.6 * i) / 40, y = boundaries[layer]! + contour(x, layer);
+      if (!i) shape.moveTo(x, y); else shape.lineTo(x, y);
     }
-    for (let i = 24; i >= 0; i--) {
-      const x = -2.8 + (5.6 * i) / 24;
-      shape.lineTo(x, high + contour(x, layer + 1));
-    }
+    for (let i = 40; i >= 0; i--) { const x = -2.8 + (5.6 * i) / 40; shape.lineTo(x, boundaries[layer + 1]! + contour(x, layer + 1)); }
     shape.closePath();
-    const earth = mesh(new THREE.ExtrudeGeometry(shape, { depth: 3.7, bevelEnabled: false, steps: 1 }), standard(layerColors[layer]!));
+    const earth = mesh(new THREE.ExtrudeGeometry(shape, { depth: 3.7, bevelEnabled: true, bevelSegments: 1, steps: 1, bevelSize: 0.012, bevelThickness: 0.012 }), standard(layerColors[layer]!, { map: soilTexture, bumpMap: roughTexture, bumpScale: 0.043 }), group);
     earth.position.z = -1.85;
+    // Branching fibres stay attached to their stratum during the reveal.
+    const roots: THREE.BufferGeometry[] = [];
+    for (let i = 0; i < 11 - layer; i++) {
+      const x = -2.6 + random() * 5.15, top = boundaries[layer + 1]! - 0.04;
+      const mid = new THREE.Vector3(x + (random() - 0.5) * 0.22, top - 0.14, 1.885);
+      const end = new THREE.Vector3(mid.x + (random() - 0.5) * 0.19, Math.max(boundaries[layer]! + 0.04, top - 0.32), 1.889);
+      roots.push(cylinderBetween(new THREE.Vector3(x, top, 1.885), mid, 0.009, 0.005, 4));
+      roots.push(cylinderBetween(mid, end, 0.005, 0.002, 3));
+      roots.push(cylinderBetween(mid, new THREE.Vector3(mid.x + 0.07 + random() * 0.1, mid.y - 0.035, 1.889), 0.004, 0.001, 3));
+    }
+    mergedMesh(roots, rootMaterial, group);
   }
 
-  const surfaceMaterial = standard(0x566a3f);
-  const surfaceLeft = mesh(new THREE.BoxGeometry(5.6, 0.2, 1.59), surfaceMaterial);
-  surfaceLeft.position.set(0, 0.68, -1.055);
-  const surfaceRight = mesh(new THREE.BoxGeometry(5.6, 0.2, 1.59), surfaceMaterial);
-  surfaceRight.position.set(0, 0.68, 1.055);
-  const canalFill = mesh(new THREE.BoxGeometry(5.6, 0.2, 0.52), surfaceMaterial);
-  canalFill.position.set(0, 0.68, 0);
+  const surfaceMaterial = standard(0x708652, { map: soilTexture, bumpMap: roughTexture, bumpScale: 0.065 });
+  const left = mesh(new THREE.BoxGeometry(5.6, 0.22, 1.59), surfaceMaterial, surface);
+  const right = mesh(new THREE.BoxGeometry(5.6, 0.22, 1.59), surfaceMaterial, surface);
+  left.position.set(0, 0.69, -1.055); right.position.set(0, 0.69, 1.055);
+  const canalFill = mesh(new THREE.BoxGeometry(5.6, 0.22, 0.52), surfaceMaterial, surface); canalFill.position.set(0, 0.69, 0);
+  const canalBanks = standard(0x5b4930, { map: soilTexture, bumpMap: roughTexture, bumpScale: 0.025 });
+  for (const z of [-0.266, 0.266]) { const bank = mesh(new THREE.BoxGeometry(5.58, 0.18, 0.025), canalBanks, surface); bank.position.set(0, 0.66, z); }
+  const waterMaterial = standard(0x63918c, { transparent: true, opacity: 0.83, roughness: 0.2, metalness: 0.12 });
+  const canalWater = mesh(new THREE.PlaneGeometry(5.57, 0.49), waterMaterial, surface, false); canalWater.rotation.x = -Math.PI / 2;
+  const waterHighlights: THREE.BufferGeometry[] = [];
+  for (let i = 0; i < 9; i++) waterHighlights.push(transform(new THREE.BoxGeometry(0.13 + random() * 0.24, 0.004, 0.008), new THREE.Vector3(-2.5 + i * 0.58, 0.004, (random() - 0.5) * 0.3)));
+  const reflections = mergedMesh(waterHighlights, standard(0xa7c7b6, { transparent: true, opacity: 0.48 }), surface); reflections.castShadow = false;
+  const saturatedMaterial = standard(0x73a7a0, { transparent: true, opacity: 0.19, roughness: 0.63, depthWrite: false });
+  const saturatedFront = mesh(new THREE.PlaneGeometry(5.59, 1), saturatedMaterial, hydrology, false); saturatedFront.position.z = 1.89;
+  const saturatedSide = mesh(new THREE.PlaneGeometry(3.69, 1), saturatedMaterial, hydrology, false); saturatedSide.rotation.y = Math.PI / 2; saturatedSide.position.x = 2.825;
+  const waterlineMaterial = standard(0xa5d0c0, { emissive: 0x315448, emissiveIntensity: 0.15 });
+  const frontLine = mesh(new THREE.BoxGeometry(5.6, 0.022, 0.013), waterlineMaterial, hydrology, false); frontLine.position.z = 1.907;
+  const sideLine = mesh(new THREE.BoxGeometry(0.013, 0.022, 3.7), waterlineMaterial, hydrology, false); sideLine.position.x = 2.84;
 
-  const waterMaterial = standard(0x6da8af, { transparent: true, opacity: 0.8, roughness: 0.18, metalness: 0.1 });
-  const canalWater = mesh(new THREE.PlaneGeometry(5.58, 0.49), waterMaterial);
-  canalWater.rotation.x = -Math.PI / 2;
-  canalWater.position.y = 0.74;
-  const saturatedMaterial = standard(0x7aa9ac, { transparent: true, opacity: 0.28, roughness: 0.5, depthWrite: false });
-  const saturatedFront = mesh(new THREE.PlaneGeometry(5.59, 1), saturatedMaterial);
-  saturatedFront.position.z = 1.875;
-  const saturatedSide = mesh(new THREE.PlaneGeometry(3.69, 1), saturatedMaterial);
-  saturatedSide.rotation.y = Math.PI / 2;
-  saturatedSide.position.x = 2.815;
-  const waterlineMaterial = standard(0xa5d3d0, { emissive: 0x36666c, emissiveIntensity: 0.2 });
-  const frontLine = mesh(new THREE.BoxGeometry(5.6, 0.025, 0.015), waterlineMaterial);
-  frontLine.position.z = 1.89;
-  const sideLine = mesh(new THREE.BoxGeometry(0.015, 0.025, 3.7), waterlineMaterial);
-  sideLine.position.x = 2.83;
-
-  // Visible roots/fibres on the cut face are schematic, not sampled data.
-  const fibreMaterial = standard(0xbaa881);
-  for (let i = 0; i < 24; i++) {
-    const x = -2.58 + ((i * 1.73) % 5.12);
-    const y = -1.41 + ((i * 0.37) % 1.8);
-    const fibre = mesh(new THREE.CylinderGeometry(0.008, 0.004, 0.15 + (i % 4) * 0.055, 3), fibreMaterial);
-    fibre.position.set(x, y, 1.883);
-    fibre.rotation.z = Math.sin(i * 5) * 1.3;
-  }
-
-  const trunkMaterial = standard(0x5f503c);
-  const crownMaterials = [standard(0x385238, { flatShading: true }), standard(0x4d6945, { flatShading: true }), standard(0x638451, { flatShading: true })];
-  const crowns: THREE.Group[] = [];
+  // Broadleaf silhouettes, tapered branching trunks, buttress roots, and emergents.
+  // Merged geometry keeps the varied crowns inexpensive to draw.
+  const trunkMaterial = standard(0x66563b, { map: soilTexture, bumpMap: roughTexture, bumpScale: 0.035 });
+  const crownMaterial = standard(0x557342, { vertexColors: true, roughness: 0.96, flatShading: false });
+  const crowns: THREE.Mesh[] = [], wood: THREE.BufferGeometry[] = [];
   const placements = [
-    [-2.08, -1.21, 1.14], [-1.14, -1.1, 1.48], [0.07, -1.29, 1.05],
-    [1.31, -1.18, 1.54], [2.19, -0.88, 0.93], [-2.13, 0.92, 0.88],
-    [-1.11, 1.18, 1.03], [0.16, 0.98, 0.83], [1.37, 1.16, 1.01],
-    [2.24, 0.81, 0.75],
+    [-2.23, -1.32, 1.65, 0.75], [-1.47, -1.12, 2.02, 0.85], [-0.48, -1.35, 1.27, 0.72],
+    [0.45, -1.11, 1.81, 0.88], [1.42, -1.29, 2.22, 0.86], [2.34, -1.1, 1.31, 0.63],
+    [-1.93, -0.54, 1.01, 0.59], [-0.8, -0.56, 1.42, 0.68], [0.94, -0.54, 1.05, 0.55],
+    [-2.25, 1.25, 1.05, 0.58], [-1.34, 0.92, 1.38, 0.67], [-0.33, 1.28, 1.06, 0.59],
+    [0.55, 0.87, 1.22, 0.63], [1.51, 1.28, 1.04, 0.58], [2.33, 0.91, 0.86, 0.54],
   ];
-  placements.forEach(([x = 0, z = 0, height = 1], index) => {
-    const tree = new THREE.Group();
-    tree.position.set(x, 0.78, z);
-    world.add(tree);
-    const trunk = mesh(new THREE.CylinderGeometry(0.035, 0.075, height, 5), trunkMaterial, tree);
-    trunk.position.y = height / 2;
-    for (let root = 0; root < 3; root++) {
-      const angle = (root * Math.PI * 2) / 3 + index;
-      const buttress = mesh(new THREE.ConeGeometry(0.12, 0.38, 3), trunkMaterial, tree);
-      buttress.position.set(Math.cos(angle) * 0.055, 0.17, Math.sin(angle) * 0.055);
-      buttress.rotation.y = angle;
+  const base = 0.8;
+  placements.forEach(([x = 0, z = 0, treeHeight = 1, radius = 0.6], index) => {
+    const leanX = (random() - 0.5) * 0.17, leanZ = (random() - 0.5) * 0.14;
+    const foot = new THREE.Vector3(x, base, z);
+    const fork = new THREE.Vector3(x + leanX, base + treeHeight * 0.66, z + leanZ);
+    const tip = new THREE.Vector3(x + leanX * 1.4, base + treeHeight, z + leanZ * 1.4);
+    const trunkRadius = 0.038 + treeHeight * 0.018;
+    wood.push(cylinderBetween(foot, fork, trunkRadius, trunkRadius * 0.66, 7)); wood.push(cylinderBetween(fork, tip, trunkRadius * 0.66, 0.012, 6));
+    for (let r = 0; r < 4; r++) {
+      const angle = r * Math.PI * 0.5 + index;
+      wood.push(cylinderBetween(new THREE.Vector3(x + Math.cos(angle) * 0.2, base + 0.013, z + Math.sin(angle) * 0.17), new THREE.Vector3(x, base + 0.31, z), 0.018, 0.04, 3));
     }
-    const crown = new THREE.Group();
-    crown.position.y = height * 0.92;
-    tree.add(crown);
-    for (let branch = 0; branch < 4; branch++) {
-      const leaf = mesh(new THREE.IcosahedronGeometry(0.33 + height * 0.08, 1), crownMaterials[(index + branch) % 3]!, crown);
-      const angle = branch * 2.4 + index;
-      leaf.position.set(Math.cos(angle) * 0.19, branch === 3 ? 0.24 : 0, Math.sin(angle) * 0.16);
-      leaf.scale.set(1.1, branch === 3 ? 0.9 : 0.76, 1);
-      leaf.rotation.set(index, branch * 0.7, index + branch);
+    const leaves: THREE.BufferGeometry[] = [];
+    for (let branch = 0; branch < 6; branch++) {
+      const angle = branch * 2.39996 + index, reach = radius * (branch === 5 ? 0.12 : 0.46 + random() * 0.14);
+      const endpoint = new THREE.Vector3(tip.x + Math.cos(angle) * reach, tip.y - 0.12 + random() * 0.22, tip.z + Math.sin(angle) * reach);
+      wood.push(cylinderBetween(fork.clone().lerp(tip, 0.35), endpoint, 0.019, 0.006, 4));
+      const foliage = new THREE.IcosahedronGeometry(radius * (0.43 + random() * 0.11), 1);
+      const position = foliage.getAttribute('position'), colors = new Float32Array(position.count * 3);
+      for (let v = 0; v < position.count; v++) {
+        const px = position.getX(v), py = position.getY(v), pz = position.getZ(v);
+        const warp = 1 + Math.sin(px * 18 + index) * Math.cos(pz * 15 + branch) * 0.065;
+        position.setXYZ(v, px * warp, py * warp, pz * warp);
+        const tint = 0.7 + (py / radius + 1) * 0.16 + (index % 3) * 0.045;
+        colors[v * 3] = tint * 0.98; colors[v * 3 + 1] = tint; colors[v * 3 + 2] = tint * 0.83;
+      }
+      foliage.setAttribute('color', new THREE.BufferAttribute(colors, 3)); foliage.computeVertexNormals();
+      foliage.scale(1.05 + (index % 3) * 0.08, index % 4 === 0 ? 1.05 : 0.76, 0.89); foliage.rotateY(angle);
+      foliage.translate(endpoint.x - tip.x, endpoint.y - tip.y, endpoint.z - tip.z); leaves.push(foliage);
     }
-    crowns.push(crown);
+    const crown = mergedMesh(leaves, crownMaterial, surface); crown.position.copy(tip); crowns.push(crown);
   });
+  mergedMesh(wood, trunkMaterial);
 
-  const ashMaterial = standard(0x534b3d, { flatShading: true });
-  const mossMaterial = standard(0x73885c, { flatShading: true });
-  for (let i = 0; i < 15; i++) {
-    const stone = mesh(new THREE.IcosahedronGeometry(0.05 + (i % 3) * 0.016, 0), i % 3 ? mossMaterial : ashMaterial);
-    stone.position.set(-2.6 + ((i * 1.13) % 5.2), 0.81, (i % 2 ? -1 : 1) * (0.49 + ((i * 0.29) % 1.15)));
-    stone.scale.set(1.4, 0.4, 1);
+  const groundcover: THREE.BufferGeometry[] = [], litter: THREE.BufferGeometry[] = [];
+  for (let i = 0; i < 75; i++) {
+    const x = -2.66 + random() * 5.32, z = (i % 2 ? -1 : 1) * (0.37 + random() * 1.35);
+    if (i % 5 === 0) {
+      const center = new THREE.Vector3(x, 0.81, z);
+      for (let leaf = 0; leaf < 5; leaf++) {
+        const angle = leaf * 1.256 + i, end = new THREE.Vector3(x + Math.cos(angle) * 0.14, 0.91 + random() * 0.07, z + Math.sin(angle) * 0.14);
+        groundcover.push(cylinderBetween(center, end, 0.014, 0.003, 3));
+      }
+    } else litter.push(transform(new THREE.IcosahedronGeometry(0.025 + random() * 0.035, 0), new THREE.Vector3(x, 0.81, z), new THREE.Vector3(1.4, 0.17, 0.75), new THREE.Euler(0, random() * 6.28, 0)));
   }
+  const understoryMaterial = standard(0x6a8042); mergedMesh(groundcover, understoryMaterial); mergedMesh(litter, standard(0x95865d));
+  const fallen = mesh(new THREE.CylinderGeometry(0.055, 0.074, 0.76, 7), trunkMaterial, surface);
+  fallen.position.set(-0.6, 0.86, 1.56); fallen.rotation.set(0.2, 0.7, 1.49);
+  // A softly baked grounding shadow avoids a large stair-stepped cast silhouette
+  // at mobile shadow-map resolutions. Tree/terrain shadows remain real PCF shadows.
+  const contactCanvas = document.createElement('canvas'); contactCanvas.width = contactCanvas.height = 128;
+  const contactContext = contactCanvas.getContext('2d');
+  if (!contactContext) throw new Error('Unable to create illustration texture');
+  const contactGradient = contactContext.createRadialGradient(64, 64, 12, 64, 64, 63);
+  contactGradient.addColorStop(0, 'rgba(18,30,20,.24)');
+  contactGradient.addColorStop(0.5, 'rgba(18,30,20,.14)');
+  contactGradient.addColorStop(1, 'rgba(18,30,20,0)');
+  contactContext.fillStyle = contactGradient; contactContext.fillRect(0, 0, 128, 128);
+  const contactTexture = new THREE.CanvasTexture(contactCanvas); textures.add(contactTexture);
+  const shadowMaterial = new THREE.MeshBasicMaterial({ map: contactTexture, transparent: true, depthWrite: false, toneMapped: false }); materials.add(shadowMaterial);
+  const floor = mesh(new THREE.PlaneGeometry(9, 6.5), shadowMaterial, scene, false);
+  floor.rotation.x = -Math.PI / 2; floor.position.set(0.12, -1.95, 0.08);
 
-  const smoulder = new THREE.Group();
-  world.add(smoulder);
-  const charMaterial = standard(0x4d291b, { emissive: 0x4d1607, emissiveIntensity: 0.65, flatShading: true });
-  const emberMaterial = standard(0xdc6a24, { emissive: 0xe35212, emissiveIntensity: 1.8, roughness: 1 });
-  const warmMaterial = standard(0xb74c1c, { emissive: 0x6f1c06, emissiveIntensity: 0.8, transparent: true, opacity: 0.9 });
-  for (let i = 0; i < 16; i++) {
-    const coal = mesh(new THREE.IcosahedronGeometry(0.11 + (i % 3) * 0.04, 0), i % 4 === 0 ? emberMaterial : charMaterial, smoulder);
-    coal.position.set(0.27 + ((i * 0.31) % 1.95), 0.2 - ((i * 0.17) % 0.75), 1.89);
-    coal.scale.set(1.75, 0.63, 0.2);
-    coal.rotation.z = i * 0.6;
+  // The combustion cue stays below the surface: an ember seam, never flames.
+  const smoulder = new THREE.Group(); layers[3]!.add(smoulder);
+  const emberMaterial = standard(0xdc7435, { emissive: 0xf56621, emissiveIntensity: 1.35, roughness: 1 });
+  const charMaterial = standard(0x3c2c20, { roughness: 1 });
+  const coalParts: THREE.BufferGeometry[] = [], emberParts: THREE.BufferGeometry[] = [];
+  for (let i = 0; i < 38; i++) {
+    const x = 0.16 + random() * 2.26, y = -0.2 + random() * 0.34;
+    const part = transform(new THREE.IcosahedronGeometry(0.035 + random() * 0.055, 0), new THREE.Vector3(x, y, 1.902), new THREE.Vector3(1.7, 0.61, 0.3), new THREE.Euler(0, 0, random() * 0.8));
+    (i % 4 ? coalParts : emberParts).push(part);
   }
-  for (let i = 0; i < 9; i++) {
-    const warm = mesh(new THREE.IcosahedronGeometry(0.026, 0), warmMaterial, smoulder);
-    warm.position.set(0.24 + ((i * 0.53) % 2.2), 0.28 - ((i * 0.22) % 0.9), 1.95);
-    warm.scale.set(2.7, 0.7, 0.3);
-  }
-
-  const smoke = new THREE.Group();
-  world.add(smoke);
-  const smokeMaterial = standard(0x9d9c8e, { transparent: true, opacity: 0.2, depthWrite: false, flatShading: true });
+  mergedMesh(coalParts, charMaterial, smoulder).castShadow = false; mergedMesh(emberParts, emberMaterial, smoulder).castShadow = false;
+  const glowingVeins: THREE.BufferGeometry[] = [];
   for (let i = 0; i < 5; i++) {
-    const puff = mesh(new THREE.IcosahedronGeometry(0.2 + i * 0.055, 1), smokeMaterial, smoke);
-    puff.position.set(1.2 - i * 0.07, 0.96 + i * 0.39, 0.95 - i * 0.08);
-    puff.scale.set(1.4, 0.9, 1);
+    const x = 0.22 + i * 0.43;
+    const points = [new THREE.Vector3(x, 0.01 + Math.sin(i) * 0.05, 1.927), new THREE.Vector3(x + 0.19, -0.035, 1.929), new THREE.Vector3(x + 0.37, 0.04, 1.925)];
+    glowingVeins.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 6, 0.009, 3, false));
+  }
+  mergedMesh(glowingVeins, emberMaterial, smoulder).castShadow = false;
+
+  const smokeCanvas = document.createElement('canvas'); smokeCanvas.width = smokeCanvas.height = 64;
+  const smokeContext = smokeCanvas.getContext('2d'); if (!smokeContext) throw new Error('Unable to create illustration texture');
+  const gradient = smokeContext.createRadialGradient(32, 32, 2, 32, 32, 31);
+  gradient.addColorStop(0, 'rgba(170,174,163,.38)'); gradient.addColorStop(0.45, 'rgba(170,174,163,.2)'); gradient.addColorStop(1, 'rgba(170,174,163,0)');
+  smokeContext.fillStyle = gradient; smokeContext.fillRect(0, 0, 64, 64);
+  const smokeTexture = new THREE.CanvasTexture(smokeCanvas); textures.add(smokeTexture);
+  const smokeMaterial = new THREE.SpriteMaterial({ map: smokeTexture, transparent: true, opacity: 0, depthWrite: false }); materials.add(smokeMaterial);
+  const smoke = new THREE.Group(); surface.add(smoke);
+  for (let i = 0; i < 5; i++) {
+    const puff = new THREE.Sprite(smokeMaterial); puff.position.set(1.55 - i * 0.055, 0.96 + i * 0.34, 0.92 - i * 0.06);
+    puff.scale.set(0.5 + i * 0.19, 0.54 + i * 0.2, 1); smoke.add(puff);
   }
 
-  const restoration = new THREE.Group();
-  world.add(restoration);
-  const damMaterial = standard(0x8c7856);
-  const dam = mesh(new THREE.BoxGeometry(0.18, 0.26, 0.64), damMaterial, restoration);
-  dam.position.set(1.7, 0.75, 0);
-  const seedlingMaterial = standard(0x7d9a54, { flatShading: true });
+  const restoration = new THREE.Group(); surface.add(restoration);
+  const damMaterial = standard(0x897653, { map: soilTexture }), damParts: THREE.BufferGeometry[] = [];
+  for (let i = 0; i < 4; i++) damParts.push(transform(new THREE.BoxGeometry(0.11, 0.09, 0.64), new THREE.Vector3(1.82, 0.64 + i * 0.065, 0)));
+  mergedMesh(damParts, damMaterial, restoration);
+  const seedlings: THREE.BufferGeometry[] = [], seedlingMaterial = standard(0x93a35d, { roughness: 1 });
   for (let i = 0; i < 7; i++) {
-    const sapling = mesh(new THREE.ConeGeometry(0.09, 0.32, 5), seedlingMaterial, restoration);
-    sapling.position.set(-2.5 + i * 0.72, 0.94, 1.55 - (i % 2) * 0.3);
+    const x = -2.36 + i * 0.71, z = 1.53 - (i % 2) * 0.3;
+    seedlings.push(cylinderBetween(new THREE.Vector3(x, 0.81, z), new THREE.Vector3(x, 1.12, z), 0.013, 0.007, 4));
+    for (let leaf = 0; leaf < 3; leaf++) seedlings.push(transform(new THREE.IcosahedronGeometry(0.09, 1), new THREE.Vector3(x + Math.cos(leaf * 2.1) * 0.06, 1.06 + leaf * 0.045, z + Math.sin(leaf * 2.1) * 0.06), new THREE.Vector3(1, 0.45, 0.65)));
   }
+  mergedMesh(seedlings, seedlingMaterial, restoration);
 
-  const stageParameters = [
-    { water: 0.52, earth: 0x566a3f, crown: [0x385238, 0x4d6945, 0x638451], foliage: 1, fire: 0, recovery: 0, fill: 1 },
-    { water: -0.83, earth: 0x8d7950, crown: [0x626543, 0x77794c, 0x878951], foliage: 0.91, fire: 0, recovery: 0, fill: 0 },
-    { water: -1.11, earth: 0x514739, crown: [0x4d4a38, 0x62563b, 0x746341], foliage: 0.55, fire: 1, recovery: 0, fill: 0 },
-    { water: 0.31, earth: 0x6e7f4b, crown: [0x405c38, 0x547546, 0x6a8a51], foliage: 0.72, fire: 0, recovery: 1, fill: 0 },
+  const stages = [
+    { water: 0.52, earth: 0x708652, crown: 0x557342, foliage: 1, fire: 0, recovery: 0, fill: 1 },
+    { water: -0.83, earth: 0x9c8557, crown: 0x727749, foliage: 0.92, fire: 0, recovery: 0, fill: 0 },
+    { water: -1.1, earth: 0x685b42, crown: 0x696247, foliage: 0.65, fire: 1, recovery: 0, fill: 0 },
+    { water: 0.31, earth: 0x7a8d55, crown: 0x607e46, foliage: 0.83, fire: 0, recovery: 1, fill: 0 },
   ];
-  const stateFor = (stage: number) => {
-    const state = stageParameters[stage]!;
-    return { ...state, earth: new THREE.Color(state.earth), crown: state.crown.map((color) => new THREE.Color(color)) };
-  };
-  let current = stateFor(0);
-  let target = 0;
-  let frame = 0;
-  let disposed = false;
-  let visible = true;
+  const stateFor = (stage: number) => { const state = stages[stage]!; return { ...state, earth: new THREE.Color(state.earth), crown: new THREE.Color(state.crown) }; };
+  let current = stateFor(0), from = current, destination = current;
+  let targetStage = 0, currentProgress = 0, targetProgress = 0;
+  let frame = 0, disposed = false, visible = true, contextLost = false;
+  let stateStarted = 0, stateAnimating = false, lastTime = 0;
+  let width = Math.max(1, container.clientWidth), height = Math.max(1, container.clientHeight);
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const lerp = THREE.MathUtils.lerp, smooth = (value: number) => value * value * (3 - 2 * value);
 
-  function drawStage() {
-    const value = (key: 'water' | 'foliage' | 'fire' | 'recovery' | 'fill') => current[key];
-    surfaceMaterial.color.copy(current.earth);
-    crownMaterials.forEach((material, index) => material.color.copy(current.crown[index]!));
-    const water = value('water');
-    const saturatedHeight = Math.max(0.03, water + 1.61);
-    saturatedFront.scale.y = saturatedHeight;
-    saturatedFront.position.y = -1.61 + saturatedHeight / 2;
-    saturatedSide.scale.y = saturatedHeight;
-    saturatedSide.position.y = saturatedFront.position.y;
-    frontLine.position.y = water;
-    sideLine.position.y = water;
-    // Canal surface is a schematic inset; cross-section indicates relative saturation.
-    canalWater.position.y = THREE.MathUtils.lerp(0.61, 0.755, (water + 1.11) / 1.63);
-    canalFill.visible = value('fill') > 0.5;
-    canalWater.visible = !canalFill.visible;
-    crowns.forEach((crown, index) => crown.scale.setScalar(value('foliage') * (index > 6 && value('fire') > 0.1 ? 0.9 : 1)));
-    const fire = value('fire');
-    smoulder.visible = fire > 0.015;
-    smoulder.scale.setScalar(Math.max(0.001, fire));
-    smoke.visible = fire > 0.015;
-    smokeMaterial.opacity = fire * 0.22;
-    restoration.visible = value('recovery') > 0.015;
-    restoration.scale.y = Math.max(0.001, value('recovery'));
-    if (visible && !disposed) renderer.render(scene, camera);
+  function draw() {
+    if (disposed || contextLost || !visible) return;
+    const p = reduced.matches ? 0.56 : currentProgress;
+    // Layers separate briefly to explain the cutaway, then reunite for recovery.
+    const gap = reduced.matches ? 0 : Math.sin(Math.PI * p) ** 2 * 0.13;
+    layers.forEach((layer, index) => { layer.position.y = (index - 2) * gap; }); surface.position.y = gap * 3;
+    surfaceMaterial.color.copy(current.earth); crownMaterial.color.copy(current.crown);
+    understoryMaterial.color.copy(current.crown).lerp(new THREE.Color(0x8e9c50), 0.35);
+    crowns.forEach((crown, index) => crown.scale.set(1, current.foliage * (index > 10 ? 0.95 : 1), 1));
+    const saturatedHeight = Math.max(0.03, current.water + 1.55);
+    saturatedFront.scale.y = saturatedSide.scale.y = saturatedHeight;
+    saturatedFront.position.y = saturatedSide.position.y = -1.55 + saturatedHeight / 2;
+    saturatedMaterial.opacity = 0.19 * (1 - gap * 3); frontLine.position.y = sideLine.position.y = current.water;
+    canalWater.position.y = lerp(0.615, 0.76, (current.water + 1.1) / 1.62); reflections.position.y = canalWater.position.y;
+    canalFill.visible = current.fill > 0.5; canalWater.visible = reflections.visible = !canalFill.visible;
+    smoulder.visible = current.fire > 0.01; emberMaterial.emissiveIntensity = current.fire * 1.35;
+    smoke.visible = current.fire > 0.01; smokeMaterial.opacity = current.fire * 0.65;
+    restoration.visible = current.recovery > 0.01; restoration.scale.y = Math.max(0.001, current.recovery);
+    const angle = lerp(0.68, 0.08, smooth(p));
+    camera.position.set(Math.sin(angle) * 12, lerp(9.4, 5.5, smooth(p)), Math.cos(angle) * 12);
+    camera.lookAt(0, lerp(0.64, 0.18, p), 0);
+    const aspect = width / height, vertical = Math.max(6.9 + gap * 4, 7.1 / aspect);
+    camera.left = -vertical * aspect / 2; camera.right = vertical * aspect / 2; camera.top = vertical / 2; camera.bottom = -vertical / 2;
+    camera.updateProjectionMatrix(); renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera);
+    container.dataset.ready = 'true';
   }
-
+  function tick(now: number) {
+    frame = 0; if (disposed || !visible || contextLost) return;
+    const delta = Math.min(50, lastTime ? now - lastTime : 16.7); lastTime = now;
+    if (stateAnimating) {
+      const fraction = reduced.matches ? 1 : Math.min(1, (now - stateStarted) / 700), t = smooth(fraction);
+      current = {
+        water: lerp(from.water, destination.water, t), foliage: lerp(from.foliage, destination.foliage, t),
+        fire: lerp(from.fire, destination.fire, t), recovery: lerp(from.recovery, destination.recovery, t), fill: lerp(from.fill, destination.fill, t),
+        earth: from.earth.clone().lerp(destination.earth, t), crown: from.crown.clone().lerp(destination.crown, t),
+      };
+      if (fraction === 1) { current = destination; stateAnimating = false; }
+    }
+    currentProgress = reduced.matches ? targetProgress : lerp(currentProgress, targetProgress, 1 - Math.exp(-delta / 75));
+    if (Math.abs(currentProgress - targetProgress) < 0.0005) currentProgress = targetProgress;
+    draw();
+    if (stateAnimating || currentProgress !== targetProgress) frame = requestAnimationFrame(tick); else lastTime = 0;
+  }
+  function invalidate() { if (!frame && !disposed && visible && !contextLost) frame = requestAnimationFrame(tick); }
   function setStage(stage: number) {
     if (!Number.isFinite(stage) || disposed) return;
-    target = THREE.MathUtils.clamp(Math.round(stage), 0, 3);
-    cancelAnimationFrame(frame);
-    if (reduced.matches || !visible) {
-      current = stateFor(target);
-      drawStage();
-      return;
-    }
-    const from = current;
-    const to = stateFor(target);
-    const started = performance.now();
-    const animate = (now: number) => {
-      const progress = Math.min(1, (now - started) / 650);
-      const eased = progress * progress * (3 - 2 * progress);
-      current = {
-        water: THREE.MathUtils.lerp(from.water, to.water, eased),
-        foliage: THREE.MathUtils.lerp(from.foliage, to.foliage, eased),
-        fire: THREE.MathUtils.lerp(from.fire, to.fire, eased),
-        recovery: THREE.MathUtils.lerp(from.recovery, to.recovery, eased),
-        fill: THREE.MathUtils.lerp(from.fill, to.fill, eased),
-        earth: from.earth.clone().lerp(to.earth, eased),
-        crown: from.crown.map((color, index) => color.clone().lerp(to.crown[index]!, eased)),
-      };
-      drawStage();
-      if (progress < 1 && !disposed && visible) frame = requestAnimationFrame(animate);
-      else current = to;
-    };
-    frame = requestAnimationFrame(animate);
+    const next = THREE.MathUtils.clamp(Math.round(stage), 0, 3);
+    if (next === targetStage) return;
+    targetStage = next; from = current; destination = stateFor(next); stateStarted = performance.now(); stateAnimating = true;
+    if (reduced.matches || !visible) { current = destination; stateAnimating = false; } invalidate();
   }
-
+  function setProgress(progress: number) {
+    if (!Number.isFinite(progress) || disposed) return;
+    const next = THREE.MathUtils.clamp(progress, 0, 1);
+    if (Math.abs(next - targetProgress) < 0.0001) return;
+    targetProgress = next;
+    if (reduced.matches || !visible) currentProgress = targetProgress;
+    // Reduced motion keeps a single explanatory viewpoint; scroll need not redraw it.
+    if (!reduced.matches) invalidate();
+  }
   function resize() {
-    const width = Math.max(1, container.clientWidth);
-    const height = Math.max(1, container.clientHeight);
-    const aspect = width / height;
-    const verticalSize = aspect < 1.1 ? 8.1 : 7.5;
-    camera.left = (-verticalSize * aspect) / 2;
-    camera.right = (verticalSize * aspect) / 2;
-    camera.top = verticalSize / 2;
-    camera.bottom = -verticalSize / 2;
-    camera.updateProjectionMatrix();
-    renderer.setSize(width, height, false);
-    drawStage();
+    width = Math.max(1, container.clientWidth); height = Math.max(1, container.clientHeight);
+    renderer.setSize(width, height, false); invalidate();
   }
-  const observer = new ResizeObserver(resize);
-  observer.observe(container);
+  const observer = new ResizeObserver(resize); observer.observe(container);
   const intersection = new IntersectionObserver(([entry]) => {
     visible = !!entry?.isIntersecting;
-    if (!visible) {
-      cancelAnimationFrame(frame);
-      current = stateFor(target);
-    } else drawStage();
+    if (!visible) { cancelAnimationFrame(frame); frame = 0; lastTime = 0; current = destination; currentProgress = targetProgress; stateAnimating = false; } else invalidate();
   });
   intersection.observe(container);
   const onStage = (event: Event) => setStage((event as CustomEvent<{ stage: number }>).detail?.stage);
-  const onReduced = () => {
-    if (reduced.matches) {
-      cancelAnimationFrame(frame);
-      current = stateFor(target);
-      drawStage();
-    }
-  };
-  const onContextLost = (event: Event) => {
-    event.preventDefault();
-    container.dataset.ready = 'false';
-    cancelAnimationFrame(frame);
-  };
-  container.addEventListener('peat-stage', onStage);
-  reduced.addEventListener('change', onReduced);
-  renderer.domElement.addEventListener('webglcontextlost', onContextLost);
-  resize();
-  // The fallback is removed only after a successful first WebGL draw.
-  container.dataset.ready = 'true';
-
+  const onProgress = (event: Event) => setProgress((event as CustomEvent<{ progress: number }>).detail?.progress);
+  const onReduced = () => { if (reduced.matches) { current = destination; stateAnimating = false; currentProgress = targetProgress; } invalidate(); };
+  const onContextLost = (event: Event) => { event.preventDefault(); contextLost = true; container.dataset.ready = 'false'; cancelAnimationFrame(frame); frame = 0; };
+  const onContextRestored = () => { contextLost = false; invalidate(); };
+  container.addEventListener('peat-stage', onStage); container.addEventListener('peat-progress', onProgress); reduced.addEventListener('change', onReduced);
+  renderer.domElement.addEventListener('webglcontextlost', onContextLost); renderer.domElement.addEventListener('webglcontextrestored', onContextRestored);
+  renderer.setSize(width, height, false); draw();
   return {
-    setStage,
+    setStage, setProgress,
     dispose() {
-      disposed = true;
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-      intersection.disconnect();
-      container.removeEventListener('peat-stage', onStage);
-      reduced.removeEventListener('change', onReduced);
-      renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
-      geometries.forEach((geometry) => geometry.dispose());
-      materials.forEach((material) => material.dispose());
-      renderer.dispose();
-      renderer.domElement.remove();
-      delete container.dataset.ready;
+      disposed = true; cancelAnimationFrame(frame); observer.disconnect(); intersection.disconnect();
+      container.removeEventListener('peat-stage', onStage); container.removeEventListener('peat-progress', onProgress); reduced.removeEventListener('change', onReduced);
+      renderer.domElement.removeEventListener('webglcontextlost', onContextLost); renderer.domElement.removeEventListener('webglcontextrestored', onContextRestored);
+      geometries.forEach((geometry) => geometry.dispose()); materials.forEach((material) => material.dispose()); textures.forEach((texture) => texture.dispose());
+      sun.shadow.map?.dispose(); renderer.dispose(); renderer.domElement.remove(); delete container.dataset.ready;
     },
   };
 }

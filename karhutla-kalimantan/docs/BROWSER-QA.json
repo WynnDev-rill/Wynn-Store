@@ -17,6 +17,10 @@
       "pass": true
     },
     {
+      "name": "Current 2026 snapshots, timestamps and source links",
+      "pass": true
+    },
+    {
       "name": "All 25 year/province selections match source",
       "pass": true
     },
@@ -30,6 +34,10 @@
     },
     {
       "name": "Lazy Three scene renders all four stages",
+      "pass": true
+    },
+    {
+      "name": "Scroll-controlled 3D camera changes the rendered view",
       "pass": true
     },
     {
@@ -54,6 +62,10 @@
     },
     {
       "name": "No-JS content and data remain available",
+      "pass": true
+    },
+    {
+      "name": "Mobile lab loading budget and deferred 3D/video",
       "pass": true
     }
   ],

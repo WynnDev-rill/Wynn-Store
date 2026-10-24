@@ -1,78 +1,58 @@
 {
-  "lcpMs": 1480,
-  "cls": 0.012191902542821912,
+  "lcpMs": 1180,
+  "cls": 0.003156233684953629,
+  "initialThreeLoaded": false,
+  "initialVideoLoaded": false,
   "resources": [
     {
       "name": "borneo-smoke-2023-mobile.webp",
       "transferSize": 106078,
-      "decodedBodySize": 105778,
-      "duration": 1835.7000000001863
+      "duration": 1708.5999999998603
     },
     {
-      "name": "SiteLayout.BXubVp-0.css",
-      "transferSize": 39486,
-      "decodedBodySize": 39186,
-      "duration": 754.3999999999069
+      "name": "SiteLayout.DFNKBqND.css",
+      "transferSize": 43355,
+      "duration": 793.4000000001397
     },
     {
       "name": "manrope-latin-wght-normal.woff2",
       "transferSize": 25136,
-      "decodedBodySize": 24836,
-      "duration": 1151.1999999997206
+      "duration": 804.8000000000466
     },
     {
       "name": "newsreader-latin-wght-normal.woff2",
       "transferSize": 58384,
-      "decodedBodySize": 58084,
-      "duration": 2005.1000000000931
+      "duration": 1186.1999999999534
     },
     {
-      "name": "newsreader-latin-wght-italic.woff2",
-      "transferSize": 64820,
-      "decodedBodySize": 64520,
-      "duration": 2672.2999999998137
-    },
-    {
-      "name": "banjarbaru-2023-thumb.webp",
-      "transferSize": 115566,
-      "decodedBodySize": 115266,
-      "duration": 2578.600000000093
-    },
-    {
-      "name": "banjarbaru-2022-thumb.webp",
-      "transferSize": 100276,
-      "decodedBodySize": 99976,
-      "duration": 2495.100000000093
+      "name": "CurrentMap.astro_astro_type_script_index_0_lang.BzSC38g4.js",
+      "transferSize": 1391,
+      "duration": 177.4000000001397
     },
     {
       "name": "DataMap.astro_astro_type_script_index_0_lang.BpwdVvrY.js",
       "transferSize": 3780,
-      "decodedBodySize": 3480,
-      "duration": 261.39999999990687
+      "duration": 171.39999999990687
     },
     {
-      "name": "index.astro_astro_type_script_index_0_lang.Bpq2GF6y.js",
-      "transferSize": 9615,
-      "decodedBodySize": 9315,
-      "duration": 370.10000000009313
+      "name": "newsreader-latin-wght-italic.woff2",
+      "transferSize": 64820,
+      "duration": 572.0999999998603
     },
     {
-      "name": "SiteLayout.astro_astro_type_script_index_0_lang.B1gOi8Q9.js",
+      "name": "index.astro_astro_type_script_index_0_lang.CtbvJrYo.js",
+      "transferSize": 11090,
+      "duration": 273.5999999998603
+    },
+    {
+      "name": "SiteLayout.astro_astro_type_script_index_0_lang.nJuX2QES.js",
       "transferSize": 327,
-      "decodedBodySize": 27,
-      "duration": 187.39999999990687
+      "duration": 169
     },
     {
-      "name": "site.BUbx4dpW.js",
-      "transferSize": 1923,
-      "decodedBodySize": 1623,
-      "duration": 189.29999999981374
-    }
-  ],
-  "navigation": [
-    {
-      "domContentLoadedMs": 3780.4000000003725,
-      "loadMs": 3847.4000000003725
+      "name": "site.Dr2UQrH7.js",
+      "transferSize": 1981,
+      "duration": 177
     }
   ],
   "conditions": {
@@ -80,8 +60,6 @@
     "cpuSlowdown": 4,
     "downloadBytesPerSecond": 200000,
     "latencyMs": 150,
-    "environment": "local lab, Chromium 133, not a physical Android device; local server uncompressed"
-  },
-  "initialThreeLoaded": false,
-  "initialVideoLoaded": false
+    "environment": "Local lab, Chromium 133 software rendering; uncompressed server; not a physical Android device"
+  }
 }

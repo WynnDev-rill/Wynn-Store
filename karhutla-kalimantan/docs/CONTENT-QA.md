@@ -1,3 +1,5 @@
+> Catatan audit versi awal. Untuk perubahan fokus Oktober 2026, lihat [REVISION-2026.md](REVISION-2026.md) dan hasil pemeriksaan revisi pada [QA.md](QA.md).
+
 # Documentary content QA
 
 Checked: 24 October 2026. Reviewer scope: read-only `src/pages/index.astro`, `src/pages/sumber.astro`, `src/data/content.ts`, provincial data, media captions/rights and video captions. No implementation files changed.

@@ -9,6 +9,7 @@ export function unlockBody() { document.body.classList.remove('dialog-open'); }
 function closeMenu(){menu?.close(); toggle?.setAttribute('aria-expanded','false'); unlockBody();}
 toggle?.addEventListener('click',()=>{if(!menu)return;menu.showModal();lockBody();toggle.setAttribute('aria-expanded','true');});
 menu?.querySelector('[data-close-menu]')?.addEventListener('click',closeMenu);
+menu?.addEventListener('cancel',e=>{e.preventDefault();closeMenu();});
 menu?.addEventListener('close',()=>{toggle?.setAttribute('aria-expanded','false');unlockBody();});
 menu?.addEventListener('click',e=>{if(e.target===menu)closeMenu();});
 menu?.querySelectorAll('a').forEach(link=>link.addEventListener('click',closeMenu));
