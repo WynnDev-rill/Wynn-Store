@@ -42,12 +42,35 @@ class SecurityAndStorageTest {
         file.writeText("""{"settings":{"onboardingDone":true},"rules":{"com.example.target":{"packageName":"com.example.target","freeze":"DISABLE","ownedDisable":true,"networkBlocked":true}}}""")
         val store = GuardStore(context)
         val rule = store.state.value.rules.getValue("com.example.target")
-        assertNull(rule.gate); assertTrue(rule.ownedDisable); assertTrue(rule.managedFreeze); assertFalse(rule.networkBlocked)
+        assertNotNull(rule.gate); assertTrue(rule.ownedDisable); assertTrue(rule.networkBlocked)
         store.settings { it.copy(darkMode = true) }
         val recreated = GuardStore(context)
-        assertEquals(3, recreated.state.value.schemaVersion)
+        assertEquals(2, recreated.state.value.schemaVersion)
         assertEquals(rule, recreated.state.value.rules.getValue("com.example.target"))
         assertTrue(recreated.state.value.settings.darkMode)
+    }
+    @Test fun version15StateRestoresLegacyFeaturesWithoutRefreezingOpenApps() = runTest {
+        val context = RuntimeEnvironment.getApplication() as Context
+        val file = File(context.filesDir, "guard-state.json")
+        file.writeText("""{"schemaVersion":3,"settings":{"freezeUtility":true,"onboardingDone":true,"darkMode":true},"rules":{"com.example.closed":{"packageName":"com.example.closed","managedFreeze":true,"freeze":"DISABLE","ownedDisable":true,"appliedNetwork":true,"pendingNetwork":true},"com.example.open":{"packageName":"com.example.open","managedFreeze":true}}}""")
+        val store = GuardStore(context)
+        assertNull(store.loadError)
+        val state = store.state.value
+        assertEquals(2, state.schemaVersion)
+        assertTrue(state.settings.onboardingDone); assertTrue(state.settings.darkMode)
+        val closed = state.rules.getValue("com.example.closed")
+        assertNotNull(closed.gate); assertTrue(closed.ownedDisable)
+        assertTrue(closed.appliedNetwork); assertTrue(closed.pendingNetwork)
+        val open = state.rules.getValue("com.example.open")
+        assertTrue(open.managedFreeze); assertNull(open.gate)
+        assertFalse(PolicyEngine.decide(open, state.settings, 0, java.time.ZonedDateTime.now()).blocked)
+        val apps = listOf(InstalledApp(open.packageName,"Open",11001,0,true,false,false,false),
+            InstalledApp(closed.packageName,"Closed",11002,0,false,false,false,false))
+        assertEquals(2, FreezeCatalog.selected(state,apps).size)
+        store.settings { it.copy(dailyGoalMinutes = 347) }
+        val recreated = GuardStore(context).state.value
+        assertEquals(347,recreated.settings.dailyGoalMinutes)
+        assertEquals(state.rules,recreated.rules)
     }
     @Test fun corruptStateIsReportedAndNeverOverwrittenSilently() = runTest {
         val context = RuntimeEnvironment.getApplication() as Context

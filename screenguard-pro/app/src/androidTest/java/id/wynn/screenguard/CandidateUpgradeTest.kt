@@ -57,6 +57,8 @@ class CandidateUpgradeTest {
         open()
         openSettings()
         find("Tema Tampilan")
+        assertTrue("Beranda must be restored",ui().hasObject(By.pkg(pkg).desc("Beranda")))
+        assertTrue("Jaringan must be restored",ui().hasObject(By.pkg(pkg).desc("Jaringan")))
         assertTrue("Saved theme did not survive",ui().hasObject(By.pkg(pkg).text("Gelap")))
         assertFalse(ui().hasObject(By.pkg(pkg).text("Target waktu layar")))
         val context=InstrumentationRegistry.getInstrumentation().targetContext

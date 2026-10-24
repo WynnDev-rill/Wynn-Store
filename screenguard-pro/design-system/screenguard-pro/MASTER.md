@@ -43,12 +43,3 @@ Automated UI interaction, tab-state retention, restricted-settings help, compact
 ## 1.2 reviewed refinements
 
 Relevant UI UX Pro Max queries: `digital wellbeing app freezing four floating tabs interactive usage chart accessible --domain ux`, `bottom sheet lists animation accessibility --stack jetpack-compose`. Native semantics replace web ARIA guidance; choices wrap instead of shrinking text. Charts expose selected-day buttons with date/duration labels; horizontal scrolling retains 48dp day targets on small displays. No slogan in the home header. The user-supplied original raster brand artwork intentionally overrides generic vector-only advice; native adaptive launcher layers apply system masks while preserving the supplied full-color artwork. Gate controls use a native modal sheet, retained per-app state, explicit wait/math progress, and standard system motion scaling.
-
-
-## 1.5 product direction — explicit user revision
-
-ScreenGuard is a manual app-freezing utility with informational activity statistics. Default destination: Bekukan. Three destinations only: Bekukan, Aktivitas, Pengaturan. No network controls, focus goals, parental PIN, time limits, challenges, timed forced unfreezing, or foreground monitoring. Legacy serialized fields are retained only for non-destructive migration/recovery.
-
-Empty freeze content is blank: title/menu toolbar and a 56dp blue bottom-right FAB; no instructional center illustration/text. One curated collection with no All/Open status filters. Opening a frozen app unfreezes it without a challenge or forced timeout and retains it in the collection. Real package state determines grayscale icons and a blue snowflake badge; color alone never conveys the state.
-
-Activity statistics retain date and period context, distinguish physical screen time from app totals, show numerical daily values and complete hourly rows, label partial data succinctly, and preserve removed-app package entries. Technical explanations live behind Info/Help actions instead of permanent paragraphs. No invented battery-savings metric. System text and duration scaling stay enabled.

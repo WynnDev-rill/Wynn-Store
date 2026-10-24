@@ -61,15 +61,15 @@ jobs:
           disable-animations: false
           script: bash screenguard-pro/qa/run-device.sh
       - name: Publish staged production APK after all checks
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && hashFiles('screenguard-pro/distribution/ScreenGuard-Pro-1.5.0.apk') != ''
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && hashFiles('screenguard-pro/distribution/ScreenGuard-Pro-1.5.1.apk') != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          SG_APK_PATH: distribution/ScreenGuard-Pro-1.5.0.apk
+          SG_APK_PATH: distribution/ScreenGuard-Pro-1.5.1.apk
         run: python3 scripts/publish-release.py
       - name: Verify live production updater installation
         env:
           SG_MANUAL_UPDATE_CHECK: 'true'
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && hashFiles('screenguard-pro/distribution/ScreenGuard-Pro-1.5.0.apk') != ''
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && hashFiles('screenguard-pro/distribution/ScreenGuard-Pro-1.5.1.apk') != ''
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35

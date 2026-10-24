@@ -43,6 +43,14 @@ adb logcat -d > qa/output/logcat.txt
 if [ "$privileged_status" -ne 0 ]; then exit "$privileged_status"; fi
 adb shell am instrument -w -e class id.wynn.screenguard.UsageDeviceAccuracyTest -e accuracy true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/usage-accuracy.txt
 grep -q 'OK (1 test)' qa/output/usage-accuracy.txt
+# Independently prove that refreeze survives killing the app process, not just closing an Activity.
+adb shell am instrument -w -e class id.wynn.screenguard.PrivilegedDeviceTest#armDaemonTimerForExternalForceStopCheck -e watchdog true id.wynn.screenguard.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/watchdog-arm.txt
+grep -q 'OK (1 test)' qa/output/watchdog-arm.txt
+adb shell am force-stop id.wynn.screenguard.debug
+sleep 12
+adb shell pm list packages -d | tr -d '\r' | tee qa/output/watchdog-disabled.txt | grep -Fx 'package:id.wynn.guardfixture'
+adb shell pm enable --user 0 id.wynn.guardfixture
+adb logcat -d > qa/output/logcat.txt
 adb install -r app/build/outputs/apk/preview/app-preview.apk
 adb logcat -c
 adb shell am start -W -n id.wynn.screenguard.preview/id.wynn.screenguard.MainActivity > qa/output/preview-launch.txt

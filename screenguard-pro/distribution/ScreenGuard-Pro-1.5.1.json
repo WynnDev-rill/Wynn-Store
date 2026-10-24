@@ -1,0 +1,13 @@
+{
+  "versionCode": 7,
+  "versionName": "1.5.1",
+  "packageName": "id.wynn.screenguard",
+  "minSdk": 30,
+  "sha256": "62ded9912f411a8af751952747e0241465975b86316420b8464fe9c1b37991e4",
+  "unsignedSha256": "0e48e16e992a764dd84b1c5093ce7dc401ff08e282703edf7d5f77d262e82cc0",
+  "signerSha256": "eca17e8afa84775e941e0e490741b01636e7941da545c508f85b8a256a4f346a",
+  "sizeBytes": 3491656,
+  "sourceCommit": "633d92009b92aab1947c862dbdd09ea9039a6800",
+  "workflowRun": "https://github.com/WynnDev-rill/Wynn-Store/actions/runs/40061630204",
+  "signing": "Original production certificate; signed locally. Private credentials and keystore remain outside git."
+}
