@@ -68,7 +68,7 @@ import java.time.LocalDate
                 StatLine("Total 7 hari", duration(week.sumOf { it.totalMs }))
             } }
             if (!app.protected && app.launchable) item { FilledTonalButton(protect, Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
-                Icon(Icons.Outlined.AcUnit, null); Spacer(Modifier.width(8.dp)); Text("Atur perlindungan aplikasi")
+                Icon(Icons.Outlined.AcUnit, null); Spacer(Modifier.width(8.dp)); Text("Bekukan aplikasi")
             } }
             item { Text(if (selected?.available != true) "Riwayat hari ini tidak tersedia. Android menyimpan kejadian rinci untuk waktu terbatas; hari kosong tidak dihitung sebagai nol." else if (selected.estimated) "Riwayat hari ini belum lengkap. Rincian yang masih tersedia ditampilkan tanpa menebak bagian yang hilang." else "Durasi dihitung dari sesi aplikasi di latar depan. Sesi berbeda dari jumlah ketukan ikon. Aktivitas bersamaan dalam aplikasi digabung; total layar dihitung terpisah.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }

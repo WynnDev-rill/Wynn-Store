@@ -36,7 +36,7 @@ import kotlinx.coroutines.withContext
     }
 }
 private val iconCache = android.util.LruCache<String, ImageBitmap>(64)
-@Composable fun AppIcon(app: InstalledApp, size: Dp = 40.dp) {
+@Composable fun AppIcon(app: InstalledApp, size: Dp = 40.dp, frozen: Boolean = false) {
     val context = LocalContext.current
     val bitmap by produceState<ImageBitmap?>(null, app.packageName, app.enabled, app.iconVersion) {
         val key = "${app.packageName}:${app.iconVersion}"
@@ -45,9 +45,13 @@ private val iconCache = android.util.LruCache<String, ImageBitmap>(64)
             info.loadIcon(context.packageManager).toBitmap(112, 112).asImageBitmap().also { iconCache.put(key, it) }
         }.getOrNull() }
     }
+    val saturation by animateFloatAsState(if (frozen) 0f else 1f, tween(180), label = "frozen icon")
     Box(Modifier.size(size).clearAndSetSemantics {}.clip(RoundedCornerShape(size * .23f)).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-        if (bitmap != null) Image(bitmap!!, contentDescription = null, modifier = Modifier.fillMaxSize())
+        if (bitmap != null) Image(bitmap!!, contentDescription = null, modifier = Modifier.fillMaxSize(), colorFilter = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(saturation) }))
         else Icon(Icons.Outlined.Android, null, Modifier.size(size * .6f), tint = MaterialTheme.colorScheme.primary)
+        if (frozen) Box(Modifier.align(Alignment.BottomEnd).size(size * .38f).clip(CircleShape).background(MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) {
+            Icon(Icons.Outlined.AcUnit, null, Modifier.size(size * .27f), tint = MaterialTheme.colorScheme.onPrimary)
+        }
     }
 }
 @Composable fun BrandMark(size: Dp = 42.dp) { Image(painterResource(R.drawable.brand_mark), null, Modifier.size(size).clip(RoundedCornerShape(size * .24f))) }

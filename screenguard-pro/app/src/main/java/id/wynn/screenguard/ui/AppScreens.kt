@@ -42,7 +42,7 @@ import id.wynn.screenguard.privilege.ShizukuStatus
                     WeekChart(days.takeLast(7), Modifier.weight(1f), labels = false)
                 }
             } }
-            if (days.any { !it.available || it.estimated }) item { Text("${days.count { it.available }} dari ${days.size} hari memiliki riwayat. Hari tanpa data tidak dihitung sebagai nol; data sebagian ditandai pada rincian.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            if (days.any { !it.available || it.estimated }) item { Text("${days.count { it.available }}/${days.size} hari tersedia", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             item { OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), label = { Text("Cari aplikasi") }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, singleLine = true, shape = RoundedCornerShape(20.dp)) }
             item { LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 itemsIndexed(listOf("Semua", "Sosial", "Video", "Game")) { i, name -> FilterChip(category == i, { category = i }, label = { Text(name) }) }
@@ -66,8 +66,6 @@ import id.wynn.screenguard.privilege.ShizukuStatus
     Column {
         PageHeader("Kontrol Internet", null)
         LazyColumn(contentPadding = PaddingValues(20.dp, 8.dp, 20.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { Text("Blokir akses internet untuk aplikasi tertentu.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            item { InfoBanner("Saat diblokir, seluruh koneksi Wi-Fi dan data seluler aplikasi dihentikan. Kontrol terpisah tidak disediakan API Android ini.", Icons.Outlined.Wifi) }
             if (status != ShizukuStatus.READY || !supported) item {
                 InfoBanner(if (status != ShizukuStatus.READY) status.label else "API firewall tidak tersedia pada Android perangkat ini.", Icons.Outlined.Shield, action = permissions)
             }

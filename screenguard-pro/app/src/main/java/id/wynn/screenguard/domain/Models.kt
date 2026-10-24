@@ -119,6 +119,8 @@ data class PolicyDecision(val blocked: Boolean, val reason: String)
 object PolicyEngine {
     fun decide(rule: AppRule, settings: GuardSettings, usedMs: Long, now: ZonedDateTime,
         elapsed: Long = 0, boot: Int = -1): PolicyDecision {
+        if (rule.managedFreeze) return PolicyDecision(rule.freeze != FreezeMode.NONE,
+            if (rule.freeze != FreezeMode.NONE) "Dibekukan" else "Aktif")
         if (rule.gate != null) {
             if (AccessSession.isOpen(rule, now.toInstant().toEpochMilli(), elapsed, boot)) return PolicyDecision(false, "Akses sementara")
             if (!rule.gate.automaticOnly) return PolicyDecision(true, "Dibekukan • tantangan aktif")
