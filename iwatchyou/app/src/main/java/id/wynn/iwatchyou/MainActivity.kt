@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
   window.navigationBarColor=Back.toArgb()
   window.decorView.systemUiVisibility=android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
   setContent {
-   MaterialTheme(colorScheme=lightColorScheme(primary=Blue,background=Back,surface=Color.White,onSurface=Ink),typography=Typography(defaultFontFamily=Jakarta)) {
+   MaterialTheme(colorScheme=lightColorScheme(primary=Blue,background=Back,surface=Color.White,onSurface=Ink),typography=Typography(bodyLarge=androidx.compose.ui.text.TextStyle(fontFamily=Jakarta),bodyMedium=androidx.compose.ui.text.TextStyle(fontFamily=Jakarta),bodySmall=androidx.compose.ui.text.TextStyle(fontFamily=Jakarta),titleLarge=androidx.compose.ui.text.TextStyle(fontFamily=Jakarta),titleMedium=androidx.compose.ui.text.TextStyle(fontFamily=Jakarta),labelLarge=androidx.compose.ui.text.TextStyle(fontFamily=Jakarta))) {
     Page()
     val next=update
     if(next!=null) AlertDialog(
