@@ -1,102 +1,136 @@
 package id.wynn.screenguard
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.uiautomator.UiDevice
-import id.wynn.screenguard.data.*
+import id.wynn.screenguard.data.UsageDay
 import id.wynn.screenguard.domain.*
+import id.wynn.screenguard.privilege.ShizukuStatus
 import id.wynn.screenguard.ui.*
-import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 import java.io.File
 import java.time.LocalDate
 
+/** Deterministic fixtures are confined to androidTest; production never injects sample usage. */
+@RunWith(AndroidJUnit4::class)
 class ScreenUiTest {
-    @get:Rule val compose=createComposeRule()
-    private val a=InstalledApp("id.wynn.guardfixture","Demo One",10120,0,true,false,false,false)
-    private val c=a.copy(packageName="com.example.two",label="Demo Two",uid=10121)
-    private val today=LocalDate.now()
-    private val data=DeviceData(apps=listOf(a,c),days=(6 downTo 0).map {UsageDay(today.minusDays(it.toLong()),mapOf(a.packageName to 120000L,c.packageName to 120000L),screenMs=180000L,unlocks=2)},usageAccess=true,loading=false)
-    private fun content(block: @androidx.compose.runtime.Composable ()->Unit) {
-        compose.setContent {GuardTheme {Surface(Modifier.fillMaxSize().systemBarsPadding(),color=MaterialTheme.colorScheme.background) {block()}}}
+    @get:Rule val compose = createComposeRule()
+    private val apps = listOf("YouTube", "TikTok", "Instagram", "Chrome", "WhatsApp").mapIndexed { i, label -> InstalledApp("test.fixture.app$i", label, 10000 + i, if (i == 1) 4 else 2, true, false, false, false) }
+    private val usage = listOf(88, 72, 52, 36, 28).mapIndexed { i, m -> apps[i].packageName to m * 60_000L }.toMap()
+    private val data = DeviceData(apps, (6 downTo 0).map { d -> UsageDay(LocalDate.now().minusDays(d.toLong()), usage.mapValues { (_, v) -> v * (7 - d).toLong() / 7 }) }, true, false)
+    private val state = GuardState(GuardSettings(onboardingDone = true), apps.associate { it.packageName to AppRule(it.packageName, dailyLimitMinutes = 60, windows = listOf(TimeWindow())) })
+    private fun content(block: @androidx.compose.runtime.Composable () -> Unit) {
+        compose.setContent { GuardTheme { Surface(Modifier.fillMaxSize().systemBarsPadding(), color = MaterialTheme.colorScheme.background) { block() } } }
     }
     private fun capture(name: String) {
         compose.waitForIdle()
-        val dir=File(InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null),"screenshots").apply {mkdirs()}
-        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).takeScreenshot(File(dir,"$name.png"))
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.getExternalFilesDir(null), "screenshots/$name.png")
+        file.parentFile!!.mkdirs()
+        compose.onAllNodes(isRoot()).onLast().captureToImage()
+        val instrument = InstrumentationRegistry.getInstrumentation()
+        instrument.waitForIdleSync()
+        EmulatorUiRecovery.dismissLauncherDialog(androidx.test.uiautomator.UiDevice.getInstance(instrument))
+        androidx.test.uiautomator.UiDevice.getInstance(instrument).waitForIdle()
+        androidx.test.uiautomator.UiDevice.getInstance(instrument).takeScreenshot(file)
     }
-    @Test fun emptyCollectionContainsOnlyToolbarAndBottomRightAdd() {
-        content {FreezeScreen(GuardState(),DeviceData(loading=false),true,false,{}, {}, {}, {_,_->})}
-        compose.onNodeWithText("Belum ada aplikasi").assertDoesNotExist()
-        compose.onNodeWithText("Tambah aplikasi").assertDoesNotExist()
-        compose.onNodeWithText("Semua").assertDoesNotExist()
-        compose.onNodeWithText("Terbuka").assertDoesNotExist()
-        val fab=compose.onNodeWithContentDescription("Tambah aplikasi").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-        val root=compose.onRoot().fetchSemanticsNode().boundsInRoot
-        assertTrue(fab.center.x>root.center.x);assertTrue(fab.center.y>root.center.y)
-        capture("01-freeze-empty")
+    @Test fun launcherUsesTheNativeAndroidAdaptiveIcon() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        org.junit.Assert.assertEquals(R.mipmap.screenguard_launcher, context.applicationInfo.icon)
+        org.junit.Assert.assertTrue(context.packageManager.getApplicationIcon(context.packageName) is android.graphics.drawable.AdaptiveIconDrawable)
     }
-    @Test fun frozenStateTracksAndroidAndOpeningRestoresNormalState() {
-        var opened=false
-        val frozen=a.copy(enabled=false)
-        val state=GuardState(rules=mapOf(a.packageName to AppRule(a.packageName,managedFreeze=true,freeze=FreezeMode.DISABLE,ownedDisable=true)))
-        content {FreezeScreen(state,data.copy(apps=listOf(frozen)),true,false,{}, {opened=true}, {}, {_,_->})}
-        compose.onNode(hasStateDescription("Dibekukan")).assertIsDisplayed()
-        capture("02-frozen-icon")
-        compose.onNode(hasStateDescription("Dibekukan")).performClick()
-        assertTrue(opened)
+    @Test fun dashboardContainsLiveNavigationAndWeeklyChart() {
+        var page: Page? = null
+        content { DashboardScreen(state, data, true, { page = it }, {}, {}) }
+        compose.onNodeWithText("ScreenGuard Pro").assertIsDisplayed()
+        compose.onNodeWithText("Tren Mingguan").assertIsDisplayed()
+        capture("01-dashboard")
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Blokir Internet"))
+        compose.onNodeWithText("Blokir Internet").performClick()
+        org.junit.Assert.assertEquals(Page.NETWORK, page)
     }
-    @Test fun activeManagedAppRemainsVisibleWithNormalIconAndCanBeFrozen() {
-        var frozen=false
-        val state=GuardState(rules=mapOf(a.packageName to AppRule(a.packageName,managedFreeze=true)))
-        content {FreezeScreen(state,data,true,false,{}, {}, {}, {_,_->},close={frozen=true})}
-        compose.onNode(hasStateDescription("Aktif")).assertIsDisplayed()
-        compose.onNodeWithContentDescription("Kelola Demo One").performClick()
-        compose.onNodeWithText("Bekukan sekarang").performClick()
-        assertTrue(frozen)
-        capture("03-app-actions")
-    }
-    @Test fun multiSelectionSurvivesPickerSearch() {
-        var added=emptyList<InstalledApp>()
-        content {FreezeScreen(GuardState(),data,true,false,{}, {}, {}, {_,_->},addMany={added=it})}
-        compose.onNodeWithContentDescription("Tambah aplikasi").performClick()
-        compose.onNodeWithText("Demo One").performClick()
-        compose.onNodeWithText("Cari aplikasi").performTextInput("Two")
-        compose.onNodeWithText("Demo Two").performClick()
-        compose.onNodeWithText("Bekukan (2)").performClick()
-        assertEquals(setOf(a.packageName,c.packageName),added.map {it.packageName}.toSet())
-    }
-    @Test fun activitySeparatesScreenFromAppTotalsAndHasNoGoalOrInstructions() {
-        content {DashboardScreen(GuardState(),data,true,{}, {}, {})}
-        compose.onNodeWithTag("activity-total").assertTextEquals("3 mnt")
-        compose.onNodeWithText("Ringkasan hari ini").assertDoesNotExist()
-        compose.onNodeWithText("Target harian").assertDoesNotExist()
-        capture("04-activity-day")
-    }
-    @Test fun rankingCarriesSelectedPeriodToAppDetails() {
-        var days=0
-        content {DashboardScreen(GuardState(),data,true,{}, {}, {},selectPeriodApp={_,_,count->days=count})}
+    @Test fun usageRangeAndSearchReallyFilter() {
+        content { UsageScreen(data, {}) {} }
         compose.onNodeWithText("7 hari").performClick()
-        compose.onNodeWithTag("activity-total").assertTextEquals("21 mnt")
-        capture("05-activity-week")
-        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Demo One"))
-        compose.onNodeWithText("Demo One").performClick()
-        assertEquals(7,days)
+        compose.onNodeWithText("Cari aplikasi").performTextInput("TikTok")
+        compose.onNode(hasText("TikTok") and !hasSetTextAction()).assertExists()
+        compose.onNodeWithText("YouTube").assertDoesNotExist()
+        capture("02-usage")
     }
-    @Test fun applicationDetailsShowPeriodsSessionsAndExactHourlyValues() {
-        content {AppStatsScreen(a,data,{}, {_,d->AppDayDetail(d,listOf(120000L)+List(23){0L},1,120000,true)}, {},today.toString(),7)}
-        compose.onNodeWithText("Durasi penggunaan").assertIsDisplayed()
-        compose.onAllNodesWithText("14 mnt").onFirst().assertIsDisplayed()
-        capture("06-app-statistics")
-        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Rincian per jam"))
-        compose.onNodeWithText("24 jam").performClick()
-        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("23.00–24.00"))
-        compose.onNodeWithText("23.00–24.00").assertIsDisplayed()
+    @Test fun networkCannotPretendToWorkWithoutShizuku() {
+        content { NetworkScreen(state, data, ShizukuStatus.STOPPED, false, false, {}, { _, _ -> error("Must be disabled") }, {}) }
+        compose.onNodeWithContentDescription("Blokir internet YouTube").assertIsNotEnabled()
+        capture("03-network")
+    }
+    @Test fun freezeOnlyShowsSelectedAppsAndPlusAddsNewApps() {
+        val chosen = apps[1]
+        val manual = state.copy(rules = mapOf(chosen.packageName to AppRule(
+            chosen.packageName, freeze = FreezeMode.DISABLE, gate = AccessGate(), ownedDisable = true)))
+        var added: InstalledApp? = null
+        var opened: InstalledApp? = null
+        content { FreezeScreen(manual, data, true, false,
+            { added = it }, { opened = it }, {}, { _, _ -> }, {}) }
+        compose.onNodeWithText("TikTok").assertIsDisplayed()
+        compose.onNodeWithText("YouTube").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Kembali").assertDoesNotExist()
+        compose.onNodeWithText("TikTok").performClick()
+        org.junit.Assert.assertEquals(chosen.packageName, opened?.packageName)
+        compose.onNodeWithContentDescription("Tambah aplikasi").performClick()
+        compose.onNodeWithText("YouTube").assertExists()
+        compose.onNodeWithText("YouTube").performClick()
+        org.junit.Assert.assertEquals(apps[0].packageName, added?.packageName)
+        capture("04-freeze")
+    }
+
+    @Test fun waitChallengeCannotUnlockEarly() {
+        content { UnlockScreen(apps[0], AccessGate(mode = GateMode.WAIT), MathChallenge(17, 8, 2), 0, 10, null, false, {}, {}, {}) }
+        compose.onNodeWithText("Buka 5 menit").assertIsNotEnabled()
+        capture("05-unlock")
+    }
+    @Test fun combinedChallengeShowsMathOnlyAfterWaiting() {
+        val remaining = androidx.compose.runtime.mutableIntStateOf(5)
+        content { UnlockScreen(apps[0], AccessGate(), MathChallenge(17, 8, 2), 1, remaining.intValue, null, false, {}, {}, {}) }
+        compose.onNodeWithText("Masukkan jawaban").assertDoesNotExist()
+        compose.runOnIdle { remaining.intValue = 0 }
+        compose.onNodeWithText("Selesaikan soal 2 dari 2.").assertExists()
+        compose.onNodeWithText("Masukkan jawaban").assertExists()
+        capture("06-combined-math")
+    }
+    @Test fun weeklyChartChangesTheSelectedDayAndAppDurations() {
+        content { DashboardScreen(state, data, true, {}, {}, {}) }
+        val date = data.days.first().date
+        compose.onNodeWithContentDescription("$date: ${duration(data.days.first().totalMs)}").performClick().assertIsSelected()
+        compose.onNodeWithText("Penggunaan ${dateLabel(date)}").assertExists()
+    }
+    @Test fun applicationStatisticsExposeRealDetailFieldsAndSelectedDay() {
+        content { AppStatsScreen(apps[0], data, {}, { _, date -> id.wynn.screenguard.data.AppDayDetail(date, List(24) { if (it == 12) 600_000L else 0 }, 3, 600_000, true) }, {}) }
+        compose.onNodeWithText("Statistik aplikasi").assertExists()
+        compose.onNodeWithText("Penggunaan per jam").assertExists()
+        compose.onNodeWithText("3 kali").assertExists()
+        capture("08-app-statistics")
+    }
+    @Test fun gateEditorWrapsChoicesAndAllowsAllThreeModes() {
+        content { GateEditor(apps[0], AppRule(apps[0].packageName), true, {}, {}, {}, {}, {}) }
+        compose.onNodeWithText("Tunggu").performClick()
+        compose.onNodeWithText("Jumlah soal").assertDoesNotExist()
+        compose.onNodeWithText("Matematika").performClick()
+        compose.onNodeWithText("Jumlah soal").assertExists()
+        compose.onNodeWithText("Kombinasi").performClick()
+        capture("09-gate-editor")
+    }
+    @Test fun settingsHasSecurityAndRecovery() {
+        content { SettingsScreen(state, ShizukuStatus.READY, {}, { it() }, {}, {}, {}, {}, {}) }
+        compose.onNodeWithText("PIN Orang Tua").assertIsDisplayed()
+        compose.onNodeWithText("Pulihkan semua aplikasi").assertExists()
+        capture("07-settings")
     }
 }

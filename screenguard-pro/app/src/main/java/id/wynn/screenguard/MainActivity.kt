@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
     }
     override fun onResume() {
         super.onResume(); viewModel.recover(); viewModel.checkUpdates()
-        stopService(android.content.Intent(this, GuardMonitorService::class.java))
+        if ((application as GuardApplication).store.state.value.needsMonitoring) GuardMonitorService.start(this)
     }
     override fun onStop() { viewModel.invalidateSession(); super.onStop() }
 }

@@ -74,7 +74,6 @@ object AccessSession {
 }
 
 @Serializable data class GuardSettings(
-    val freezeUtility: Boolean = false,
     val onboardingDone: Boolean = false,
     val monitorEnabled: Boolean = false,
     val focusUntil: Long = 0,
@@ -91,12 +90,17 @@ object AccessSession {
 ) { val hasPin: Boolean get() = pinHash.isNotBlank() }
 
 @Serializable data class GuardState(val settings: GuardSettings = GuardSettings(), val rules: Map<String, AppRule> = emptyMap(), val schemaVersion: Int = 2) {
-    val needsMonitoring get() = !settings.freezeUtility && settings.monitorEnabled && rules.values.any { it.gate?.automaticOnly == true && (it.dailyLimitMinutes > 0 || it.windows.isNotEmpty()) }
+    val needsMonitoring get() = settings.monitorEnabled && rules.values.any { it.gate?.automaticOnly == true && (it.dailyLimitMinutes > 0 || it.windows.isNotEmpty()) }
 }
 
 /** Convert manual freezes and Focus selections once, keeping recovery ownership and network rules. */
 object GuardMigration {
     fun migrate(state: GuardState, nowWall: Long = System.currentTimeMillis()): GuardState {
+        if (state.schemaVersion == 3) return state.copy(schemaVersion = 2,
+            rules = state.rules.mapValues { (_, r) ->
+                if (r.managedFreeze && (r.freeze != FreezeMode.NONE || r.ownedDisable || r.ownedSuspension))
+                    r.copy(gate = r.gate ?: AccessGate()) else r
+            })
         if (state.schemaVersion >= 2) return state
         return state.copy(schemaVersion = 2, settings = state.settings.copy(focusUntil = 0, monitorEnabled = state.settings.monitorEnabled && state.rules.values.any { it.dailyLimitMinutes > 0 || it.windows.isNotEmpty() }),
             rules = state.rules.mapValues { (_, r) ->
@@ -115,7 +119,6 @@ data class PolicyDecision(val blocked: Boolean, val reason: String)
 object PolicyEngine {
     fun decide(rule: AppRule, settings: GuardSettings, usedMs: Long, now: ZonedDateTime,
         elapsed: Long = 0, boot: Int = -1): PolicyDecision {
-        if (settings.freezeUtility) return PolicyDecision(rule.freeze != FreezeMode.NONE, if (rule.freeze != FreezeMode.NONE) "Dibekukan" else "Aktif")
         if (rule.gate != null) {
             if (AccessSession.isOpen(rule, now.toInstant().toEpochMilli(), elapsed, boot)) return PolicyDecision(false, "Akses sementara")
             if (!rule.gate.automaticOnly) return PolicyDecision(true, "Dibekukan • tantangan aktif")

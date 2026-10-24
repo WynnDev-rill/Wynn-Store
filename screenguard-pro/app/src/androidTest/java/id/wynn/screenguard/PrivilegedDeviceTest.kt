@@ -80,28 +80,31 @@ class PrivilegedDeviceTest {
             assertNull("Disabled app must disappear from normal launcher resolution", pm.getLaunchIntentForPackage(pkg))
             graph.gateway.freeze(pkg, user, 2, false)
             assertTrue(pm.getApplicationInfo(pkg, 0).enabled)
-            graph.store.settings { it.copy(freezeUtility = true, pinHash = "", pinSalt = "") }
+            graph.store.settings { it.copy(pinHash = "", pinSalt = "", freezeChallengeEnabled = true, freezeGate = AccessGate(mode = GateMode.BOTH, waitSeconds = 5, questions = 2, level = MathLevel.EASY, accessMinutes = 1)) }
             val vm = GuardViewModel(graph)
             val app = graph.catalog.list().first { it.packageName == pkg }
-            vm.addManagedApps(listOf(app))
-            withTimeout(15_000) { while (vm.busy.value) delay(100) }
+            vm.configureGate(app, AccessGate(mode = GateMode.BOTH, waitSeconds = 5, questions = 2, level = MathLevel.EASY, accessMinutes = 1))
+            withTimeout(15_000) { while (vm.busy.value || graph.store.state.value.rules[pkg]?.gate == null) delay(100) }
             assertFalse(pm.getApplicationInfo(pkg, PackageManager.MATCH_DISABLED_COMPONENTS).enabled)
-            assertTrue(graph.store.state.value.rules.getValue(pkg).managedFreeze)
-            assertNull(graph.store.state.value.rules.getValue(pkg).gate)
-            var opened = false
-            vm.setManualFreeze(app, false) { opened = true }
-            withTimeout(15_000) { while (vm.busy.value) delay(100) }
-            assertTrue("Unfreeze failed: ${vm.message.value}", opened)
-            assertTrue(pm.getApplicationInfo(pkg, 0).enabled)
-            assertTrue(graph.store.state.value.rules.getValue(pkg).managedFreeze)
-            assertFalse(graph.store.state.value.needsMonitoring)
-            vm.setManualFreeze(app, true)
-            withTimeout(15_000) { while (vm.busy.value) delay(100) }
+            vm.prepareUnlock(app) {}
+            vm.unlock("0") { error("Must not unlock before wait") }
+            assertNotNull(vm.challengeError.value)
+            delay(5_100)
+            val first = vm.challenge.value
+            vm.unlock((first.a + first.b * first.c).toString()) { error("Must finish both questions") }
+            assertEquals(1, vm.completedQuestions.value)
             assertFalse(pm.getApplicationInfo(pkg, PackageManager.MATCH_DISABLED_COMPONENTS).enabled)
-            vm.removeManagedApp(app)
+            var launched = false
+            val second = vm.challenge.value
+            vm.unlock((second.a + second.b * second.c).toString()) { target ->
+                context.startActivity(pm.getLaunchIntentForPackage(target)!!.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                launched = true
+            }
             withTimeout(15_000) { while (vm.busy.value) delay(100) }
+            assertTrue("Completed challenge should launch the actual fixture: ${vm.message.value}", launched)
             assertTrue(pm.getApplicationInfo(pkg, 0).enabled)
-            assertFalse(graph.store.state.value.rules.getValue(pkg).managedFreeze)
+            assertTrue(graph.store.state.value.rules.getValue(pkg).ownedDisable)
+            assertNotNull(graph.store.state.value.rules.getValue(pkg).gate)
         } finally {
             runCatching { graph.controller.restoreAll() }
             runCatching { graph.gateway.scheduleRefreeze(pkg, user, 0) }

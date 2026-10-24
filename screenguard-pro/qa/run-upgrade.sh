@@ -33,7 +33,7 @@ for attempt in range(24):
     time.sleep(10)
 else: raise SystemExit('Live stable feed did not activate candidate')
 pathlib.Path('qa/output/upgrade-feed.json').write_text(json.dumps(feed))
-previous='1.4.0' if feed['versionCode']>=6 else '1.3.0'
+previous='1.5.0' if feed['versionCode']>=7 else '1.4.0' if feed['versionCode']>=6 else '1.3.0'
 pathlib.Path('qa/output/upgrade-baseline.txt').write_text(previous)
 print('Live feed active:',feed['versionName'],feed['sha256'])
 PY
