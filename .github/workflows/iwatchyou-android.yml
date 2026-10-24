@@ -46,6 +46,19 @@ jobs:
           import os, pathlib, zipfile
           p=pathlib.Path(os.environ['RUNNER_TEMP'])/'iwatchyou-release.jks'
           raw=p.read_bytes()
+          import base64, gzip, re
+          for _ in range(3):
+              candidate=re.sub(rb'\\s+',b'',raw.strip().strip(b'"'))
+              try:
+                  decoded=base64.b64decode(candidate,validate=True)
+              except Exception:
+                  break
+              if len(decoded)<64 or decoded==raw: break
+              raw=decoded
+              p.write_bytes(raw)
+          if raw.startswith(b'\\x1f\\x8b'):
+              raw=gzip.decompress(raw)
+              p.write_bytes(raw)
           if zipfile.is_zipfile(p):
               with zipfile.ZipFile(p) as z:
                   names=[n for n in z.namelist() if not n.endswith('/') and n.lower().endswith(('.jks','.keystore','.p12','.pfx'))]
@@ -54,7 +67,10 @@ jobs:
                   p.write_bytes(raw)
           container='JKS' if raw.startswith(bytes.fromhex('feedfeed')) else 'PKCS12' if raw.startswith(bytes.fromhex('3082')) else 'unknown'
           print('Signing container format:',container)
-          if container=='unknown': raise SystemExit('Invalid production keystore format')
+          if container=='unknown':
+              description='PEM' if raw.startswith(b'-----BEGIN') else 'TEXT' if all(32<=b<=126 or b in (9,10,13) for b in raw[:64]) else 'BINARY'
+              print('Unsupported container class:',description)
+              raise SystemExit('Invalid production keystore format')
           PY
       - name: Build signed APK
         env:
