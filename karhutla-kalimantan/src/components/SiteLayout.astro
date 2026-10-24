@@ -1,0 +1,37 @@
+---
+import '../styles/global.css';
+import Icon from './Icon.astro';
+interface Props { title?: string; description?: string; home?:boolean; }
+const {title='Kalimantan: Di balik asap',description='Dokumenter interaktif tentang kebakaran hutan dan lahan di Kalimantan. Telusuri sejarah, gambut, peta data KLHK, arsip satelit, dan pemulihan.',home=false}=Astro.props;
+const chapters=[['cerita','Bentang yang berubah'],['riwayat','Riwayat api'],['gambut','Di bawah permukaan'],['peta','Peta kebakaran'],['dampak','Yang ikut hilang'],['pulih','Merawat kembali'],['arsip','Arsip pengamatan']];
+---
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="theme-color" content="#142823"/>
+<title>{title}</title><meta name="description" content={description}/>
+<link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)}/>
+<meta property="og:title" content={title}/><meta property="og:description" content={description}/><meta property="og:type" content="website"/><meta property="og:locale" content="id_ID"/><meta property="og:image" content={new URL('/media/social.jpg',Astro.site)}/><meta name="twitter:card" content="summary_large_image"/>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+{home && <link rel="preload" as="image" href="/media/borneo-smoke-2023.webp" imagesrcset="/media/borneo-smoke-2023-mobile.webp 900w, /media/borneo-smoke-2023.webp 1920w" imagesizes="100vw"/>}
+</head>
+<body class:list={{'is-home':home}}>
+<a class="skip-link" href="#main">Langsung ke isi</a>
+<header class:list={['site-header',{'header-on-image':home}]}>
+<a class="brand" href="/" aria-label="Kalimantan: Di balik asap, beranda"><svg class="brand-mark" width="30" height="30" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M4 25c8-3 2-10 9-12s2-7 12-8M7 29c10-4 3-11 10-13s3-7 12-8M3 17c4-3 1-7 7-9s3-5 8-6" stroke="currentColor" stroke-width="1.5"/></svg><span>Di balik asap<span class="brand-sub">Sebuah cerita dari Kalimantan</span></span></a>
+<nav class="desktop-nav" aria-label="Navigasi utama"><a href="/#cerita">Cerita</a><a href="/#peta">Peta data</a><a href="/#arsip">Arsip</a><a href="/sumber/">Sumber</a></nav>
+<button class="menu-toggle" aria-label="Buka daftar bab" aria-expanded="false" aria-controls="chapter-menu"><span>Daftar bab</span><Icon name="menu"/></button>
+<div class="reading-progress" aria-hidden="true"></div>
+</header>
+<dialog id="chapter-menu" class="chapter-dialog" aria-labelledby="menu-title">
+<div class="chapter-dialog-head"><p id="menu-title">Jelajahi dokumenter</p><button class="icon-button" data-close-menu aria-label="Tutup daftar bab"><Icon name="close"/></button></div>
+<nav aria-label="Daftar bab">{chapters.map(([id,label],i)=><a href={`/#${id}`}><span class="chapter-count">{String(i+1).padStart(2,'0')}</span><span>{label}</span><Icon name="arrow"/></a>)}<a href="/sumber/"><span class="chapter-count">↗</span><span>Sumber & metodologi</span><Icon name="arrow"/></a></nav>
+<p class="small muted">Baca berurutan, atau mulai dari bagian yang ingin kamu pahami.</p>
+</dialog>
+<slot/>
+<footer class="site-footer"><div class="footer-top"><a class="brand" href="/">Di balik asap</a><p>Memahami api.<br/>Merawat yang masih ada.</p></div><div class="footer-bottom"><p>Dokumenter independen · Wynn Studio · 2026</p><a href="/sumber/">Sumber, metode & kredit <Icon name="external" size={14}/></a><a href="/#main">Kembali ke awal <span aria-hidden="true">↑</span></a></div><p class="footer-note">Cakupan data: 2019–2023. Riset diperiksa 24 Oktober 2026. Bukan layanan peringatan kebakaran atau peta kondisi terkini.</p></footer>
+<script>
+import '../scripts/site';
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+# Referensi desain sebelum implementasi
+
+Riset: 24 Oktober 2026. Halaman utama, struktur HTML yang terindeks, dokumentasi studio, halaman Awwwards, dan beberapa tampilan langsung di Cloud Browser ditinjau. `Visual langsung` berarti tangkapan layar benar-benar diperiksa; `HTML + dokumentasi` bukan klaim bahwa seluruh animasi berhasil dimainkan. Referensi adalah prinsip, bukan aset atau template untuk disalin.
+
+## Sepuluh referensi utama
+
+| Situs terverifikasi | Bukti peninjauan | Pelajaran visual, UX, narasi, motion, implementasi | Adaptasi untuk Kalimantan |
+|---|---|---|---|
+| [OHZI](https://ohzi.io/) | HTML studio dibaca; Cloud Browser dibuka tetapi render tertahan pada loader. [Awwwards](https://www.awwwards.com/sites/ohzi-interactive) juga dibaca. | Pengalaman spasial sebagai medium utama; urutan eksplorasi dan navigasi lima bagian tetap eksplisit. Studio menekankan performa perangkat menengah. Awwwards edisi 2021 mencantumkan WebGL, Three.js, GLSL, Blender; jangan menganggap stack historis itu otomatis sama dengan situs 2026. | Satu objek gambut sebagai alat penjelas. Isi utama tetap bisa dibaca meski WebGL gagal; jangan menahan pembaca di loader. |
+| [Minh Pham](https://minhpham.design/) | HTML, Cloud Browser, tombol START, hero dan respons cursor ditinjau; [Awwwards](https://www.awwwards.com/sites/minh-pham-designer). | Tipografi condensed bertumpuk menjadi komposisi, navigasi kecil di perimeter, ruang negatif yang luas. Mask cursor mengungkap narasi alternatif. Awwwards mengonfirmasi dua narasi serta parallax, motion, dan 3D. | Ambil disiplin skala/ritme, bukan warna, copy, cursor, atau komposisi yang sama. Reveal pada gambut harus mengungkap mekanisme nyata dan tersedia melalui sentuhan/keyboard. |
+| [Lusion](https://lusion.co/) | HTML live dan [Awwwards Lusion v3](https://www.awwwards.com/sites/lusion-v3); browser dibuka tetapi render tertahan pada loader 000. | Hubungan desain, motion, 3D, dan engineering kuat; daftar karya menyediakan jalur alternatif menuju isi. Awwwards mendokumentasikan scroll animation dan reactive cursor. Tidak melakukan klaim benchmark frame rate. | Satu momen spasial yang berarti lebih baik daripada 3D di setiap bagian. Animasi tidak boleh jadi syarat akses ke data. |
+| [Locomotive](https://locomotive.ca/en) | HTML live terverifikasi; navigasi Cloud Browser timeout sehingga analisis visual tidak mengklaim tampilan langsung. | Struktur konten menempatkan karya sebelum pernyataan panjang. Navigasi ringkas, hierarki proyek, dan jalur baca lengkap. Situs memiliki artikel primer tentang keputusan front-end/scroll. Exact stack saat ini tidak diinspeksi. | Bab berbasis bukti, bukan deretan kartu seragam; penunjuk bab konsisten dan lompatan langsung ke peta/arsip. |
+| [The Pudding](https://pudding.cool/) | HTML dan screenshot langsung. [Happy Map](https://pudding.cool/2026/02/happy-map/) juga dibuka, tetapi peta tertahan saat loading. | Publikasi visual dengan pertanyaan yang konkret; kartu arsip memperlihatkan bentuk visualisasi sebelum pembaca masuk. Filter media dan pencarian jelas. Gaya tiap esai mengikuti pertanyaannya; jangan menebak stack dari rupa. | Peta harus menjawab pertanyaan terukur, dilengkapi tabel dan metodologi. Arsip menampilkan media, tanggal, tempat, dan sumber; bukan dekorasi. |
+| [Bruno Simon](https://bruno-simon.com/) | Halaman live dibuka dan dokumentasi di dalam halaman dibaca. | Dunia 3D menjadi navigasi. Halaman mencantumkan pilihan kualitas, instruksi mobile, audio, dan kontrol pemulihan ketika pengguna tersangkut. Halaman sendiri menyebut Three.js, TSL, WebGL/WebGPU. | Ambil fallback kualitas dan petunjuk interaksi; jangan mengubah dokumenter menjadi permainan wajib. Model diaktifkan lokal dan punya kontrol HTML. |
+| [NASA Earth Observatory](https://science.nasa.gov/earth/earth-observatory/) | Halaman hasil redirect dari earthobservatory.nasa.gov dibaca. | Citra dan penjelasan pengamatan saling menguatkan; metadata tanggal, topik, dan sumber data menjaga konteks. Arsip dan penjelasan ringkas mendahulukan bukti daripada efek. | Dokumentasi satelit asli dengan tanggal sensor, kredit, keterangan false color bila ada, dan sumber yang bisa dibuka. Jangan mengubah hotspot menjadi angka luas terbakar. |
+| [Our World in Data—Deforestation](https://ourworldindata.org/deforestation) | Halaman live dibaca, termasuk pemberitahuan bahwa artikel lama dan tautan data terbaru. | Grafik berada dekat definisi dan catatan. Penjelasan membedakan metrik yang sering tertukar. Tanggal pembaruan dan transparansi status konten jelas. | Label cakupan (Kalimantan/nasional), unit hektare, periode, sumber, dan status data. Tabel tetap terbaca tanpa peta; jangan menghilangkan ketidakpastian demi angka dramatis. |
+| [Ayo Pantau Gambut](https://ayo.pantaugambut.id/en/) | HTML, screenshot intro, tombol Skip Intro, struktur bab dan panel kredit diperiksa langsung. | Dokumenter lokal berbasis bab: kehidupan warga, ilmu gambut, pemulihan, tindakan. Tampilan intro slate/serif/CTA oranye; terdapat penjelasan navigasi, 360°, arsip dan sumber per bagian. Konten bersifat historis; jabatan/komitmen lama bukan fakta terkini. | Meminjam hubungan tempat–mekanisme–manusia, tetapi memakai struktur dan bahasa visual orisinal. Jangan menduplikasi angka model mortalitas tanpa penjelasan atau kesaksian tanpa kredit/izin. |
+| [The Guardian—Firestorm](https://www.theguardian.com/world/interactive/2013/may/26/firestorm-bushfire-dunalley-holmes-family) | Halaman primer terverifikasi; [MIT Docubase](https://docubase.mit.edu/project/firestorm/) dibaca karena halaman legacy tidak membuka seluruh pengalaman. | MIT mendokumentasikan perpaduan video, grafis interaktif, suara, teks, dan scroll vertikal. Analisis berdasarkan dokumentasi, bukan klaim seluruh animasi legacy dimainkan. | Alur sebab–kejadian–akibat–pemulihan; satu pertanyaan per visual. Media hanya diputar atas tindakan pengguna, dengan caption dan transkrip/ringkasan. |
+
+## Referensi tambahan, bukan dasar klaim visual
+
+- [Resn](https://resn.co.nz/): halaman live dibuka tetapi hanya canvas/image diekstrak; tidak menyimpulkan stack atau interaksi spesifik dari HTML kosong.
+- [NASA Eyes on the Earth](https://eyes.nasa.gov/apps/earth/): aplikasi dibuka, HTML kosong. Berguna sebagai pembanding pengalaman geospasial, tetapi tidak dijadikan bukti pola interaksi yang tidak berhasil diuji.
+- [Persepolis Reimagined](https://persepolis.getty.edu/): URL primer dibuka, ekstraksi hanya loader/iframe; tidak diklaim telah ditinjau penuh.
+- [SBS The Boat](https://theboat.sbs.com.au/): halaman legacy gagal diakses. [Catatan primer SBS](https://www.sbs.com.au/aboutus/2015/04/29/sbs-online-releases-first-ever-interactive-graphic-novel/) mendokumentasikan medium campuran, tetapi tidak dihitung sebagai tinjauan live penuh.
+
+## Arah desain orisinal yang direkomendasikan
+
+**Dari langit, turun ke tanah, kembali ke kehidupan.** Buka dengan citra satelit nyata, komposisi layar lebar dan judul yang memiliki bobot. Pengalaman lalu mendekat ke tempat, membuka penampang gambut yang diberi label ilustrasi edukatif, dan keluar ke dampak serta pemulihan. Ritme editorial bergantian antara frame dokumentasi besar, ruang baca tenang, dan interaksi ilmiah yang fokus.
+
+- Latar baca putih mineral, tinta hijau gelap, hijau air untuk hidrologi; oranye bara hanya sebagai penanda api/risiko. Hindari kesan poster bencana yang terus-menerus hitam-merah.
+- Dua keluarga font berlisensi terbuka dengan fungsi jelas: sans yang tepat untuk data/navigasi dan serif humanis yang tidak ornamental untuk pengantar/cerita. Judul dapat memakai sans variabel tegas bila tersedia. Hindari semua label uppercase dan monospace dekoratif.
+- Menu ringkas berisi bab dan progres baca; deep-link ke kronologi, mekanisme, peta, arsip, dan sumber. Tidak ada scroll-jacking, cursor wajib, splash gate, atau audio autoplay.
+- Interaksi unggulan: kontrol kondisi gambut basah, terdrainase, terbakar. Air turun, lapisan tanah/oksigen terlihat, bara di bawah permukaan menunjukkan smouldering. Tandai sebagai ilustrasi, bukan simulator prediktif.
+- Peta data harus memakai batas wilayah nyata dan dataset terverifikasi, dengan pemilih tahun/provinsi, legenda, tabel, metode, dan unduhan data. Jangan membuat titik api acak demi estetika.
+- Motion menghubungkan keadaan. Satu transisi kamera/penampang yang bertujuan; pengurangan motion wajib, loop berhenti di luar viewport. Render on demand, DPR dibatasi, asset lazy-loaded.
+- Semua media dokumenter punya tanggal, lokasi, sumber, kredit, lisensi. Foto tidak dipakai ulang dari situs referensi tanpa hak; bukan gambar AI yang menyamar sebagai kejadian.
+
+## Keputusan yang perlu diverifikasi dalam QA
+
+1. Layar pertama lengkap tanpa menunggu WebGL/video.
+2. Bab, peta, dialog arsip, dan model dapat digunakan dengan keyboard dan sentuhan; target minimal 44px.
+3. Pembaca dapat membuka semua sumber dan membaca tabel tanpa menyalakan efek.
+4. Citra dan angka diberi konteks tempat/waktu yang sama; angka nasional tidak diberi label Kalimantan.
+5. Tidak ada scroll horizontal 360px; header tetap tidak menutupi anchor atau focus.
+6. Ukur loading dan screenshot pada viewport Android; jangan mengklaim performa dari mesin desktop sebagai hasil HP nyata.

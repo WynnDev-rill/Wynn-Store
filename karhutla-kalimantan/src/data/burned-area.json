@@ -1,0 +1,16 @@
+{
+  "title": "Luas kebakaran hutan dan lahan menurut provinsi",
+  "unit": "ha",
+  "years": [2019, 2020, 2021, 2022, 2023],
+  "source": "Statistik Kementerian Lingkungan Hidup dan Kehutanan 2023, Tabel 7.2, halaman cetak 161 (halaman PDF 177)",
+  "sourceUrl": "https://statistik.kehutanan.go.id/storage/publication/attachment/publication/buku-statistik-2023-kementerian-lingkungan-hidup-dan-kehutanan.pdf#page=177",
+  "accessed": "2026-10-24",
+  "scope": "Lima provinsi Indonesia di Kalimantan; seluruh jenis lahan, bukan hanya gambut. Bukan seluruh Pulau Borneo.",
+  "provinces": [
+    {"id":"barat", "name":"Kalimantan Barat", "shapeName":"West Kalimantan", "values":[151919,7646,20590,21836,111848.43]},
+    {"id":"tengah", "name":"Kalimantan Tengah", "shapeName":"Central Kalimantan", "values":[317749,7681,3653,1554,165896.44]},
+    {"id":"selatan", "name":"Kalimantan Selatan", "shapeName":"South Kalimantan", "values":[137848,4017,8625,429,190394.58]},
+    {"id":"timur", "name":"Kalimantan Timur", "shapeName":"East Kalimantan", "values":[68524,5221,3029,373,39494.41]},
+    {"id":"utara", "name":"Kalimantan Utara", "shapeName":"North Kalimantan", "values":[8559,1721,1678,370,796.36]}
+  ]
+}

@@ -1,0 +1,6 @@
+---
+import {sources} from '../data/content';
+const {id}=Astro.props;
+const source=sources.find(s=>s.id===id);
+---
+{source && <a class="cite" href={`/sumber/#${source.id}`} aria-label={`Sumber: ${source.label}`}>[{source.label}]</a>}
