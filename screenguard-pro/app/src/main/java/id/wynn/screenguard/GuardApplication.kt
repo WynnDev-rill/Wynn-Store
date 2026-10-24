@@ -25,6 +25,10 @@ class GuardApplication : Application() {
                 if (status == ShizukuStatus.READY) runCatching { controller.reconcile(forceNetwork = true) }
             }
         }
+        getSystemService(android.app.NotificationManager::class.java).apply {
+            cancel(42)
+            deleteNotificationChannel("monitor-quiet")
+        }
         MonitorScheduler.schedule(this)
     }
 }

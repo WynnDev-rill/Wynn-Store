@@ -62,7 +62,7 @@ class ProductionUpgradeTest {
             // Retry the ORIGINAL client's real Settings action, with a bounded propagation window.
             // Keep each failed window as evidence; never inject a manifest or bypass verification.
             var found = false
-            for (attempt in 1..6) {
+            for (attempt in 1..10) {
                 if (ui.hasObject(offered)) { found = true; break }
                 checkNotNull(ui.findObject(By.pkg(pkg).text("Periksa update"))).click()
                 found = ui.wait(Until.hasObject(offered), 30_000)

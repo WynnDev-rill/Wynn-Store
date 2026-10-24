@@ -42,10 +42,10 @@ class SecurityAndStorageTest {
         file.writeText("""{"settings":{"onboardingDone":true},"rules":{"com.example.target":{"packageName":"com.example.target","freeze":"DISABLE","ownedDisable":true,"networkBlocked":true}}}""")
         val store = GuardStore(context)
         val rule = store.state.value.rules.getValue("com.example.target")
-        assertNotNull(rule.gate); assertTrue(rule.ownedDisable); assertTrue(rule.networkBlocked)
+        assertNull(rule.gate); assertTrue(rule.ownedDisable); assertTrue(rule.managedFreeze); assertFalse(rule.networkBlocked)
         store.settings { it.copy(darkMode = true) }
         val recreated = GuardStore(context)
-        assertEquals(2, recreated.state.value.schemaVersion)
+        assertEquals(3, recreated.state.value.schemaVersion)
         assertEquals(rule, recreated.state.value.rules.getValue("com.example.target"))
         assertTrue(recreated.state.value.settings.darkMode)
     }

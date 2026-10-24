@@ -51,6 +51,7 @@ object AccessSession {
 
 @Serializable data class AppRule(
     val packageName: String,
+    val managedFreeze: Boolean = false,
     val networkBlocked: Boolean = false,
     val freeze: FreezeMode = FreezeMode.NONE,
     val dailyLimitMinutes: Int = 0,
@@ -73,6 +74,7 @@ object AccessSession {
 }
 
 @Serializable data class GuardSettings(
+    val freezeUtility: Boolean = false,
     val onboardingDone: Boolean = false,
     val monitorEnabled: Boolean = false,
     val focusUntil: Long = 0,
@@ -89,7 +91,7 @@ object AccessSession {
 ) { val hasPin: Boolean get() = pinHash.isNotBlank() }
 
 @Serializable data class GuardState(val settings: GuardSettings = GuardSettings(), val rules: Map<String, AppRule> = emptyMap(), val schemaVersion: Int = 2) {
-    val needsMonitoring get() = settings.monitorEnabled && rules.values.any { it.gate?.automaticOnly == true && (it.dailyLimitMinutes > 0 || it.windows.isNotEmpty()) }
+    val needsMonitoring get() = !settings.freezeUtility && settings.monitorEnabled && rules.values.any { it.gate?.automaticOnly == true && (it.dailyLimitMinutes > 0 || it.windows.isNotEmpty()) }
 }
 
 /** Convert manual freezes and Focus selections once, keeping recovery ownership and network rules. */
@@ -113,6 +115,7 @@ data class PolicyDecision(val blocked: Boolean, val reason: String)
 object PolicyEngine {
     fun decide(rule: AppRule, settings: GuardSettings, usedMs: Long, now: ZonedDateTime,
         elapsed: Long = 0, boot: Int = -1): PolicyDecision {
+        if (settings.freezeUtility) return PolicyDecision(rule.freeze != FreezeMode.NONE, if (rule.freeze != FreezeMode.NONE) "Dibekukan" else "Aktif")
         if (rule.gate != null) {
             if (AccessSession.isOpen(rule, now.toInstant().toEpochMilli(), elapsed, boot)) return PolicyDecision(false, "Akses sementara")
             if (!rule.gate.automaticOnly) return PolicyDecision(true, "Dibekukan • tantangan aktif")
@@ -139,11 +142,11 @@ object FreezeCatalog {
     fun selected(state: GuardState, apps: List<InstalledApp>): List<InstalledApp> =
         apps.filter { app ->
             val rule = state.rules[app.packageName]
-            rule?.gate != null || rule?.ownedDisable == true || rule?.ownedSuspension == true
+            rule?.managedFreeze == true || rule?.gate != null || rule?.ownedDisable == true || rule?.ownedSuspension == true
         }.sortedBy { it.label.lowercase() }
 
     fun canAdd(app: InstalledApp, rule: AppRule?): Boolean =
-        !app.protected && app.launchable && app.enabled && !app.suspended && rule?.gate == null &&
+        !app.protected && app.launchable && app.enabled && !app.suspended && rule?.gate == null && rule?.managedFreeze != true &&
             rule?.ownedDisable != true && rule?.ownedSuspension != true
 }
 

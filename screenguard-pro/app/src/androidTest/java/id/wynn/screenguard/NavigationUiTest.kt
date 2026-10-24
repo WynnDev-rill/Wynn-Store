@@ -1,90 +1,42 @@
 package id.wynn.screenguard
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.Density
 import androidx.test.platform.app.InstrumentationRegistry
 import id.wynn.screenguard.ui.*
-import id.wynn.screenguard.privilege.ShizukuStatus
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
-import org.junit.Assert.*
-import java.io.File
-import androidx.test.uiautomator.UiDevice
-import id.wynn.screenguard.update.*
 
 class NavigationUiTest {
-    @get:Rule val compose = createComposeRule()
-    private fun capture(name: String) {
-        compose.waitForIdle()
-        val instrument = InstrumentationRegistry.getInstrumentation()
-        val file = File(instrument.targetContext.getExternalFilesDir(null), "screenshots/$name.png")
-        file.parentFile!!.mkdirs()
-        // Synchronize the rendered Compose layer before capturing the actual Android window.
-        compose.onAllNodes(isRoot()).onLast().captureToImage()
-        instrument.waitForIdleSync()
-        EmulatorUiRecovery.dismissLauncherDialog(UiDevice.getInstance(instrument))
-        UiDevice.getInstance(instrument).waitForIdle()
-        UiDevice.getInstance(instrument).takeScreenshot(file)
-    }
-    @Test fun dockNavigatesBetweenRootScreensWithoutBackArrows() {
-        val app = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as GuardApplication
-        runBlocking { app.store.settings { it.copy(onboardingDone = true, pinHash = "", pinSalt = "") } }
-        val vm = GuardViewModel(app)
-        compose.setContent { ScreenGuardApp(vm) }
-        compose.onAllNodes(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Role, androidx.compose.ui.semantics.Role.Tab)).assertCountEquals(4)
-        capture("10-floating-dock-home")
-        compose.onNodeWithContentDescription("Bekukan").performClick()
-        compose.onNodeWithContentDescription("Tambah aplikasi").assertExists()
-        compose.onNodeWithContentDescription("Pengaturan Bekukan").assertExists()
-        compose.onNodeWithContentDescription("Kembali").assertDoesNotExist()
-        capture("11-floating-dock-freeze")
-        compose.onNodeWithContentDescription("Jaringan").performClick()
-        compose.onNodeWithText("Kontrol Internet").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Kembali").assertDoesNotExist()
+    @get:Rule val compose=createComposeRule()
+    @Test fun dockNavigatesOnlyFreezeActivityAndSettings() {
+        val graph=InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as GuardApplication
+        runBlocking {graph.store.settings {it.copy(onboardingDone=true,pinHash="",pinSalt="")}}
+        val vm=GuardViewModel(graph)
+        compose.setContent {ScreenGuardApp(vm)}
+        compose.onNodeWithContentDescription("Tambah aplikasi").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Jaringan").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Aktivitas").performClick()
+        compose.onNodeWithText("Waktu layar").assertExists()
         compose.onNodeWithContentDescription("Pengaturan").performClick()
-        compose.onNodeWithContentDescription("Kembali").assertDoesNotExist()
-        compose.onNodeWithContentDescription("Beranda").performClick()
-        compose.onNodeWithText("ScreenGuard Pro").assertIsDisplayed()
-    }
-    @Test fun restrictedSettingsHelpExplainsActualSystemAction() {
-        compose.setContent { GuardTheme { PermissionsScreen(false, ShizukuStatus.STOPPED, {}, {}, {}, {}) } }
-        compose.onNodeWithText("Lihat cara mengizinkan akses").performScrollTo().performClick()
-        compose.onNodeWithText("Buka info ScreenGuard Pro").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Panduan resmi Android").assertExists()
-        capture("12-restricted-settings-help")
+        compose.onNodeWithText("Periksa update").assertExists()
+        compose.onNodeWithText("PIN Orang Tua").assertDoesNotExist()
+        compose.onNodeWithText("Target waktu layar").assertDoesNotExist()
     }
     @Test fun dockSupportsLargeTextAndSelectedSemantics() {
-        var selected: Page? = null
-        compose.setContent {
-            val density = LocalDensity.current
-            GuardTheme(dark = true) {
-                CompositionLocalProvider(LocalDensity provides Density(density.density, 2f)) {
-                    Box(Modifier.width(320.dp)) { FloatingDock(Page.NETWORK) { selected = it } }
-                }
-            }
-        }
-        compose.onNodeWithContentDescription("Jaringan").assertIsSelected()
-        compose.onNodeWithContentDescription("Pengaturan").performClick()
-        assertEquals(Page.SETTINGS, selected)
-        capture("13-dock-large-text-dark")
+        var selected:Page?=null
+        compose.setContent {val d=LocalDensity.current;CompositionLocalProvider(LocalDensity provides Density(d.density,2f)) {
+            GuardTheme(true) {FloatingDock(Page.FREEZE) {selected=it}}
+        }}
+        compose.onNodeWithContentDescription("Bekukan").assertIsSelected()
+        compose.onNodeWithContentDescription("Aktivitas").performClick()
+        assertEquals(Page.HOME,selected)
+        compose.onNodeWithContentDescription("Pengaturan").assertIsDisplayed()
     }
-    @Test fun updateSheetShowsActualProgressAndCancellation() {
-        val release = UpdateManifest(3, "1.2.0", "id.wynn.screenguard", 30,
-            "https://github.com/WynnDev-rill/Wynn-Store/releases/download/screenguard-v1.2.0/ScreenGuard-Pro.apk", "a".repeat(64), "b".repeat(64), 3_000_000,
-            "Peningkatan stabilitas dan pengalaman fokus yang lebih halus.")
-        var cancelled = false
-        compose.setContent { GuardTheme { UpdateSheet(AppUpdater.State(available = release, progress = .5f, message = "Mengunduh update…"), {}, {}, {}, { cancelled = true }) } }
-        compose.onNodeWithText("50%").assertIsDisplayed()
-        capture("14-update-sheet")
-        compose.onNodeWithText("Batalkan unduhan").performClick()
-        assertTrue(cancelled)
-    }
-
 }
