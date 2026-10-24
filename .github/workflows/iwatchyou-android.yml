@@ -42,6 +42,20 @@ jobs:
           test -n "$KEYSTORE" && test -n "$STORE_PASSWORD" && test -n "$KEY_ALIAS" && test -n "$KEY_PASSWORD"
           umask 077
           printf '%s' "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/iwatchyou-release.jks"
+          python3 - <<'PY'
+          import os, pathlib, zipfile
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'iwatchyou-release.jks'
+          raw=p.read_bytes()
+          if zipfile.is_zipfile(p):
+              with zipfile.ZipFile(p) as z:
+                  names=[n for n in z.namelist() if not n.endswith('/') and n.lower().endswith(('.jks','.keystore','.p12','.pfx'))]
+                  if len(names)!=1: raise SystemExit('Signing archive must contain exactly one keystore')
+                  raw=z.read(names[0])
+                  p.write_bytes(raw)
+          container='JKS' if raw.startswith(bytes.fromhex('feedfeed')) else 'PKCS12' if raw.startswith(bytes.fromhex('3082')) else 'unknown'
+          print('Signing container format:',container)
+          if container=='unknown': raise SystemExit('Invalid production keystore format')
+          PY
       - name: Build signed APK
         env:
           IW_KEYSTORE_PATH: ${{ runner.temp }}/iwatchyou-release.jks
