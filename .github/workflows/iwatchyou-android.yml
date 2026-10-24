@@ -30,7 +30,30 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Run unit tests
         run: ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest --stacktrace
+      - name: Build testable APK
+        run: ./screenguard-pro/gradlew -p iwatchyou :app:assembleDebug --stacktrace
+      - name: Verify test APK signature
+        run: |
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose iwatchyou/app/build/outputs/apk/debug/app-debug.apk
+      - name: Upload test APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IWatchYou-1.0.0-test
+          path: iwatchyou/app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish test APK (preview, not stable)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag=iwatchyou-preview-v1.0.0
+          cp iwatchyou/app/build/outputs/apk/debug/app-debug.apk IWatchYou-1.0.0-preview.apk
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --prerelease --title "IWatchYou v1.0.0 — Pratinjau" --notes "APK uji bertanda tangan debug. Belum mendukung pembaruan tanpa reinstall ke rilis produksi."
+          gh release upload "$tag" IWatchYou-1.0.0-preview.apk --repo "$GITHUB_REPOSITORY" --clobber
       - name: Require existing protected production signing secrets
+        id: production_key
+        continue-on-error: true
         shell: bash
         env:
           KEYSTORE: ${{ secrets.SG_KEYSTORE_BASE64 }}
@@ -73,6 +96,7 @@ jobs:
               raise SystemExit('Invalid production keystore format')
           PY
       - name: Build signed APK
+        if: steps.production_key.outcome == 'success'
         env:
           IW_KEYSTORE_PATH: ${{ runner.temp }}/iwatchyou-release.jks
           IW_STORE_PASSWORD: ${{ secrets.SG_STORE_PASSWORD }}
@@ -82,11 +106,13 @@ jobs:
           ./screenguard-pro/gradlew -p iwatchyou :app:assembleRelease --stacktrace
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs iwatchyou/app/build/outputs/apk/release/app-release.apk
       - name: Upload build artifact
+        if: steps.production_key.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: IWatchYou-1.0.0-signed
           path: iwatchyou/app/build/outputs/apk/release/app-release.apk
       - name: Publish release and update metadata
+        if: steps.production_key.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
