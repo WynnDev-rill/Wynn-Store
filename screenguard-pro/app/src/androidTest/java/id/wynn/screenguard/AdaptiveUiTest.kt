@@ -34,6 +34,17 @@ class AdaptiveUiTest {
         compose.onNodeWithContentDescription("Kelola ${app.label}").assertIsDisplayed()
         capture("07-freeze-dark-large")
     }
+    @Test fun activityLargeTextKeepsNumbersAndPeriodControlsReadable() {
+        val date=java.time.LocalDate.now()
+        val data=DeviceData(days=listOf(id.wynn.screenguard.data.UsageDay(date,emptyMap(),screenMs=37800000L)),usageAccess=true,loading=false)
+        compose.setContent {val d=LocalDensity.current;GuardTheme(true) {CompositionLocalProvider(LocalDensity provides Density(d.density,1.8f)) {
+            Surface(Modifier.width(320.dp).height(600.dp).testTag("adaptive"),color=MaterialTheme.colorScheme.background) {ActivityScreen(data) {_,_,_->}}
+        }}}
+        compose.onNodeWithText("30 hari").assertIsDisplayed()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("activity-total"))
+        compose.onNodeWithTag("activity-total").assertTextEquals("10 jam 30 mnt")
+        capture("09-activity-dark-large")
+    }
     @Test fun landscapeSettingsKeepRecoveryAndUpdateAvailable() {
         compose.setContent {GuardTheme(true) {Surface(Modifier.width(600.dp).height(320.dp).testTag("adaptive"),color=MaterialTheme.colorScheme.background) {
             SettingsScreen(GuardState(),ShizukuStatus.READY,{}, {it()}, {}, {}, {}, {}, {})

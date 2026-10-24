@@ -35,7 +35,9 @@ class PolicyWorker(context: Context, parameters: WorkerParameters) : CoroutineWo
         val graph = applicationContext as GuardApplication
         // Persist daily/hourly records before Android expires its event history.
         if (graph.usage.hasAccess()) runCatching { graph.usage.range(2) }
-        if (graph.store.state.value.rules.isEmpty()) return Result.success()
+        // Manual freezing has no background enforcement loop. Shizuku connection and
+        // explicit user actions handle reconciliation; this worker only snapshots activity.
+        if (graph.store.state.value.settings.freezeUtility || graph.store.state.value.rules.isEmpty()) return Result.success()
         return try {
             graph.gateway.refresh()
             val errors = graph.controller.reconcile(forceNetwork = true)

@@ -47,9 +47,10 @@ class ScreenUiTest {
         val frozen=a.copy(enabled=false)
         val state=GuardState(rules=mapOf(a.packageName to AppRule(a.packageName,managedFreeze=true,freeze=FreezeMode.DISABLE,ownedDisable=true)))
         content {FreezeScreen(state,data.copy(apps=listOf(frozen)),true,false,{}, {opened=true}, {}, {_,_->})}
-        compose.onNode(hasStateDescription("Dibekukan")).assertIsDisplayed().performClick()
-        assertTrue(opened)
+        compose.onNode(hasStateDescription("Dibekukan")).assertIsDisplayed()
         capture("02-frozen-icon")
+        compose.onNode(hasStateDescription("Dibekukan")).performClick()
+        assertTrue(opened)
     }
     @Test fun activeManagedAppRemainsVisibleWithNormalIconAndCanBeFrozen() {
         var frozen=false

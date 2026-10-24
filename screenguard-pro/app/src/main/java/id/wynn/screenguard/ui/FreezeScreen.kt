@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.*
@@ -57,7 +58,7 @@ import id.wynn.screenguard.domain.*
                     contentPadding=PaddingValues(16.dp,24.dp,16.dp,96.dp),verticalArrangement=Arrangement.spacedBy(24.dp),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                     items(visible,key={it.packageName}) { app ->
                         val frozen = !app.enabled || app.suspended
-                        Column(Modifier.fillMaxWidth().combinedClickable(enabled=!busy,onClick={select(app)},onLongClick={menu=app})
+                        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).combinedClickable(enabled=!busy,onClick={select(app)},onLongClick={menu=app})
                             .semantics(mergeDescendants=true) { stateDescription=if(frozen) "Dibekukan" else "Aktif"; contentDescription="${app.label}, ${if(frozen) "dibekukan" else "aktif"}" },
                             horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(8.dp)) {
                             AppIcon(app,60.dp,frozen)

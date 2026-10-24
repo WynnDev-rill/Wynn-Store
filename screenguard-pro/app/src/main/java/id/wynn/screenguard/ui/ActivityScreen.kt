@@ -53,10 +53,12 @@ fun readableDuration(ms: Long): String {
 @Composable fun DailyUsageChart(days: List<UsageDay>,selectedDate: LocalDate,onSelect: (LocalDate)->Unit) {
     val max=days.filter {it.available}.maxOfOrNull {it.totalMs}?.coerceAtLeast(60000)?:60000
     val names=listOf("Sen","Sel","Rab","Kam","Jum","Sab","Min")
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(4.dp),verticalAlignment=Alignment.Bottom) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+    val columnWidth = if(days.size <= 7) maxWidth / days.size.coerceAtLeast(1) else 48.dp
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(if(days.size <= 7) 0.dp else 4.dp),verticalAlignment=Alignment.Bottom) {
         days.forEach {day ->
             val chosen=day.date==selectedDate
-            Column(Modifier.width(48.dp).clip(RoundedCornerShape(12.dp)).clickable {onSelect(day.date)}.padding(vertical=8.dp)
+            Column(Modifier.width(columnWidth).clip(RoundedCornerShape(12.dp)).clickable {onSelect(day.date)}.padding(vertical=8.dp)
                 .semantics(mergeDescendants=true) {contentDescription="${day.date}: ${if(day.available) readableDuration(day.totalMs) else "data tidak tersedia"}";selected=chosen},
                 horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(6.dp)) {
                 Text(if(day.available) duration(day.totalMs) else "—",Modifier.heightIn(min=36.dp),style=MaterialTheme.typography.labelSmall,textAlign=TextAlign.Center)
@@ -68,6 +70,7 @@ fun readableDuration(ms: Long): String {
                 Text("${day.date.dayOfMonth}",style=MaterialTheme.typography.labelMedium)
             }
         }
+    }
     }
 }
 @Composable fun ActivityScreen(device: DeviceData,back: (()->Unit)?=null,refresh: ()->Unit={},permissions: ()->Unit={},selected: (InstalledApp,LocalDate,Int)->Unit) {
