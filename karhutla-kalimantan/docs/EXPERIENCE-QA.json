@@ -1,0 +1,17 @@
+{
+  "checks": [
+    {
+      "name": "Scroll changes rendered contour transforms",
+      "pass": true
+    },
+    {
+      "name": "WebGL failure keeps SVG and HTML controls",
+      "pass": true
+    },
+    {
+      "name": "Reduced motion keeps stable perspective and no running animations",
+      "pass": true
+    }
+  ],
+  "errors": []
+}

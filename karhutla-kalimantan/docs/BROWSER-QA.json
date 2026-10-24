@@ -13,7 +13,7 @@
       "pass": true
     },
     {
-      "name": "Before-after slider keyboard works",
+      "name": "Infographic preserves exact three-day source readings",
       "pass": true
     },
     {
@@ -41,11 +41,11 @@
       "pass": true
     },
     {
-      "name": "Archive filters and image dialog Escape restore focus",
+      "name": "Wynn profile replaces gallery and uses supplied avatar",
       "pass": true
     },
     {
-      "name": "Real NASA video loads, plays and is removed on close",
+      "name": "Text choreography and contour depth respond to scroll",
       "pass": true
     },
     {
@@ -78,20 +78,48 @@
     {
       "page": "home",
       "violations": []
+    },
+    {
+      "page": "main",
+      "violations": []
+    },
+    {
+      "page": "cerita",
+      "violations": []
+    },
+    {
+      "page": "riwayat",
+      "violations": []
+    },
+    {
+      "page": "gambut",
+      "violations": []
+    },
+    {
+      "page": "dampak",
+      "violations": []
+    },
+    {
+      "page": "wynn",
+      "violations": []
     }
   ],
   "screenshots": [
     "desktop-hero-final.png",
     "desktop-cerita-final.png",
+    "desktop-riwayat-final.png",
     "desktop-gambut-final.png",
     "desktop-peta-final.png",
+    "desktop-dampak-final.png",
     "desktop-pulih-final.png",
-    "desktop-arsip-final.png",
+    "desktop-wynn-final.png",
     "mobile-hero-final.png",
     "mobile-cerita-final.png",
+    "mobile-riwayat-final.png",
     "mobile-gambut-final.png",
     "mobile-peta-final.png",
+    "mobile-dampak-final.png",
     "mobile-pulih-final.png",
-    "mobile-arsip-final.png"
+    "mobile-wynn-final.png"
   ]
 }

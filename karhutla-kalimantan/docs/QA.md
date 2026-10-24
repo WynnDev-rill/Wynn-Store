@@ -1,36 +1,43 @@
-# Audit revisi — 24 Oktober 2026
+# Audit pengalaman visual — 24 Oktober 2026
 
-Versi ini mengutamakan laporan karhutla Oktober 2026. Rincian perbandingan dengan OHZI, Minh Pham, The Pudding dan NASA terdapat pada [REVISION-2026.md](REVISION-2026.md); peninjauan sepuluh referensi ada di [DESIGN-REFERENCES.md](DESIGN-REFERENCES.md).
+Permintaan dan keputusan implementasi: [EXPERIENCE-REDESIGN.md](EXPERIENCE-REDESIGN.md). Fokus rilis ini adalah animasi di seluruh perjalanan, infografis ringkas dan profil Wynn sebagai pengganti galeri pengamatan.
 
-## Hasil yang dapat diulang
+## Hasil terukur
 
-- **17 skenario browser lulus**, termasuk kedua snapshot terbaru, 25 kombinasi peta arsip, navigasi keyboard/touch, dialog dan pengembalian fokus, video NASA yang benar-benar diputar, empat kondisi gambut, perubahan kamera 3D, serta akses tanpa JavaScript.
-- **4 tes data lulus**: presisi transkripsi KLHK, kelengkapan batas provinsi, kesamaan JSON/CSV historis, dan seluruh referensi sitasi.
-- **Nol temuan otomatis axe** untuk WCAG 2 A/AA dan 2.1 AA pada beranda dan halaman sumber. Ini bukan sertifikasi aksesibilitas menyeluruh.
-- **Nol error JavaScript** dalam pengujian desktop. Tidak ada overflow halaman pada lebar 320, 360, 390, 768, 1024, dan 1440 px.
-- Build Astro, pemeriksaan tipe, tautan/aset lokal dan skrip dengan CSP ketat lulus. Peringatan ukuran bundle Three.js tetap ada; modul tersebut dimuat saat mendekati bab gambut.
-- **LCP 1.180 ms; CLS 0,00316** pada satu pengukuran laboratorium Chromium 133, viewport 390×844, CPU diperlambat 4×, unduhan 200.000 byte/detik dan latensi 150 ms. Bukan pengukuran Android fisik atau data lapangan. Video dan Three.js tidak dimuat pada layar awal.
+- **17 skenario browser lulus**: dokumen semantik, menu/fokus/Escape, tab kronologi, sembilan titik grafik, dua cuplikan hotspot, 25 pilihan peta arsip, keyboard pada peta, CSV/tabel, empat kondisi 3D, perubahan kamera, profil/avatar, motion teks dan kontur, sitasi, enam lebar viewport, touch/reduced motion, tanpa JS dan anggaran loading.
+- **3 pemeriksaan tambahan lulus**: transform kontur benar-benar berubah saat scroll; WebGL sengaja dimatikan dan fallback SVG/tombol tetap berfungsi; reduced motion menjaga perspektif tetap dan tidak ada animasi berjalan.
+- **4 tes data lulus**; build/TypeScript nol error, warning tipe atau hint; audit aset dan CSP ketat lulus. Peringatan ukuran chunk Three.js tetap ada, modul dimuat lazy.
+- **Nol error JavaScript** dalam pengujian utama. **Nol temuan otomatis axe** pada sumber dan tujuh keadaan/bagian beranda. Ini bukan sertifikasi aksesibilitas menyeluruh.
+- Viewport **320, 360, 390, 768, 1024 dan 1440 px**: tidak ada overflow horizontal halaman. Tabel tetap bisa digulir lokal. Emulasi sentuh dan reduced motion diuji.
+- **LCP 1.508 ms; CLS 0,02948**, satu pengukuran lab Chromium 133, viewport 390×844, CPU 4× lambat, download 200.000 byte/detik dan latensi 150 ms. Server lokal tanpa kompresi, bukan Android fisik atau data lapangan. Three.js dan video tidak dimuat pada layar awal.
 
-## Audit visual dan revisi
+## Revisi berdasarkan pemeriksaan
 
-Screenshot desktop/mobile diperiksa setelah implementasi. Dibandingkan model awal di [gambut.webp](screenshots/gambut.webp), revisi memiliki variasi kanopi, akar, tekstur penampang, pemisahan lapisan dan framing kamera saat digulir. Bayangan lantai yang terlalu kasar diganti dengan kontak lembut; kontras header diperbaiki dengan menghilangkan transisi warna yang menghasilkan frame berkombinasi kontras rendah.
+| Temuan | Perbaikan | Bukti |
+|---|---|---|
+| Model lama memakai gumpalan kanopi faceted | Daun melengkung individual digabung per pohon, palet alami, framing diperiksa ulang | Screenshot mobile gambut dan empat kondisi tersimpan saat tes |
+| Kredit citra dan tombol masuk bertumpuk di desktop | Lembar citra digeser naik, tombol memiliki ruang sendiri | Screenshot pembuka desktop |
+| Kredit mobile terlalu kecil | Caption dinaikkan dan tautan diberi tinggi sentuh 44 px | Screenshot pembuka mobile |
+| Galeri terasa seperti daftar sumber | Galeri/filter/dialog/pemutar dilepas; profil Wynn memakai avatar yang diberikan | Screenshot profil desktop/mobile; kredit media tetap di sumber |
+| Tes kontur memeriksa sebelum smooth scroll selesai | Menunggu progres viewport yang nyata sebelum membandingkan transform | Tes tambahan membandingkan dua matriks CSS saat posisi scroll berubah |
 
-Komposisi hero, tipografi isi, keterbacaan model pada mobile, peta terbaru, serta pemisahan arsip telah diperiksa pada screenshot. Gerak menggunakan gulir alami, reduced motion tersedia, dan render 3D berhenti ketika tidak berubah atau berada di luar layar. Detail prosedural bersifat ilustratif, bukan rekonstruksi dokumenter atau aset fotorealistis setara produksi OHZI.
+## Perbandingan visual
 
-## Bukti visual
+Versi sebelumnya memakai pembuka citra layar penuh dan susunan editorial dominan. Revisi memakai judul kinetik, lembar citra berperspektif, alur sinyal, grafik waktu, bidang kontur berlapis, diorama organik, orbit partikel dan identitas pembuat. Referensi [OHZI dan sembilan situs lain](DESIGN-REFERENCES.md) diterapkan sebagai prinsip, tidak sebagai aset atau template.
 
-| Pembuka desktop | Model mobile |
+| Pembuka baru | Profil Wynn |
 |---|---|
-| ![Pembuka edisi Oktober](screenshots/revision-desktop-hero-final.webp) | ![Model gambut mobile](screenshots/revision-mobile-gambut-final.webp) |
+| ![Pembuka](screenshots/experience-desktop-hero-final.webp) | ![Profil](screenshots/experience-desktop-wynn-final.webp) |
 
-- [Kamera dan penampang desktop](screenshots/revision-desktop-camera-depth.webp)
-- [Peta cuplikan terbaru](screenshots/revision-desktop-peta-final.webp)
-- [Laporan pembuka mobile](screenshots/revision-mobile-cerita-final.webp)
+- [Pembuka mobile](screenshots/experience-mobile-hero-final.webp)
+- [Lapisan perspektif desktop](screenshots/experience-desktop-strata.webp) dan [mobile](screenshots/experience-mobile-strata.webp)
+- [Gambut mobile](screenshots/experience-mobile-gambut-final.webp) dan [bara bawah tanah](screenshots/experience-peat-stage-2.webp)
+- [Grafik mobile](screenshots/experience-mobile-riwayat-final.webp)
 
-## Batas yang masih berlaku
+## Batas validasi
 
-Tidak ada klaim peringkat objektif di atas seluruh situs web. Standar rilis dinilai lewat fungsi, aksesibilitas otomatis, ketepatan sumber, performa terukur dan perbandingan visual berdasarkan dimensi tertentu. Perangkat fisik, penilai eksternal dan seluruh kombinasi teknologi bantu belum diuji. Cloud Browser menonaktifkan WebGL sehingga jalur 3D diperiksa dengan Chromium software rendering; fallback tetap tersedia.
+Tidak ada klaim persentase peningkatan objektif atau kesetaraan fotorealisme OHZI. Belum diuji pada perangkat Android fisik, semua pembaca layar, atau populasi penilai eksternal. Pemeriksaan real 3D menggunakan Chromium software rendering; Cloud Browser memiliki keterbatasan WebGL. Spline dipakai untuk studi scene, tetapi preview kosong sehingga tidak dimasukkan sebagai embed final. Blender/API generasi berbayar tidak dipakai.
 
-Data terbaru memakai rilis Kemenhut sampai 24 Oktober dan snapshot SiPongi sampai 23 Oktober pukul 21.00 WIB, bukan feed langsung. Citra/foto/video tetap arsip bertanggal, tidak diberi label kejadian 2026. Hotspot adalah deteksi termal, bukan kejadian kebakaran atau luas terbakar.
+Sumber terbaru tetap rilis Kemenhut hingga 24 Oktober 2026, cuplikan SiPongi hingga 23 Oktober 21.00 WIB. Citra 2023 dan foto 2021 ditandai sebagai arsip. Avatar adalah identitas ilustratif pilihan Wynn, bukan foto wajah. Klaim profil dibatasi pada karya web/Android serta proses desain dan publikasi.
 
-Hasil mentah: [BROWSER-QA.json](BROWSER-QA.json), [PERFORMANCE-QA.json](PERFORMANCE-QA.json), [BUNDLE-SIZES.json](BUNDLE-SIZES.json). Jalankan `npm test`, `npm run build`, dan `npm run test:browser` untuk mengulang pemeriksaan; Playwright memerlukan Chromium yang tersedia.
+Hasil mentah: [BROWSER-QA.json](BROWSER-QA.json), [EXPERIENCE-QA.json](EXPERIENCE-QA.json), [PERFORMANCE-QA.json](PERFORMANCE-QA.json), [BUNDLE-SIZES.json](BUNDLE-SIZES.json). Ulangi dengan `npm test`, `npm run build`, `npm run test:browser`, `npm run test:experience` (memerlukan Chromium; path kustom dapat diberikan melalui BROWSER_EXECUTABLE_PATH).

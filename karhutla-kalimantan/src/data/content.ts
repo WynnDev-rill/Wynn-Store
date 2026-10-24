@@ -20,7 +20,7 @@ export const sources = [
 ];
 export type SourceId = typeof sources[number]['id'];
 export const chapters = [
- {id:'cerita',title:'Bentang yang berubah'}, {id:'riwayat',title:'Riwayat api'}, {id:'gambut',title:'Di bawah permukaan'}, {id:'peta',title:'Peta kebakaran'}, {id:'dampak',title:'Yang ikut hilang'}, {id:'pulih',title:'Merawat kembali'}, {id:'arsip',title:'Arsip pengamatan'}
+ {id:'cerita',title:'Bentang yang berubah'}, {id:'riwayat',title:'Riwayat api'}, {id:'gambut',title:'Di bawah permukaan'}, {id:'peta',title:'Peta kebakaran'}, {id:'dampak',title:'Yang ikut hilang'}, {id:'pulih',title:'Merawat kembali'}, {id:'wynn',title:'Tentang Wynn'}
 ];
 export const historicalChronology = [
  {year:'1982–83',title:'Peringatan dari timur',place:'Kalimantan Timur',text:'Kekeringan parah diikuti kebakaran besar. Peristiwa 1982–1983 menjadi salah satu penanda awal krisis karhutla modern di Indonesia.',source:'ipb'},
