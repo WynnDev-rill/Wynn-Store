@@ -20,6 +20,15 @@ class FreezeUtilityTest {
         assertEquals(0,b.dailyLimitMinutes);assertFalse(n.needsMonitoring);assertFalse(n.settings.hasPin)
         assertEquals(n,FreezeUtilityMigration.migrate(n))
     }
+    @Test fun upgradeKeepsOnlyAProvenLiveLeaseOpenAndNeverRevivesARebootedLease() {
+        val wall=1000000L
+        val rule=AppRule("com.test.app",gate=AccessGate(),freeze=FreezeMode.DISABLE,ownedDisable=true,
+            sessionStartedWall=wall-1000,sessionStartedElapsed=1000,sessionUntilElapsed=61000,sessionBoot=4,overrideUntil=wall+59000)
+        val old=GuardState(rules=mapOf(rule.packageName to rule))
+        assertEquals(FreezeMode.NONE,FreezeUtilityMigration.migrate(old,wall,2000,4).rules.getValue(rule.packageName).freeze)
+        assertEquals(FreezeMode.DISABLE,FreezeUtilityMigration.migrate(old,wall,2000,5).rules.getValue(rule.packageName).freeze)
+        assertEquals(FreezeMode.DISABLE,FreezeUtilityMigration.migrate(old,wall,70000,4).rules.getValue(rule.packageName).freeze)
+    }
     @Test fun unfreezingNeverRearmsAChallengeOrDailyLimit() {
         val rule=AppRule("com.test.app",managedFreeze=true,dailyLimitMinutes=1,gate=AccessGate())
         val s=GuardSettings(freezeUtility=true,monitorEnabled=true)

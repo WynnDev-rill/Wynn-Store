@@ -27,7 +27,8 @@ class GuardStore(context: Context) {
             GuardMigration.migrate(if ("\"schemaVersion\"" in text) decoded else decoded.copy(schemaVersion = 1))
         } else GuardState() }
         loadError = result.exceptionOrNull()?.let { "Data lokal tidak terbaca. Jangan hapus data aplikasi; pulihkan aplikasi melalui panduan pemulihan." }
-        mutable = MutableStateFlow(FreezeUtilityMigration.migrate(result.getOrDefault(GuardState())))
+        mutable = MutableStateFlow(FreezeUtilityMigration.migrate(result.getOrDefault(GuardState()), System.currentTimeMillis(),
+            android.os.SystemClock.elapsedRealtime(), runCatching { android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.BOOT_COUNT, -1) }.getOrDefault(-1)))
     }
     suspend fun update(transform: (GuardState) -> GuardState) = withContext(Dispatchers.IO) {
         mutex.withLock {
