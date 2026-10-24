@@ -1,11 +1,11 @@
 {
-  "versionCode": 7,
-  "versionName": "1.5.1",
+  "versionCode": 8,
+  "versionName": "1.5.2",
   "packageName": "id.wynn.screenguard",
   "minSdk": 30,
-  "apkUrl": "https://github.com/WynnDev-rill/Wynn-Store/releases/download/screenguard-v1.5.1/ScreenGuard-Pro-1.5.1.apk",
-  "sha256": "62ded9912f411a8af751952747e0241465975b86316420b8464fe9c1b37991e4",
+  "apkUrl": "https://github.com/WynnDev-rill/Wynn-Store/releases/download/screenguard-v1.5.2/ScreenGuard-Pro-1.5.2.apk",
+  "sha256": "98ef764ff083594c5570b8b4de31d4d8ab3b12de3597ed9649dd5f375c857e4a",
   "signerSha256": "eca17e8afa84775e941e0e490741b01636e7941da545c508f85b8a256a4f346a",
-  "sizeBytes": 3491656,
-  "notes": "Memulihkan tampilan dan fitur versi 1.4: Beranda, Bekukan, Jaringan, Pengaturan, serta statistik sebelumnya. Pembaruan dapat dipasang di atas 1.5 tanpa uninstall; koleksi aplikasi, tema, dan data penggunaan tetap dipertahankan."
+  "sizeBytes": 3458888,
+  "notes": "Bekukan memakai tampilan 1.5: satu daftar, tombol tambah biru, ikon beku hitam putih, serta buka dan bekukan langsung. Beranda, Jaringan, dan statistik versi 1.4 tetap tersedia. Ringkasan dan teks petunjuk berlebihan dibersihkan. Pengujian penggunaan langsung diserahkan kepada pengguna."
 }
