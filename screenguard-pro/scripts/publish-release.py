@@ -25,7 +25,7 @@ output = Path('dist'); output.mkdir(exist_ok=True)
 public_apk = output / name; public_apk.write_bytes(apk.read_bytes())
 manifest = dict(versionCode=code, versionName=version, packageName='id.wynn.screenguard', minSdk=30,
     apkUrl=f'https://github.com/{repo}/releases/download/{tag}/{name}', sha256=hashlib.sha256(apk.read_bytes()).hexdigest(),
-    signerSha256=signer, sizeBytes=apk.stat().st_size, notes='Memulihkan tampilan dan fitur versi 1.4: Beranda, Bekukan, Jaringan, Pengaturan, serta statistik sebelumnya. Pembaruan dapat dipasang di atas 1.5 tanpa uninstall; koleksi aplikasi, tema, dan data penggunaan tetap dipertahankan.')
+    signerSha256=signer, sizeBytes=apk.stat().st_size, notes='Bekukan memakai tampilan 1.5: satu daftar, tombol tambah biru, ikon beku hitam putih, serta buka dan bekukan langsung. Beranda, Jaringan, dan statistik versi 1.4 tetap tersedia. Ringkasan dan teks petunjuk berlebihan dibersihkan. Pengujian penggunaan langsung diserahkan kepada pengguna.')
 metadata = output / 'update.json'; metadata.write_text(json.dumps(manifest, indent=2) + '\n')
 endpoint = f'repos/{repo}/contents/screenguard-pro/updates/stable.json'
 previous = subprocess.run(['gh', 'api', endpoint], text=True, capture_output=True)

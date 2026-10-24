@@ -42,7 +42,7 @@ class PolicyController(private val store: GuardStore, private val catalog: AppCa
                 if (sessionOpen) {
                     // Arm before enabling. Failure leaves the application closed.
                     gateway.scheduleRefreeze(pkg, app.uid / 100000, rule.sessionUntilElapsed)
-                } else if (rule.gate != null || rule.ownedDisable || rule.overrideUntil > 0) {
+                } else if (rule.managedFreeze || rule.gate != null || rule.ownedDisable || rule.overrideUntil > 0) {
                     gateway.scheduleRefreeze(pkg, app.uid / 100000, 0)
                 }
                 val disable = decision.blocked && (rule.gate != null || rule.freeze == FreezeMode.DISABLE)
@@ -85,7 +85,7 @@ class PolicyController(private val store: GuardStore, private val catalog: AppCa
 
     suspend fun restoreAll(): List<String> {
         store.update { s -> s.copy(settings = s.settings.copy(monitorEnabled = false, focusUntil = 0),
-            rules = s.rules.mapValues { (_, r) -> r.copy(gate = null, networkBlocked = false, freeze = FreezeMode.NONE, dailyLimitMinutes = 0, windows = emptyList(), focus = false, overrideUntil = 0) }) }
+            rules = s.rules.mapValues { (_, r) -> r.copy(managedFreeze = false, gate = null, networkBlocked = false, freeze = FreezeMode.NONE, dailyLimitMinutes = 0, windows = emptyList(), focus = false, overrideUntil = 0) }) }
         return reconcile(forceNetwork = true)
     }
 }

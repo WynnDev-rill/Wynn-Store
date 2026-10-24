@@ -49,7 +49,6 @@ import id.wynn.screenguard.privilege.ShizukuStatus
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("Periksa saat dibuka", style = MaterialTheme.typography.titleMedium)
-                        Text("Menghubungi GitHub untuk metadata versi. Data penggunaan tetap lokal.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(autoUpdate, autoUpdateChange, modifier = Modifier.semantics { contentDescription = "Periksa update otomatis" })
                 }

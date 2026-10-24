@@ -122,18 +122,11 @@ enum class Page { HOME, FREEZE, NETWORK, SETTINGS, USAGE, APP_STATS, UNLOCK, PER
                             }
                             Page.NETWORK -> NetworkScreen(state, device, status, supported, busy, ::back, vm::setNetwork, ::permissions) { navigate(Page.FREEZE) }
                             Page.FREEZE -> FreezeScreen(state, device, status == ShizukuStatus.READY, busy,
-                                vm::addFrozen, ::select,
-                                { app ->
-                                    if (state.settings.freezeChallengeEnabled) {
-                                        if (status != ShizukuStatus.READY) permissions()
-                                        else {
-                                            removalPackage = app.packageName
-                                            vm.prepareUnlock(app) { pageName = Page.UNLOCK.name }
-                                        }
-                                    } else vm.removeGate(app)
-                                },
-                                { enabled, config -> vm.settings { it.copy(freezeChallengeEnabled = enabled, freezeGate = config) } },
-                                ::permissions, vm::closeAccess, vm::freezeAllNow, vm::addFrozenApps, vm::saveRule, detailPackage)
+                                { app -> vm.addManagedApps(listOf(app)) },
+                                { app -> vm.setManualFreeze(app, false) { launchApp(app.packageName) } },
+                                vm::removeManagedApp, { _, _ -> }, ::permissions,
+                                { app -> vm.setManualFreeze(app, true) }, vm::freezeManagedApps,
+                                vm::addManagedApps)
                             Page.UNLOCK -> UnlockScreen(device.apps.find { it.packageName == unlocking }, gate, challenge, completed, remaining, challengeError, busy, ::back, vm::newChallenge,
                                 unlock = { answer ->
                                     if (removalPackage != null) vm.releaseAfterChallenge(answer) {

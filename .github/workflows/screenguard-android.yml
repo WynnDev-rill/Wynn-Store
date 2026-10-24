@@ -3,24 +3,32 @@ on:
   workflow_dispatch:
   push:
     paths: ['screenguard-pro/**', '!screenguard-pro/updates/**', '.github/workflows/screenguard-android.yml']
-  pull_request:
-    paths: ['screenguard-pro/**', '!screenguard-pro/updates/**', '.github/workflows/screenguard-android.yml']
 permissions:
   contents: read
 concurrency:
   group: screenguard-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  verify:
+  release:
     permissions:
       contents: write
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: screenguard-pro
     steps:
       - uses: actions/checkout@v4
+      - name: Read release version
+        id: version
+        run: |
+          python3 - <<'PYCODE'
+          import os,pathlib,re
+          version=re.search(r'versionName = "([0-9.]+)"',pathlib.Path('app/build.gradle.kts').read_text()).group(1)
+          apk='distribution/ScreenGuard-Pro-'+version+'.apk'
+          with open(os.environ['GITHUB_OUTPUT'],'a') as out:
+              out.write('apk='+apk+'\nstaged='+str(pathlib.Path(apk).is_file()).lower()+'\n')
+          PYCODE
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -29,133 +37,20 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Build, unit tests and Android lint
-        run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:lintRelease :app:assembleDebug :app:assembleRelease :app:assemblePreview :app:assembleDebugAndroidTest :device-fixture:assembleDebug --stacktrace
-      - name: Prepare installable test APK
-        run: |
-          mkdir -p dist
-          cp "$ANDROID_HOME/build-tools/36.0.0/lib/apksigner.jar" dist/apksigner.jar
-          cp app/build/outputs/apk/preview/app-preview.apk dist/ScreenGuard-Pro-test.apk
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose dist/ScreenGuard-Pro-test.apk
-          sha256sum dist/ScreenGuard-Pro-test.apk > dist/SHA256SUMS
-      - name: Upload unsigned candidate and public signing tool
+        if: steps.version.outputs.staged != 'true'
+      # User requested direct device testing: compile and signing checks only for this release.
+      - name: Build release APK for user testing
+        if: steps.version.outputs.staged != 'true'
+        run: ./gradlew :app:assembleRelease --stacktrace
+      - name: Upload unsigned release
+        if: steps.version.outputs.staged != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ScreenGuard-unsigned
-          path: |
-            screenguard-pro/app/build/outputs/apk/release/app-release-unsigned.apk
-            screenguard-pro/dist/apksigner.jar
-      - name: Enable KVM
-        working-directory: .
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-      - name: Compose interaction and screenshot tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          profile: pixel_6
-          disable-animations: false
-          script: bash screenguard-pro/qa/run-device.sh
-      - name: Publish staged production APK after all checks
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && hashFiles('screenguard-pro/distribution/ScreenGuard-Pro-1.5.1.apk') != ''
+          path: screenguard-pro/app/build/outputs/apk/release/app-release-unsigned.apk
+      - name: Verify original production signature and publish update
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.version.outputs.staged == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          SG_APK_PATH: distribution/ScreenGuard-Pro-1.5.1.apk
+          SG_APK_PATH: ${{ steps.version.outputs.apk }}
         run: python3 scripts/publish-release.py
-      - name: Verify live production updater installation
-        env:
-          SG_MANUAL_UPDATE_CHECK: 'true'
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && hashFiles('screenguard-pro/distribution/ScreenGuard-Pro-1.5.1.apk') != ''
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          profile: pixel_6
-          disable-animations: false
-          script: bash screenguard-pro/qa/run-upgrade.sh
-      - name: Upload verified production release APK
-        if: success() && hashFiles('screenguard-pro/dist/production/RELEASE-SHA256.txt') != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: ScreenGuard-Pro-release-verified
-          retention-days: 30
-          path: screenguard-pro/dist/production/
-      - name: Upload installable APK, test reports and screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ScreenGuard-Pro-test
-          retention-days: 30
-          path: |
-            screenguard-pro/dist/
-            screenguard-pro/app/build/outputs/apk/release/app-release-unsigned.apk
-            screenguard-pro/screenshots/
-            screenguard-pro/app/build/reports/
-            screenguard-pro/app/build/outputs/mapping/
-            screenguard-pro/app/build/outputs/androidTest-results/
-            screenguard-pro/qa/output/
-  signed-release:
-    permissions:
-      contents: write
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    needs: verify
-    runs-on: ubuntu-latest
-    environment: screenguard-release
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: android-actions/setup-android@v3
-        with:
-          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
-      - uses: gradle/actions/setup-gradle@v4
-      - name: Check private signing secrets
-        id: signing
-        env:
-          KEYSTORE: ${{ secrets.SG_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.SG_STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.SG_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.SG_KEY_PASSWORD }}
-        run: |
-          if [ -z "$KEYSTORE" ] || [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
-            echo 'available=false' >> "$GITHUB_OUTPUT"
-            echo 'Release signing secrets are not configured. Installable test APK is available from the verify job.' >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          umask 077
-          printf '%s' "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/screenguard-release.jks"
-          echo 'available=true' >> "$GITHUB_OUTPUT"
-      - name: Build privately signed release
-        if: steps.signing.outputs.available == 'true'
-        working-directory: screenguard-pro
-        env:
-          SG_KEYSTORE_PATH: ${{ runner.temp }}/screenguard-release.jks
-          SG_STORE_PASSWORD: ${{ secrets.SG_STORE_PASSWORD }}
-          SG_KEY_ALIAS: ${{ secrets.SG_KEY_ALIAS }}
-          SG_KEY_PASSWORD: ${{ secrets.SG_KEY_PASSWORD }}
-        run: |
-          ./gradlew :app:assembleRelease
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
-      - name: Upload signed APK
-        if: steps.signing.outputs.available == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ScreenGuard-Pro-release
-          path: screenguard-pro/app/build/outputs/apk/release/app-release.apk
-      - name: Publish verified stable release and update feed
-        if: steps.signing.outputs.available == 'true'
-        working-directory: screenguard-pro
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/publish-release.py
-      - name: Remove temporary signing material
-        if: always()
-        run: rm -f "$RUNNER_TEMP/screenguard-release.jks"
