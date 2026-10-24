@@ -48,7 +48,7 @@ jobs:
           raw=p.read_bytes()
           import base64, gzip, re
           for _ in range(3):
-              candidate=re.sub(rb'\\s+',b'',raw.strip().strip(b'"'))
+              candidate=re.sub(rb'\s+',b'',raw.strip().strip(b'"'))
               try:
                   decoded=base64.b64decode(candidate,validate=True)
               except Exception:
@@ -56,7 +56,7 @@ jobs:
               if len(decoded)<64 or decoded==raw: break
               raw=decoded
               p.write_bytes(raw)
-          if raw.startswith(b'\\x1f\\x8b'):
+          if raw.startswith(b'\x1f\x8b'):
               raw=gzip.decompress(raw)
               p.write_bytes(raw)
           if zipfile.is_zipfile(p):
