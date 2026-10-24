@@ -1,3 +1,5 @@
+> Catatan rancangan awal. Galeri/pemutar dan pembuka telah diganti pada revisi pengalaman; lihat [EXPERIENCE-REDESIGN.md](EXPERIENCE-REDESIGN.md) untuk desain yang diterbitkan sekarang.
+
 # Kalimantan: Di balik asap — art direction
 
 ## Brief and research decision

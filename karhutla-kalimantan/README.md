@@ -13,6 +13,7 @@ npm test
 npm run build
 npx playwright install chromium
 npm run test:browser
+npm run test:experience
 ```
 
 Hasil static build: `dist/`. Tidak memerlukan backend, API key, atau paket berbayar.
@@ -38,14 +39,18 @@ Astro static HTML + TypeScript; CSS orisinal; SVG choropleth geometri nyata; sat
 
 - [Riset lingkungan](docs/RESEARCH.md)
 - [Referensi desain (10 utama)](docs/DESIGN-REFERENCES.md)
-- [Art direction](docs/DESIGN.md)
+- [Revisi pengalaman visual & profil Wynn](docs/EXPERIENCE-REDESIGN.md)
+- [Audit terbaru & screenshot](docs/QA.md)
+- [Art direction awal](docs/DESIGN.md)
 - [Audit isi](docs/CONTENT-QA.md)
 - [Batas wilayah & sumber lisensi](docs/boundary-metadata.json)
 
-Kredit media dan metode tersedia bagi pembaca di `/sumber/`. Data historis 2019–2023; bukan kondisi terkini. Gambar bukan generatif. Penampang gambut adalah ilustrasi edukatif tidak berskala, bukan alat prediksi.
+Kredit media dan metode tersedia bagi pembaca di `/sumber/`. Fokus laporan Kemenhut Oktober 2026; cuplikan sampai 23 Oktober 21.00 WIB, bukan feed langsung. Data luas historis 2019–2023 tersedia sebagai konteks terpisah. Citra dokumenter bukan generatif. Avatar profil dipilih dan disediakan Wynn. Penampang gambut adalah ilustrasi edukatif tidak berskala, bukan alat prediksi.
 
 ## Hak pihak ketiga
 
 Lisensi kode repositori tidak menghapus hak media. Citra NASA/USGS dan NASA SVS: pemakaian informasi/edukasi sesuai pedoman NASA, dengan kredit, tanpa endorsement. Foto Sungai Sebangau Mankdhay rahman: CC BY-SA 4.0 (diperkecil/dikompresi, tampilan dapat dipotong; adaptasi foto dibagikan di bawah lisensi sama). geoBoundaries CC BY 4.0; sumber geometri OpenStreetMap/Wambacher ODbL 1.0; geometri turunan dibagikan di bawah ODbL. Font Manrope dan Newsreader SIL OFL; teks lisensi di `docs/licenses/`.
 
-`test:browser` menguji layout 320–1440px, keyboard/menu, 25 kombinasi data, arsip foto/video, WebGL, reduced motion, fallback tanpa JavaScript dan audit axe. Hasil dan screenshot di `test-results/` (tidak dikomit). Untuk memakai Chromium sistem: `BROWSER_EXECUTABLE_PATH=/path/to/chromium npm run test:browser`. Tes mobile adalah emulasi viewport/touch, bukan pengukuran di HP fisik.
+`test:browser` menguji layout 320–1440px, keyboard/menu, 25 kombinasi data, grafik kronologi, profil/avatar, motion teks/kontur, WebGL, reduced motion, fallback tanpa JavaScript dan audit axe. Hasil dan screenshot di `test-results/` (tidak dikomit). Untuk memakai Chromium sistem: `BROWSER_EXECUTABLE_PATH=/path/to/chromium npm run test:browser`. Tes mobile adalah emulasi viewport/touch, bukan pengukuran di HP fisik.
+
+`test:experience` memeriksa perubahan transform kontur saat gulir, fallback ketika WebGL sengaja dimatikan, serta reduced motion. Galeri arsip/pemutar telah diganti profil Wynn; bibliografi dan kredit media yang masih digunakan tetap tersedia. Runtime produksi tetap gratis dan mandiri; studi Spline tidak menjadi dependensi frontend.
