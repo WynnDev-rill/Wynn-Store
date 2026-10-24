@@ -21,9 +21,8 @@ import androidx.compose.ui.unit.dp
 
 /** Persistent, safe-area-aware dock. Active item expands without moving its tap region. */
 @Composable fun FloatingDock(page: Page, navigate: (Page) -> Unit) {
-    val tabs = listOf(Triple(Page.HOME, "Beranda", Icons.Outlined.Home),
-        Triple(Page.FREEZE, "Bekukan", Icons.Outlined.AcUnit),
-        Triple(Page.NETWORK, "Jaringan", Icons.Outlined.Wifi),
+    val tabs = listOf(Triple(Page.FREEZE, "Bekukan", Icons.Outlined.AcUnit),
+        Triple(Page.HOME, "Aktivitas", Icons.Outlined.BarChart),
         Triple(Page.SETTINGS, "Pengaturan", Icons.Outlined.Settings))
     val active = if (page == Page.USAGE || page == Page.APP_STATS) Page.HOME else page
     val largeText = LocalDensity.current.fontScale > 1.3f

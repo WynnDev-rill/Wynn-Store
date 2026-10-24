@@ -25,14 +25,15 @@ adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 python3 - <<'PY'
 import urllib.request,json,time,pathlib
 url='https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/screenguard-pro/updates/stable.json'
-minimum=5 if pathlib.Path('distribution/ScreenGuard-Pro-1.4.0.apk').is_file() else 4
+import re
+minimum=int(re.search(r'versionCode = (\d+)',pathlib.Path('app/build.gradle.kts').read_text()).group(1))
 for attempt in range(24):
     with urllib.request.urlopen(urllib.request.Request(url,headers={'Cache-Control':'no-cache'}),timeout=20) as r: feed=json.load(r)
     if feed['versionCode']>=minimum: break
     time.sleep(10)
 else: raise SystemExit('Live stable feed did not activate candidate')
 pathlib.Path('qa/output/upgrade-feed.json').write_text(json.dumps(feed))
-previous='1.3.0' if feed['versionCode']>=5 else '1.2.0'
+previous='1.4.0' if feed['versionCode']>=6 else '1.3.0'
 pathlib.Path('qa/output/upgrade-baseline.txt').write_text(previous)
 print('Live feed active:',feed['versionName'],feed['sha256'])
 PY

@@ -8,6 +8,7 @@ import id.wynn.screenguard.GuardApplication
 import id.wynn.screenguard.data.*
 import id.wynn.screenguard.domain.*
 import id.wynn.screenguard.service.GuardMonitorService
+import id.wynn.screenguard.privilege.ShizukuStatus
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.time.ZonedDateTime
@@ -108,7 +109,7 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
     fun grantUsageThroughShizuku() = secure { work {
         graph.gateway.grantOwnUsageAccess()
         check(graph.usage.hasAccess()) { "Perangkat belum mengizinkan akses. Gunakan Info aplikasi → Izinkan setelan terbatas, lalu coba kembali." }
-        message.value = "Akses penggunaan aktif. Statistik dan batas harian siap digunakan."
+        message.value = "Akses penggunaan aktif. Statistik siap digunakan."
     } }
     fun setNetwork(app: InstalledApp, blocked: Boolean) = secure { work {
         check(!app.protected && !app.sharedUid) { "Aplikasi ini dilindungi atau memakai UID bersama" }
@@ -284,6 +285,41 @@ class GuardViewModel(application: Application) : AndroidViewModel(application) {
         check(actual?.enabled == true && !actual.suspended) { state.value.rules[pkg]?.lastError ?: "Android belum mengaktifkan aplikasi" }
         if (state.value.needsMonitoring) check(GuardMonitorService.start(graph)) { "Layanan pemantauan gagal dijalankan" }
         launch(pkg)
+    }
+    fun addManagedApps(apps: List<InstalledApp>) = work {
+        check(status.value == ShizukuStatus.READY) { "Hubungkan Shizuku" }
+        val eligible = apps.filter { FreezeCatalog.canAdd(it, state.value.rules[it.packageName]) }
+        check(eligible.isNotEmpty()) { "Tidak ada aplikasi yang dapat ditambahkan" }
+        graph.store.update { s -> s.copy(rules = s.rules + eligible.associate { app ->
+            app.packageName to (s.rules[app.packageName] ?: AppRule(app.packageName)).copy(managedFreeze = true,
+                freeze = FreezeMode.DISABLE, gate = null, overrideUntil = 0, lastError = null)
+        }) }
+        reconcile()
+    }
+    fun setManualFreeze(app: InstalledApp, frozen: Boolean, done: () -> Unit = {}) = work {
+        check(status.value == ShizukuStatus.READY) { "Hubungkan Shizuku" }
+        check(!app.protected && state.value.rules[app.packageName]?.managedFreeze == true) { "Aplikasi tidak dikelola" }
+        graph.store.rule(app.packageName) { it.copy(freeze = if (frozen) FreezeMode.DISABLE else FreezeMode.NONE,
+            gate = null, overrideUntil = 0, sessionUntilElapsed = 0) }
+        reconcile()
+        val actual = withContext(Dispatchers.IO) { graph.catalog.managed(setOf(app.packageName)).firstOrNull() }
+        check(actual != null && if (frozen) !actual.enabled else actual.enabled && !actual.suspended) {
+            state.value.rules[app.packageName]?.lastError ?: "Status aplikasi belum berubah"
+        }
+        done()
+    }
+    fun freezeManagedApps() = work {
+        check(status.value == ShizukuStatus.READY) { "Hubungkan Shizuku" }
+        graph.store.update { s -> s.copy(rules = s.rules.mapValues { (_, r) ->
+            if (r.managedFreeze) r.copy(freeze = FreezeMode.DISABLE, gate = null, overrideUntil = 0) else r
+        }) }
+        reconcile()
+    }
+    fun removeManagedApp(app: InstalledApp) = work {
+        check(status.value == ShizukuStatus.READY) { "Hubungkan Shizuku" }
+        graph.store.rule(app.packageName) { it.copy(managedFreeze = false, freeze = FreezeMode.NONE,
+            gate = null, overrideUntil = 0, sessionUntilElapsed = 0) }
+        reconcile()
     }
     fun sessionOpen(rule: AppRule): Boolean = AccessSession.isOpen(rule, System.currentTimeMillis(), SystemClock.elapsedRealtime(), graph.usage.bootCount())
 }

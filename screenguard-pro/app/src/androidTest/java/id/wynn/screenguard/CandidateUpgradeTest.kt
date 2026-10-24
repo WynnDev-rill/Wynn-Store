@@ -49,19 +49,17 @@ class CandidateUpgradeTest {
         open()
         if(!ui().hasObject(By.pkg(pkg).desc("Pengaturan")))find("Mulai ScreenGuard").click()
         openSettings()
-        find("Target waktu layar").click()
-        val input=checkNotNull(ui().wait(Until.findObject(By.pkg(pkg).clazz("android.widget.EditText")),10000))
-        input.text="347"
-        find("Simpan").click()
-        assertTrue(ui().wait(Until.hasObject(By.pkg(pkg).text("5j 47m")),10000))
+        find("Tema Tampilan").click()
+        assertTrue(ui().wait(Until.hasObject(By.pkg(pkg).text("Gelap")),10000))
     }
     @Test fun candidateRetainsOnboardingAndSavedGoal() {
         assumeTrue(InstrumentationRegistry.getArguments().getString("candidate")=="verify")
         open()
         openSettings()
-        find("Target waktu layar")
-        assertTrue("Saved private settings did not survive",ui().hasObject(By.pkg(pkg).text("5j 47m")))
+        find("Tema Tampilan")
+        assertTrue("Saved theme did not survive",ui().hasObject(By.pkg(pkg).text("Gelap")))
+        assertFalse(ui().hasObject(By.pkg(pkg).text("Target waktu layar")))
         val context=InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("1.4.0",context.packageManager.getPackageInfo(pkg,0).versionName)
+        assertEquals(BuildConfig.VERSION_NAME.substringBefore("-"),context.packageManager.getPackageInfo(pkg,0).versionName)
     }
 }
