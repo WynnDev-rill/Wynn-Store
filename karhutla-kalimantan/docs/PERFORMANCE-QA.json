@@ -1,0 +1,87 @@
+{
+  "lcpMs": 1480,
+  "cls": 0.012191902542821912,
+  "resources": [
+    {
+      "name": "borneo-smoke-2023-mobile.webp",
+      "transferSize": 106078,
+      "decodedBodySize": 105778,
+      "duration": 1835.7000000001863
+    },
+    {
+      "name": "SiteLayout.BXubVp-0.css",
+      "transferSize": 39486,
+      "decodedBodySize": 39186,
+      "duration": 754.3999999999069
+    },
+    {
+      "name": "manrope-latin-wght-normal.woff2",
+      "transferSize": 25136,
+      "decodedBodySize": 24836,
+      "duration": 1151.1999999997206
+    },
+    {
+      "name": "newsreader-latin-wght-normal.woff2",
+      "transferSize": 58384,
+      "decodedBodySize": 58084,
+      "duration": 2005.1000000000931
+    },
+    {
+      "name": "newsreader-latin-wght-italic.woff2",
+      "transferSize": 64820,
+      "decodedBodySize": 64520,
+      "duration": 2672.2999999998137
+    },
+    {
+      "name": "banjarbaru-2023-thumb.webp",
+      "transferSize": 115566,
+      "decodedBodySize": 115266,
+      "duration": 2578.600000000093
+    },
+    {
+      "name": "banjarbaru-2022-thumb.webp",
+      "transferSize": 100276,
+      "decodedBodySize": 99976,
+      "duration": 2495.100000000093
+    },
+    {
+      "name": "DataMap.astro_astro_type_script_index_0_lang.BpwdVvrY.js",
+      "transferSize": 3780,
+      "decodedBodySize": 3480,
+      "duration": 261.39999999990687
+    },
+    {
+      "name": "index.astro_astro_type_script_index_0_lang.Bpq2GF6y.js",
+      "transferSize": 9615,
+      "decodedBodySize": 9315,
+      "duration": 370.10000000009313
+    },
+    {
+      "name": "SiteLayout.astro_astro_type_script_index_0_lang.B1gOi8Q9.js",
+      "transferSize": 327,
+      "decodedBodySize": 27,
+      "duration": 187.39999999990687
+    },
+    {
+      "name": "site.BUbx4dpW.js",
+      "transferSize": 1923,
+      "decodedBodySize": 1623,
+      "duration": 189.29999999981374
+    }
+  ],
+  "navigation": [
+    {
+      "domContentLoadedMs": 3780.4000000003725,
+      "loadMs": 3847.4000000003725
+    }
+  ],
+  "conditions": {
+    "viewport": "390x844",
+    "cpuSlowdown": 4,
+    "downloadBytesPerSecond": 200000,
+    "latencyMs": 150,
+    "environment": "local lab, Chromium 133, not a physical Android device; local server uncompressed"
+  },
+  "initialThreeLoaded": false,
+  "initialVideoLoaded": false
+}

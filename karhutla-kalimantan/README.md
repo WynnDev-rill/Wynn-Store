@@ -23,7 +23,7 @@ Hasil static build: `dist/`. Tidak memerlukan backend, API key, atau paket berba
 - Repository: `WynnDev-rill/Wynn-Store`
 - Production branch: `main`
 - Root: `karhutla-kalimantan`
-- Build: `npm run build`
+- Build: `npm test && npm run build`
 - Output (relatif root): `dist`
 - Node: `24` (`.node-version`)
 - Build watch paths: `karhutla-kalimantan/*`
