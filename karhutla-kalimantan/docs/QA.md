@@ -6,7 +6,7 @@
 - **8 pemeriksaan pengalaman lulus**: kontur benar-benar berubah saat gulir, fallback WebGL, reduced motion, tilt keyboard/Escape dan orientasi sensor otomatis simulasi, tiga kondisi hutan/mode jelajah, audio start/stop, dan profil mobile berdampingan.
 - **4 tes data lulus**. Build Astro/TypeScript dan audit aset/CSP lulus, nol error tipe/warning/hint; peringatan ukuran bundle 3D lazy tetap ada.
 - **Nol error JavaScript** dalam suite utama; **nol temuan otomatis axe** pada sumber serta delapan keadaan/bagian beranda. Tidak berarti sertifikasi aksesibilitas lengkap.
-- **LCP 2216 ms, CLS 0.01225** pada satu pengukuran lab Chromium133, viewport390×844, CPU4×, download200.000byte/detik, latensi150ms; bukan perangkat Android fisik. Three.js tidak dimuat di layar awal.
+- **LCP 2324 ms, CLS 0,08499** pada satu pengukuran lab Chromium133, viewport390×844, CPU4×, download200.000byte/detik, latensi150ms; bukan perangkat Android fisik. Hero 3D dimuat ketika terlihat; renderer gambut dan hutan tetap ditunda sampai babnya.
 
 ## Pemeriksaan visual dan pembanding
 
@@ -33,3 +33,7 @@ Hasil mentah: [BROWSER-QA.json](BROWSER-QA.json), [EXPERIENCE-QA.json](EXPERIENC
 | Hutan mobile | Wynn berdampingan |
 |---|---|
 | ![Hutan](screenshots/immersive-mobile-fire.webp) | ![Profil](screenshots/immersive-mobile-wynn.webp) |
+
+## Revisi lima adegan
+
+17 skenario browser dan 11 pemeriksaan tambahan adegan/fallback lulus; 4 tes data lulus. Nol error JavaScript dan nol temuan otomatis axe di sembilan halaman/keadaan. Build TypeScript tanpa error/hint, peringatan bundle Three lazy tetap ada. Loading lab terbaru LCP2324ms/CLS0,08499, kondisi sama seperti di atas. Ini bukan pengujian HP fisik. Lihat [SPATIAL-REVIEW.md](SPATIAL-REVIEW.md) dan [SPATIAL-QA.json](SPATIAL-QA.json).

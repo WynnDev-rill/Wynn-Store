@@ -1,0 +1,15 @@
+---
+import '../styles/spatial.css';
+interface Props{kind:'hero'|'signal'|'strata'|'map'|'impact'}
+const {kind}=Astro.props;
+const titles={hero:'Tanah menyimpan jejak.',signal:'Dari orbit ke bentang.',strata:'Buka yang tersembunyi.',map:'Lihat bentangnya.',impact:'Asap tidak tinggal di tempat.'};
+---
+<figure class:list={['spatial-scene',`spatial-${kind}`]} data-spatial={kind}>
+<div class="spatial-view" data-spatial-view tabindex="0" role="img" aria-label={`${titles[kind]} Ilustrasi interaktif; geser atau gunakan panah untuk melihat.`}><div class="spatial-fallback" aria-hidden="true"><i></i><i></i><i></i></div><span class="spatial-index" aria-hidden="true">BENTANG / {kind==='map'?'WILAYAH':kind==='impact'?'UDARA':'MATERIAL'}</span></div>
+<figcaption><span>{titles[kind]}</span><span>Geser untuk melihat ↔</span></figcaption>
+<div class="spatial-controls"><button data-spatial-action aria-pressed="false">{kind==='map'?'Putar bentang':kind==='signal'?'Lihat pemindaian':kind==='impact'?'Ikuti udara':kind==='strata'?'Pisahkan lapisan':'Lihat sisi lain'}</button><button data-spatial-reset>Atur ulang ↺</button></div>
+<p class="spatial-note">{kind==='map'?'Batas provinsi asli; tinggi relief seragam, bukan jumlah hotspot atau elevasi.':'Ilustrasi konseptual · bukan rekonstruksi kejadian · tidak berskala'}</p>
+</figure>
+<script>
+document.querySelectorAll<HTMLElement>('[data-spatial]').forEach(root=>{const observer=new IntersectionObserver(async entries=>{if(!entries.some(e=>e.isIntersecting))return;observer.disconnect();try{const{mountSpatial}=await import('../scripts/spatial-scenes');mountSpatial(root);}catch{root.dataset.ready='false';}},{rootMargin:'0px',threshold:.05});observer.observe(root);});
+</script>

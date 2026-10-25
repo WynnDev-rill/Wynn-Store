@@ -13,7 +13,8 @@
     "check": "astro check",
     "test": "node --test tests/*.test.mjs",
     "test:browser": "node scripts/browser-qa.cjs",
-    "test:experience": "node scripts/experience-qa.cjs"
+    "test:experience": "node scripts/experience-qa.cjs",
+    "test:spatial": "node scripts/spatial-qa.cjs"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.3.0",

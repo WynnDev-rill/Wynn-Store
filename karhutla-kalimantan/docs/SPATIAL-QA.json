@@ -1,0 +1,51 @@
+{
+  "checks": [
+    {
+      "name": "hero render 390",
+      "pass": true
+    },
+    {
+      "name": "signal render 390",
+      "pass": true
+    },
+    {
+      "name": "strata render 390",
+      "pass": true
+    },
+    {
+      "name": "map render 390",
+      "pass": true
+    },
+    {
+      "name": "impact render 390",
+      "pass": true
+    },
+    {
+      "name": "hero render 1440",
+      "pass": true
+    },
+    {
+      "name": "signal render 1440",
+      "pass": true
+    },
+    {
+      "name": "strata render 1440",
+      "pass": true
+    },
+    {
+      "name": "map render 1440",
+      "pass": true
+    },
+    {
+      "name": "impact render 1440",
+      "pass": true
+    },
+    {
+      "name": "Five WebGL fallbacks visible",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "axe": [],
+  "screenshots": []
+}
