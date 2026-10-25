@@ -4,7 +4,10 @@ import '../styles/experience.css';
 import '../styles/season-experience.css';
 import '../styles/portrait.css';
 import '../styles/immersive.css';
+import '../styles/weather-edition.css';
 import Icon from './Icon.astro';
+import manropeFont from '@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2?url';
+import newsreaderFont from '@fontsource-variable/newsreader/files/newsreader-latin-wght-normal.woff2?url';
 interface Props { title?: string; description?: string; home?:boolean; }
 const {title='Kalimantan: Di balik asap',description='Dokumenter interaktif tentang kebakaran hutan dan lahan di Kalimantan. Januari–Oktober 2026: jejak kejadian, laporan terbaru, deteksi hotspot, mekanisme gambut, dampak dan operasi pengendalian.',home=false}=Astro.props;
 const chapters=[['ruang','Masuk ke ruang hutan'],['cerita','Bentang yang berubah'],['musim','Jejak musim api 2026'],['gambut','Di bawah permukaan'],['peta','Peta kebakaran'],['dampak','Yang ikut hilang'],['pulih','Merawat kembali'],['wynn','Tentang Wynn']];
@@ -16,6 +19,7 @@ const chapters=[['ruang','Masuk ke ruang hutan'],['cerita','Bentang yang berubah
 <title>{title}</title><meta name="description" content={description}/>
 <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)}/>
 <meta property="og:title" content={title}/><meta property="og:description" content={description}/><meta property="og:type" content="website"/><meta property="og:locale" content="id_ID"/><meta property="og:image" content={new URL('/media/social.jpg',Astro.site)}/><meta name="twitter:card" content="summary_large_image"/>
+<link rel="preload" href={manropeFont} as="font" type="font/woff2" crossorigin="anonymous"/><link rel="preload" href={newsreaderFont} as="font" type="font/woff2" crossorigin="anonymous"/>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
 {home && <link rel="preload" as="image" href="/media/borneo-smoke-2023.webp" imagesrcset="/media/borneo-smoke-2023-mobile.webp 900w, /media/borneo-smoke-2023.webp 1920w" imagesizes="100vw"/>}
 </head>

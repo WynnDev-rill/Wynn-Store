@@ -1,0 +1,43 @@
+{
+  "checks": [
+    {
+      "name": "Manual day",
+      "pass": true
+    },
+    {
+      "name": "Manual night",
+      "pass": true
+    },
+    {
+      "name": "Manual rain",
+      "pass": true
+    },
+    {
+      "name": "Weather audio starts and stops",
+      "pass": true
+    },
+    {
+      "name": "Weather motion switch stops animation",
+      "pass": true
+    },
+    {
+      "name": "Manual weather stays pinned across chapters",
+      "pass": true
+    },
+    {
+      "name": "Automatic weather follows chapters",
+      "pass": true
+    },
+    {
+      "name": "Mobile screenshots 390px",
+      "pass": true
+    },
+    {
+      "name": "Reduced motion static weather",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "axe": [],
+  "screenshots": []
+}

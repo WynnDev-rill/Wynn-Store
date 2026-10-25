@@ -1,0 +1,18 @@
+[
+  {
+    "mode": "day",
+    "violations": []
+  },
+  {
+    "mode": "night",
+    "violations": []
+  },
+  {
+    "mode": "rain",
+    "violations": []
+  },
+  {
+    "mode": "sources",
+    "violations": []
+  }
+]

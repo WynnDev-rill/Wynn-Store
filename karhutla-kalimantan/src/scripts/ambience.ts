@@ -13,6 +13,9 @@ if (soundControl) {
   let wanted = false;
   let revision = 0;
   let disposed = false;
+  let rainGain:GainNode|undefined;
+  const syncWeatherAudio=()=>{if(context&&rainGain)rainGain.gain.setTargetAtTime(document.body.dataset.weather==='rain'?.065:0,context.currentTime,.8);};
+  document.addEventListener('documentary-weather',syncWeatherAudio);
   const sources = new Set<AudioBufferSourceNode>();
   const nodes = new Set<AudioNode>();
   const shouldPlay = () => wanted && !document.hidden && !disposed;
@@ -70,6 +73,7 @@ if (soundControl) {
     const gust = track(context.createOscillator()); gust.type = 'sine'; gust.frequency.value = 0.085;
     const gustDepth = track(context.createGain()); gustDepth.gain.value = 0.048;
     gust.connect(gustDepth); gustDepth.connect(windGain.gain);
+    const rainBuffer=context.createBuffer(1,context.sampleRate*3,context.sampleRate);const rainSamples=rainBuffer.getChannelData(0);for(let i=0;i<rainSamples.length;i++)rainSamples[i]=(Math.random()*2-1)*.4;const rain=track(context.createBufferSource());sources.add(rain);rain.buffer=rainBuffer;rain.loop=true;const rainFilter=track(context.createBiquadFilter());rainFilter.type='lowpass';rainFilter.frequency.value=2400;rainGain=track(context.createGain());rainGain.gain.value=0;rain.connect(rainFilter);rainFilter.connect(rainGain);rainGain.connect(master);rain.start();syncWeatherAudio();
     wind.start(); gust.start();
 
     crackleBuffer = context.createBuffer(1, Math.ceil(context.sampleRate * 0.18), context.sampleRate);
@@ -83,6 +87,7 @@ if (soundControl) {
   };
   const scheduleCrackle = () => {
     if (!shouldPlay() || !context || context.state !== 'running' || !master || !crackleBuffer) return;
+    if(document.body.dataset.weather!=='night'){crackleTimer=setTimeout(scheduleCrackle,650);return;}
     const at = context.currentTime + 0.015;
     const pop = context.createBufferSource(); sources.add(pop);
     const filter = context.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 1450 + Math.random() * 950; filter.Q.value = 0.25;

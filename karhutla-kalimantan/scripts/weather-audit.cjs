@@ -1,0 +1,15 @@
+const {chromium}=require('playwright');const AxeBuilder=require('@axe-core/playwright').default;const fs=require('fs'),http=require('http'),path=require('path'),assert=require('assert/strict');
+const root=path.resolve(process.cwd(),'dist'),out=path.resolve(process.cwd(),'test-results');fs.mkdirSync(out,{recursive:true});
+const report={checks:[],errors:[],axe:[],screenshots:[]};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{
+const server=http.createServer((req,res)=>{let f=path.join(root,decodeURIComponent(req.url.split('?')[0]));if(f.endsWith('/'))f+='index.html';const types={'.html':'text/html','.css':'text/css','.js':'application/javascript','.webp':'image/webp','.woff2':'font/woff2','.svg':'image/svg+xml','.json':'application/json','.vtt':'text/vtt','.webm':'video/webm'};if(!fs.existsSync(f)){res.statusCode=404;res.end('404');return}const policy=fs.readFileSync(path.join(root,'_headers'),'utf8').split('\n').find(l=>l.trim().startsWith('Content-Security-Policy:')).trim().replace('Content-Security-Policy: ','');res.setHeader('Content-Security-Policy',policy);res.setHeader('Content-Type',types[path.extname(f)]||'application/octet-stream');res.setHeader('Content-Length',fs.statSync(f).size);if(req.method==='HEAD'){res.end();return}fs.createReadStream(f).pipe(res);});await new Promise(r=>server.listen(4322,'127.0.0.1',r));
+const browser=await chromium.launch({...(process.env.BROWSER_EXECUTABLE_PATH?{executablePath:process.env.BROWSER_EXECUTABLE_PATH}:{}),headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const context=await browser.newContext({viewport:{width:1440,height:1000}});const page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));await page.goto('http://127.0.0.1:4322/',{waitUntil:'networkidle'});
+
+
+
+
+await page.locator('[data-historical]>summary').click();await page.locator('.data-table-details summary').click();
+for(const mode of ['day','night','rain']){await page.locator('.weather-dock summary').click();await page.locator('[data-weather-choice="'+mode+'"]').click();await page.locator('.weather-dock summary').click();await sleep(500);const a=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();report.axe.push({mode,violations:a.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))});console.log(mode,JSON.stringify(a.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))));}
+await page.goto('http://127.0.0.1:4322/sumber/',{waitUntil:'networkidle'});const sourceResult=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();report.axe.push({mode:'sources',violations:sourceResult.violations.map(v=>({id:v.id}))});console.log('sources',sourceResult.violations.map(v=>v.id));fs.writeFileSync(out+'/weather-accessibility.json',JSON.stringify(report.axe,null,2));assert(report.axe.every(a=>a.violations.length===0));await browser.close();server.close();})().catch(e=>{console.error(e);process.exit(1)});

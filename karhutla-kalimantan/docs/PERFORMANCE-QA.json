@@ -1,94 +1,84 @@
 {
-  "lcpMs": 2324,
-  "cls": 0.08498830755385028,
+  "lcpMs": 2900,
+  "cls": 0.008249188459177144,
   "initialThreeLoaded": false,
-  "initialHeroLoaded": true,
+  "initialHeroLoaded": false,
   "initialVideoLoaded": false,
   "resources": [
     {
+      "name": "manrope-latin-wght-normal.DHIcAJRg.woff2",
+      "transferSize": 25136,
+      "duration": 823.5
+    },
+    {
+      "name": "newsreader-latin-wght-normal.CCVVNp6i.woff2",
+      "transferSize": 58384,
+      "duration": 1542.5
+    },
+    {
       "name": "borneo-smoke-2023-mobile.webp",
       "transferSize": 106078,
-      "duration": 1837.5999999998603
+      "duration": 2262.100000000559
     },
     {
-      "name": "SiteLayout.CaHWmPj1.css",
-      "transferSize": 106073,
-      "duration": 1828.6999999999534
+      "name": "SiteLayout.DYiSZSkK.css",
+      "transferSize": 123652,
+      "duration": 2433.7000000001863
     },
     {
-      "name": "index.DPi4Kc5c.css",
-      "transferSize": 9886,
-      "duration": 373.4000000001397
+      "name": "index.C5ChEEfh.css",
+      "transferSize": 4387,
+      "duration": 318.29999999981374
     },
     {
-      "name": "SpatialScene.astro_astro_type_script_index_0_lang.CbI1ZFmn.js",
-      "transferSize": 924,
-      "duration": 189.5
+      "name": "Weather.astro_astro_type_script_index_0_lang.BaiH31NY.js",
+      "transferSize": 4313,
+      "duration": 591.2999999998137
     },
     {
-      "name": "ForestWorld.astro_astro_type_script_index_0_lang.B4AxCzSv.js",
-      "transferSize": 1935,
-      "duration": 228.89999999990687
+      "name": "ForestWorld.astro_astro_type_script_index_0_lang.DI533KJe.js",
+      "transferSize": 1901,
+      "duration": 800.0999999996275
     },
     {
       "name": "preload-helper.DHhhL8Zf.js",
       "transferSize": 1965,
-      "duration": 216.10000000009313
+      "duration": 224.29999999981374
     },
     {
       "name": "manrope-latin-wght-normal.woff2",
       "transferSize": 25136,
-      "duration": 865.4000000001397
-    },
-    {
-      "name": "newsreader-latin-wght-italic.woff2",
-      "transferSize": 64820,
-      "duration": 1424.6999999999534
+      "duration": 881.3000000007451
     },
     {
       "name": "newsreader-latin-wght-normal.woff2",
       "transferSize": 58384,
-      "duration": 1363.6000000000931
+      "duration": 1388.2999999998137
+    },
+    {
+      "name": "newsreader-latin-wght-italic.woff2",
+      "transferSize": 64820,
+      "duration": 1448.0999999996275
     },
     {
       "name": "CurrentMap.astro_astro_type_script_index_0_lang.CI62VnCf.js",
       "transferSize": 1397,
-      "duration": 222.5
+      "duration": 226.59999999962747
     },
     {
       "name": "DataMap.astro_astro_type_script_index_0_lang.BpwdVvrY.js",
       "transferSize": 3780,
-      "duration": 170.60000000009313
+      "duration": 170.8999999994412
     },
     {
-      "name": "index.astro_astro_type_script_index_0_lang.D5ng140s.js",
-      "transferSize": 13000,
-      "duration": 329.69999999995343
+      "name": "index.astro_astro_type_script_index_0_lang.EjlRYetM.js",
+      "transferSize": 13580,
+      "duration": 241.79999999981374
     },
     {
       "name": "SiteLayout.astro_astro_type_script_index_0_lang.fv0F9fbN.js",
       "transferSize": 2138,
-      "duration": 177.9000000001397
-    },
-    {
-      "name": "spatial-scenes.C3mWxN4u.js",
-      "transferSize": 31954,
-      "duration": 668.5
-    },
-    {
-      "name": "BufferGeometryUtils.ClNaPluO.js",
-      "transferSize": 612404,
-      "duration": 3644.9000000001397
-    },
-    {
-      "name": "GLTFLoader.D3fuWyWX.js",
-      "transferSize": 44550,
-      "duration": 802.6000000000931
-    },
-    {
-      "name": "campfire-logs.glb",
-      "transferSize": 9584,
-      "duration": 202.69999999995343
+      "duration": 180.6000000005588
     }
   ],
   "conditions": {

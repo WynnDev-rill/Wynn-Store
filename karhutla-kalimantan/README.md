@@ -61,3 +61,7 @@ Lisensi kode repositori tidak menghapus hak media. Citra NASA/USGS dan NASA SVS:
 Bab Ruang menambahkan hutan Three.js dengan tiga keadaan, drag/panah/orientasi otomatis ketika tersedia, serta audio sintetis opsional. Wynn tampil berdampingan dengan kartu optik tanpa tombol sensor. Detail implementasi dan perbandingan premium: [docs/IMMERSIVE-REVIEW.md](docs/IMMERSIVE-REVIEW.md).
 
 Peningkatan lima adegan spasial: [docs/SPATIAL-REVIEW.md](docs/SPATIAL-REVIEW.md). Uji tambahan: npm run test:spatial.
+
+## Edisi aktif: cuaca dan suasana
+
+Lima panggung3D tambahan digantikan atmosfer viewport bersama: siang putih,malam biru gelap dan hujan. Hutan,gambut dan Wynn dipertahankan. [Audit edisi cuaca](docs/WEATHER-REVIEW.md). Jalankan npm run test:weather; suite spatial lama hanya arsip; gunakan test:weather dan test:accessibility.
