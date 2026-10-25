@@ -67,6 +67,8 @@ class WatchService : AccessibilityService() {
  private var zone=ZoneId.systemDefault()
  private var excluded=emptySet<String>()
  private var retryBudget=0
+ private var activityHint: String?=null
+ private var hasActivityHint=false
  private val resolveTask=Runnable { resolveForeground() }
  private fun unlocked()=!screenOffSignal && power.isInteractive && !keyguard.isKeyguardLocked
  private val receiver=object: BroadcastReceiver() {
@@ -177,6 +179,15 @@ class WatchService : AccessibilityService() {
  override fun onAccessibilityEvent(event: AccessibilityEvent?) {
   if(event==null || !::worker.isInitialized || closing) return
   if(event.eventType!=AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && event.eventType!=AccessibilityEvent.TYPE_WINDOWS_CHANGED) return
+  // Some OEMs expose a window before its accessibility root (or never expose that root).
+  // Activity transition metadata is sufficient to start the timer without waiting for text nodes.
+  if(event.eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+   val pkg=event.packageName?.toString()
+   val cls=event.className?.toString().orEmpty()
+   if(pkg!=null && (pkg in excluded || cls.endsWith("Activity") || cls.endsWith("Launcher"))) {
+    activityHint=pkg.takeUnless { it in excluded };hasActivityHint=true
+   }
+  }
   // Window-state transitions are immediate; structural churn gets one bounded reconciliation.
   main.removeCallbacks(resolveTask)
   retryBudget=2
@@ -201,8 +212,12 @@ class WatchService : AccessibilityService() {
    }
    needsRetry=observed.isEmpty() || observed.any { it.application && (it.focused || it.active) && it.pkg==null }
    if(applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) android.util.Log.d("IWatchYou-focus",observed.toString())
-   ForegroundPolicy.select(observed,excluded)
-  }.getOrNull()
+   val focused=observed.firstOrNull { it.focused && !it.keyboard && !it.overlay }
+   val resolved=ForegroundPolicy.select(observed,excluded)
+   if(focused!=null && (!focused.application || focused.pip)) resolved
+   else if(hasActivityHint && (needsRetry || focused?.pkg!=activityHint)) activityHint
+   else resolved
+  }.getOrElse { if(hasActivityHint)activityHint else null }
   if(on && needsRetry && retryBudget>0) { retryBudget--; main.removeCallbacks(resolveTask); main.postDelayed(resolveTask,100) }
   val elapsed=SystemClock.elapsedRealtime(); val wall=System.currentTimeMillis()
   worker.post {
@@ -212,6 +227,7 @@ class WatchService : AccessibilityService() {
    if(on) t.screenOn(elapsed) else t.screenOff(elapsed)
    val previous=t.snapshot(elapsed).foreground
    t.appChanged(selected,elapsed)
+   main.post { if(!closing && unlocked() && selected!=null) overlay.show(selected) else overlay.hide() }
    if(previous!=selected || wasOn!=on) persist(elapsed)
    if(wasOn!=on) { notification(elapsed); scheduleMaintenance() }
    main.post { if(!closing && unlocked() && selected!=null) overlay.show(selected) else overlay.hide() }
