@@ -217,7 +217,7 @@ class WatchService : AccessibilityService() {
    val resolved=ForegroundPolicy.select(observed,excluded)
    if(focused!=null && (!focused.application || focused.pip)) resolved
    else if(hasActivityHint && (needsRetry || (SystemClock.uptimeMillis()<hintUntil && focused?.pkg!=activityHint))) activityHint
-   else resolved
+   else resolved.also { activityHint=it;hasActivityHint=true }
   }.getOrElse { if(hasActivityHint)activityHint else null }
   if(on && needsRetry && retryBudget>0) { retryBudget--; main.removeCallbacks(resolveTask); main.postDelayed(resolveTask,100) }
   val elapsed=SystemClock.elapsedRealtime(); val wall=System.currentTimeMillis()

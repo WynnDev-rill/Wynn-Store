@@ -126,6 +126,8 @@ class DeviceTest {
   }
   try {
    repeat(3) {
+    device.pressHome()
+    SystemClock.sleep(150)
     shell("am start -a android.settings.SETTINGS")
     waitFor(20_000) { service.current().foreground=="com.android.settings" }
     val start=service.current().apps["com.android.settings"] ?: 0L
