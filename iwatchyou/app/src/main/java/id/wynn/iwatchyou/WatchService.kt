@@ -5,6 +5,8 @@ import android.app.*
 import android.content.*
 import android.content.res.Configuration
 import android.os.*
+import android.hardware.display.DisplayManager
+import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityWindowInfo
 import java.time.*
@@ -35,9 +37,30 @@ class WatchService : AccessibilityService() {
  private lateinit var overlay: OverlayController
  private val power by lazy { getSystemService(PowerManager::class.java) }
  private val keyguard by lazy { getSystemService(KeyguardManager::class.java) }
+ private val displays by lazy { getSystemService(DisplayManager::class.java) }
  private val notices by lazy { getSystemService(NotificationManager::class.java) }
  private var registered=false
+ private var displayInteractive=true
+ private val displayListener=object: DisplayManager.DisplayListener {
+  override fun onDisplayAdded(id: Int)=Unit
+  override fun onDisplayRemoved(id: Int)=Unit
+  override fun onDisplayChanged(id: Int) {
+   if(id!=Display.DEFAULT_DISPLAY || !::worker.isInitialized || closing)return
+   val on=displays.getDisplay(id)?.state==Display.STATE_ON && power.isInteractive
+   if(on==displayInteractive)return
+   displayInteractive=on;screenOffSignal=!on
+   val elapsed=SystemClock.elapsedRealtime();val wall=System.currentTimeMillis()
+   worker.post {
+    advanceDay(elapsed,wall)
+    val t=ledger ?: return@post
+    if(on && unlocked())t.screenOn(elapsed) else t.screenOff(elapsed)
+    persist(elapsed);notification(elapsed);scheduleMaintenance()
+    main.post { if(on) resolveForeground() else overlay.hide() }
+   }
+  }
+ }
  @Volatile private var closing=false
+ @Volatile private var screenOffSignal=false
  private var midnightWall=0L
  private var lastWall=0L
  private var lastElapsed=0L
@@ -45,9 +68,11 @@ class WatchService : AccessibilityService() {
  private var excluded=emptySet<String>()
  private var retryBudget=0
  private val resolveTask=Runnable { resolveForeground() }
- private fun unlocked()=power.isInteractive && !keyguard.isKeyguardLocked
+ private fun unlocked()=!screenOffSignal && power.isInteractive && !keyguard.isKeyguardLocked
  private val receiver=object: BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
+   if(intent.action==Intent.ACTION_SCREEN_OFF) screenOffSignal=true
+   if(intent.action==Intent.ACTION_SCREEN_ON || intent.action==Intent.ACTION_USER_PRESENT) screenOffSignal=false
    val elapsed=SystemClock.elapsedRealtime(); val wall=System.currentTimeMillis()
    val isOn=unlocked()
    worker.post {
@@ -84,6 +109,8 @@ class WatchService : AccessibilityService() {
   if(Build.VERSION.SDK_INT>=33) registerReceiver(receiver,filter,RECEIVER_NOT_EXPORTED)
   else { @Suppress("DEPRECATION") registerReceiver(receiver,filter) }
   registered=true
+  displayInteractive=displays.getDisplay(Display.DEFAULT_DISPLAY)?.state==Display.STATE_ON && power.isInteractive
+  displays.registerDisplayListener(displayListener,main)
   worker.post {
    store=HistoryStore(applicationContext); store.migrateLegacy(applicationContext)
    val elapsed=SystemClock.elapsedRealtime(); val wall=System.currentTimeMillis()
@@ -214,7 +241,7 @@ class WatchService : AccessibilityService() {
   closing=true; instance=null
   main.removeCallbacksAndMessages(null)
   if(::overlay.isInitialized) overlay.hide()
-  if(registered) unregisterReceiver(receiver)
+  if(registered) { unregisterReceiver(receiver);displays.unregisterDisplayListener(displayListener) }
   if(::worker.isInitialized) {
    worker.removeCallbacksAndMessages(null)
    worker.post {

@@ -49,7 +49,10 @@ class OverlayController(private val context: AccessibilityService, private val s
    contentDescription="Waktu aplikasi. Ketuk untuk membuka kunci posisi, lalu geser."
    setOnChronometerTickListener { text=WatchService.format(SystemClock.elapsedRealtime()-base) }
   }
-  val w=WindowManager.LayoutParams(dp(134),dp(44),WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+  val timerWidth=maxOf(dp(134),kotlin.math.ceil(timer.paint.measureText("00:00:00")).toInt()+dp(47))
+  val metrics=timer.paint.fontMetrics
+  val timerHeight=maxOf(dp(44),kotlin.math.ceil(metrics.bottom-metrics.top).toInt()+dp(16))
+  val w=WindowManager.LayoutParams(timerWidth,timerHeight,WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
    PixelFormat.TRANSLUCENT).apply {
     gravity=Gravity.TOP or Gravity.LEFT

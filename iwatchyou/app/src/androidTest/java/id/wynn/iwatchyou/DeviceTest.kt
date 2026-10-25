@@ -62,12 +62,27 @@ class DeviceTest {
   device.setOrientationLeft();SystemClock.sleep(600);device.setOrientationNatural();SystemClock.sleep(600)
   val restored=device.findObject(By.clazz("android.widget.Chronometer")).visibleBounds
   assertEquals(x,restored.left);assertEquals(y,restored.top)
+  // Repeated transitions exercise the event adapter as well as the pure ledger.
+  repeat(3) {
+   shell("am start -n id.wynn.iwatchyou/.MainActivity")
+   waitFor { WatchService.instance?.current()?.foreground==null }
+   val stopped=WatchService.instance!!.current().apps["com.android.settings"]!!
+   SystemClock.sleep(120)
+   assertEquals(stopped,WatchService.instance!!.current().apps["com.android.settings"])
+   shell("am start -a android.settings.SETTINGS")
+   waitFor { WatchService.instance?.current()?.foreground=="com.android.settings" }
+  }
   device.pressHome()
   waitFor { WatchService.instance?.current()?.foreground==null }
   val paused=WatchService.instance!!.current().apps["com.android.settings"]!!
   SystemClock.sleep(1100)
   assertEquals(paused,WatchService.instance!!.current().apps["com.android.settings"])
-  device.sleep();SystemClock.sleep(700)
+  device.sleep()
+  waitFor {
+   val off=!context.getSystemService(android.os.PowerManager::class.java).isInteractive
+   val notices=context.getSystemService(android.app.NotificationManager::class.java).activeNotifications
+   off && notices.any { !it.notification.extras.getBoolean(android.app.Notification.EXTRA_SHOW_CHRONOMETER) }
+  }
   val locked=WatchService.instance!!.current().screenMs
   SystemClock.sleep(1200);assertEquals(locked,WatchService.instance!!.current().screenMs)
   device.wakeUp();shell("wm dismiss-keyguard")
@@ -86,7 +101,9 @@ class DeviceTest {
   shell("am start -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.ProbeActivity")
   waitFor { WatchService.instance?.current()?.foreground=="id.wynn.iwatchyou.test" }
   SystemClock.sleep(700)
+  assertTrue(device.wait(Until.hasObject(By.text("PiP fixture")),8000))
   device.findObject(By.text("PiP fixture")).click()
+  waitFor { automation.windows.any { it.isInPictureInPictureMode } }
   shell("am start -a android.settings.SETTINGS")
   waitFor { WatchService.instance?.current()?.foreground=="com.android.settings" }
   val paused=WatchService.instance!!.current().apps["id.wynn.iwatchyou.test"]!!

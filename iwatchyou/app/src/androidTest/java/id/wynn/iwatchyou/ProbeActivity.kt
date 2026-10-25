@@ -11,6 +11,6 @@ class ProbeActivity: Activity() {
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
   if(intent.getBooleanExtra("finish",false)) { finish();return }
-  setContentView(Button(this).apply { text="PiP fixture";setOnClickListener { enterPictureInPictureMode(PictureInPictureParams.Builder().setAspectRatio(Rational(16,9)).build()) } })
+  setContentView(Button(this).apply { text="PiP fixture";isAllCaps=false;setOnClickListener { enterPictureInPictureMode(PictureInPictureParams.Builder().setAspectRatio(Rational(16,9)).build()) } })
  }
 }

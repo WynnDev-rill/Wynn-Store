@@ -58,7 +58,7 @@ object UpdateManager {
      val age=System.currentTimeMillis()-p.getLong("checked",0)
      var raw=if(!reportErrors && age in 0..21_600_000) p.getString("release",null) else null
      if(raw==null) {
-      val c=connection(FEED)
+      val c=connection(FEED+"?check="+System.currentTimeMillis())
       try { raw=c.inputStream.use { input -> val out=java.io.ByteArrayOutputStream(); val buffer=ByteArray(4096); while(true) { val n=input.read(buffer); if(n<0)break; require(out.size()+n<=65_536);out.write(buffer,0,n) };out.toString("UTF-8") } } finally { c.disconnect() }
       // Validate before caching; malformed feeds never become a silent "latest" response.
       parse(raw!!,context)
