@@ -185,7 +185,7 @@ class WatchService : AccessibilityService() {
   if(event.eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
    val pkg=event.packageName?.toString()
    val cls=event.className?.toString().orEmpty()
-   if(pkg!=null && (pkg in excluded || cls.endsWith("Activity") || cls.endsWith("Launcher"))) {
+   if(pkg!=null && !cls.contains("Dialog") && !cls.contains("Popup") && (pkg in excluded || cls.endsWith("Activity") || cls.endsWith("Launcher") || packageManager.getLaunchIntentForPackage(pkg)!=null)) {
     activityHint=pkg.takeUnless { it in excluded };hasActivityHint=true;hintUntil=SystemClock.uptimeMillis()+250
    }
   }

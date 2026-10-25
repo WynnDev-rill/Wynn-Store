@@ -35,11 +35,12 @@ def duration():
  raise AssertionError('Screen time not found')
 def capture(name):
  with open(out/name,'wb') as f:subprocess.run(['adb','exec-out','screencap','-p'],stdout=f,check=True)
+expected=int(re.search(r'versionCode = (\d+)',pathlib.Path('iwatchyou/app/build.gradle.kts').read_text()).group(1))
 try:
  # Reset the disposable smoke-test installation before seeding the lower-version fixture.
  subprocess.run(['adb','uninstall','id.wynn.iwatchyou'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  adb('install','-r','iwatchyou/qa/fixtures/upgrade-baseline.apk')
- assert version()==1
+ assert version()==expected-1
  shell('pm grant id.wynn.iwatchyou android.permission.POST_NOTIFICATIONS')
  shell('appops set id.wynn.iwatchyou REQUEST_INSTALL_PACKAGES allow')
  shell('am start -n id.wynn.iwatchyou/.MainActivity')
@@ -73,8 +74,8 @@ try:
   time.sleep(1)
  else:raise AssertionError('Android installation consent did not appear')
  end=time.monotonic()+50
- while time.monotonic()<end and version()!=2:time.sleep(1)
- assert version()==2,'Production update did not install'
+ while time.monotonic()<end and version()!=expected:time.sleep(1)
+ assert version()==expected,'Production update did not install'
  # Dismiss the installer's completion dialog through its normal Open action.
  tap(wait_for('Open',timeout=25))
  shell('am start -n id.wynn.iwatchyou/.MainActivity');wait_for('Pengaturan',attr='content-desc')
@@ -83,7 +84,7 @@ try:
  while after<before and time.monotonic()<end:time.sleep(1);after=duration()
  assert after>=before,'Private daily data was reset by update'
  capture('after.png')
- (out/'result.txt').write_text(f'PASS: public stable feed, production signer, in-app download, Android consent, version 1 -> 2, retained screen seconds {before} -> {after}\n')
+ (out/'result.txt').write_text(f'PASS: public stable feed, production signer, in-app download, Android consent, version {expected-1} -> {expected}, retained screen seconds {before} -> {after}\n')
  print((out/'result.txt').read_text())
 finally:
  (out/'package.txt').write_text(shell('dumpsys package id.wynn.iwatchyou'))
