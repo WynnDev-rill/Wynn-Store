@@ -37,6 +37,16 @@ def capture(name):
  with open(out/name,'wb') as f:subprocess.run(['adb','exec-out','screencap','-p'],stdout=f,check=True)
 expected=int(re.search(r'versionCode = (\d+)',pathlib.Path('iwatchyou/app/build.gradle.kts').read_text()).group(1))
 try:
+ # GitHub's public raw branch can lag the authenticated publication API briefly.
+ deadline=time.monotonic()+180
+ while True:
+  try:
+   address='https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/iwatchyou/updates/stable.json?ready='+str(int(time.time()*1000))
+   with urllib.request.urlopen(address,timeout=12) as response:ready=json.loads(response.read())
+   if ready.get('versionCode')==expected:break
+  except Exception:pass
+  if time.monotonic()>deadline:raise AssertionError('Public stable feed did not propagate')
+  time.sleep(3)
  # Reset the disposable smoke-test installation before seeding the lower-version fixture.
  subprocess.run(['adb','uninstall','id.wynn.iwatchyou'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  adb('install','-r','iwatchyou/qa/fixtures/upgrade-baseline.apk')

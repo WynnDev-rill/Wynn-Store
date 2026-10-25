@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 out=iwatchyou/qa/production-output
-version=$(python3 -c 'import re,pathlib;print(re.search(r"versionName = \"([0-9.]+)\"",pathlib.Path("iwatchyou/app/build.gradle.kts").read_text()).group(1))')
+version=$(python3 -c 'import re,pathlib; print(re.search(r"versionName = \"([0-9.]+)\"",pathlib.Path("iwatchyou/app/build.gradle.kts").read_text()).group(1))')
 mkdir -p "$out"
 adb install -r "iwatchyou/distribution/IWatchYou-$version.apk"
 adb shell pm grant id.wynn.iwatchyou android.permission.POST_NOTIFICATIONS

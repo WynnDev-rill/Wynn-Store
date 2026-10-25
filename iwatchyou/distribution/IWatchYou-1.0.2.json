@@ -1,0 +1,13 @@
+{
+  "versionCode": 3,
+  "versionName": "1.0.2",
+  "packageName": "id.wynn.iwatchyou",
+  "minSdk": 30,
+  "sha256": "4329817577bdd9ce4739ccb676c82e371ab83de1afa75424f6ad1614212de5fb",
+  "unsignedSha256": "392bc5d64933270278bbeb1f2d6436f11913266bc9d06681358be8e7d674d0ff",
+  "signerSha256": "eca17e8afa84775e941e0e490741b01636e7941da545c508f85b8a256a4f346a",
+  "sizeBytes": 2003492,
+  "sourceCommit": "e6fe3ab408a224159dc0f49e85cb08d503adff3e",
+  "workflowRunId": 40156611475,
+  "sourceDigest": "490186ad56d888cd09b2f86482a662f567ce9322046bb77c39f1b7317aa18c3f"
+}

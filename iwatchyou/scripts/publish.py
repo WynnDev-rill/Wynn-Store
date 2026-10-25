@@ -31,7 +31,7 @@ run=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs/{
 assert run['head_sha']==meta['sourceCommit'] and run['conclusion']=='success','Source build and emulator checks must pass'
 manifest=dict(versionCode=code,versionName=version,packageName='id.wynn.iwatchyou',minSdk=30,
  apkUrl=f'https://github.com/{repo}/releases/download/{tag}/{name}',sha256=meta['sha256'],signerSha256=cert,sizeBytes=apk.stat().st_size,
- notes='Pencatatan berbasis fokus jendela, riwayat harian, timer mengambang yang terkunci saat redup, serta tampilan dan ukuran APK yang dioptimalkan.')
+ notes=('Perbaikan timer yang tidak mulai pada sebagian perangkat: deteksi langsung dari event perpindahan aplikasi, dengan fallback saat data jendela belum tersedia.' if version=='1.0.2' else 'Pencatatan berbasis fokus jendela, riwayat harian, timer mengambang yang terkunci saat redup, serta tampilan dan ukuran APK yang dioptimalkan.'))
 feed=root/'distribution/update.json';feed.write_text(json.dumps(manifest,indent=2)+'\n')
 endpoint=f'repos/{repo}/contents/iwatchyou/updates/stable.json'
 old=json.loads(subprocess.check_output(['gh','api',endpoint],text=True))
