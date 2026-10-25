@@ -257,6 +257,10 @@ class WatchService : AccessibilityService() {
   ledger?.let { it.checkpoint(now); store.write(it.snapshot(now)) }
  }
  fun current(): TimeLedger.Snapshot=ledger?.snapshot(SystemClock.elapsedRealtime()) ?: TimeLedger.Snapshot(today(),0,emptyMap(),null)
+ fun ownActivityVisible() {
+  activityHint=null;hasActivityHint=true;hintUntil=SystemClock.uptimeMillis()+250;focusGeneration++
+  if(ledger!=null && !closing)commitSelection(null,unlocked())
+ }
  fun refreshNotification() { if(::worker.isInitialized) worker.post { notification(SystemClock.elapsedRealtime()) } }
  private fun notification(now: Long) {
   if(closing) return

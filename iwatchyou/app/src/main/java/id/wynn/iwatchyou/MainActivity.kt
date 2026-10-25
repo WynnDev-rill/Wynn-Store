@@ -93,7 +93,7 @@ class MainActivity: ComponentActivity() {
   }
   UpdateManager.check(this) { r,_ -> update=r }
  }
- override fun onResume() { super.onResume(); WatchService.instance?.refreshNotification(); UpdateManager.resumeInstall(this) { message=it } }
+ override fun onResume() { super.onResume(); WatchService.instance?.ownActivityVisible(); WatchService.instance?.refreshNotification(); UpdateManager.resumeInstall(this) { message=it } }
  @Composable private fun Page() {
   var data by remember { mutableStateOf(TimeLedger.Snapshot(WatchService.today(),0,emptyMap(),null)) }
   var active by remember { mutableStateOf(false) }
