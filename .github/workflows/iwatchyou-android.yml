@@ -23,7 +23,12 @@ jobs:
       - uses: actions/checkout@v4
       - id: version
         run: |
-          if test -f iwatchyou/distribution/IWatchYou-1.0.1.apk; then echo 'staged=true' >> "$GITHUB_OUTPUT"; else echo 'staged=false' >> "$GITHUB_OUTPUT"; fi
+          python3 - <<'PYCODE'
+          import os,pathlib,re
+          version=re.search(r'versionName = "([0-9.]+)"',pathlib.Path('iwatchyou/app/build.gradle.kts').read_text()).group(1)
+          staged=pathlib.Path('iwatchyou/distribution/IWatchYou-'+version+'.apk').is_file()
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:f.write('staged='+str(staged).lower()+'\n')
+          PYCODE
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

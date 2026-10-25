@@ -20,6 +20,7 @@ class DeviceTest {
   val dir=java.io.File(context.getExternalFilesDir(null),"qa").apply { mkdirs() }
   runCatching { device.takeScreenshot(java.io.File(dir,testName.methodName+".png"));device.dumpWindowHierarchy(java.io.File(dir,testName.methodName+".xml")) }
   println("Final ledger: "+WatchService.instance?.current())
+  shell("settings put secure enabled_accessibility_services ''")
   shell("settings put system font_scale 1.0");device.setOrientationNatural();device.unfreezeRotation() }
  private val context get()=ApplicationProvider.getApplicationContext<Context>()
  private val automation get()=InstrumentationRegistry.getInstrumentation().getUiAutomation(1)
@@ -38,7 +39,7 @@ class DeviceTest {
   shell("settings put secure accessibility_enabled 1")
   waitFor { WatchService.instance!=null }
   device.wakeUp();shell("wm dismiss-keyguard")
-  context.startActivity(Intent(android.provider.Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+  shell("am start -a android.settings.SETTINGS")
   waitFor { WatchService.instance?.current()?.foreground=="com.android.settings" }
   val before=WatchService.instance!!.current().apps["com.android.settings"] ?: 0L
   SystemClock.sleep(1600)
@@ -70,14 +71,32 @@ class DeviceTest {
   val locked=WatchService.instance!!.current().screenMs
   SystemClock.sleep(1200);assertEquals(locked,WatchService.instance!!.current().screenMs)
   device.wakeUp();shell("wm dismiss-keyguard")
-  context.startActivity(Intent(android.provider.Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+  shell("am start -a android.settings.SETTINGS")
   waitFor { WatchService.instance?.current()?.foreground=="com.android.settings" }
   assertTrue(WatchService.instance!!.current().apps["com.android.settings"]!!>=paused)
   shell("settings put secure enabled_accessibility_services ''")
  }
+ @Test fun pipDoesNotKeepCountingTheFloatingVideo() {
+  automation
+  if(android.os.Build.VERSION.SDK_INT>=33) shell("pm grant id.wynn.iwatchyou android.permission.POST_NOTIFICATIONS")
+  shell("settings put secure enabled_accessibility_services id.wynn.iwatchyou/.WatchService")
+  shell("settings put secure accessibility_enabled 1")
+  waitFor { WatchService.instance!=null }
+  device.wakeUp();shell("wm dismiss-keyguard")
+  shell("am start -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.ProbeActivity")
+  waitFor { WatchService.instance?.current()?.foreground=="id.wynn.iwatchyou.test" }
+  SystemClock.sleep(700)
+  device.findObject(By.text("PiP fixture")).click()
+  shell("am start -a android.settings.SETTINGS")
+  waitFor { WatchService.instance?.current()?.foreground=="com.android.settings" }
+  val paused=WatchService.instance!!.current().apps["id.wynn.iwatchyou.test"]!!
+  SystemClock.sleep(1200)
+  assertEquals(paused,WatchService.instance!!.current().apps["id.wynn.iwatchyou.test"])
+  shell("am start -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.ProbeActivity --activity-clear-task --activity-new-task --ez finish true")
+ }
  @Test fun mainScreenSurvivesRotationAndLargeText() {
   device.wakeUp();shell("wm dismiss-keyguard")
-  context.startActivity(Intent(context,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+  shell("am start -n id.wynn.iwatchyou/.MainActivity")
   assertTrue(device.wait(Until.hasObject(By.text("IWatchYou")),5000))
   assertTrue(device.wait(Until.hasObject(By.desc("Pemantauan")),8000))
   device.setOrientationLeft();SystemClock.sleep(800)

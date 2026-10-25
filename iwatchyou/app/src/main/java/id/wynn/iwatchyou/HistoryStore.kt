@@ -25,7 +25,7 @@ class HistoryStore(context: Context) : SQLiteOpenHelper(context,"history.db",nul
    put("day",s.day); put("screen",s.screenMs)
    put("apps",JSONObject(s.apps).toString()); put("hours",JSONArray(s.hours).toString())
   }
-  writableDatabase.insertWithOnConflict("days",null,values,SQLiteDatabase.CONFLICT_REPLACE)
+  check(writableDatabase.insertWithOnConflict("days",null,values,SQLiteDatabase.CONFLICT_REPLACE)!=-1L) { "Could not save daily history" }
  }
  fun migrateLegacy(context: Context) {
   val p=context.getSharedPreferences("times",Context.MODE_PRIVATE)

@@ -172,7 +172,7 @@ class MainActivity: ComponentActivity() {
      }
     }
     items(entries,key={it.key}) { entry ->
-     AppRow(entry.key,entry.value,entries.first().value,Palette[entries.indexOf(entry)%Palette.size])
+     AppRow(entry.key,entry.value,entries.first().value,Palette[(entry.key.hashCode() and Int.MAX_VALUE)%Palette.size])
     }
     item { Text("Timer meredup setelah 3 detik. Ketuk dahulu untuk menggesernya.",fontSize=11.sp,lineHeight=18.sp,color=Muted,modifier=Modifier.padding(horizontal=3.dp)) }
    }

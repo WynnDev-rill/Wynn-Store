@@ -70,8 +70,10 @@ class WatchService : AccessibilityService() {
   if (::worker.isInitialized) return
   thread.start(); worker=Handler(thread.looper)
   overlay=OverlayController(this) { current() }
-  excluded=setOfNotNull(packageName,"android","com.android.systemui",
-   packageManager.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),0)?.activityInfo?.packageName)
+  val homes=packageManager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),0)
+   .filterNot { it.activityInfo.name.endsWith(".FallbackHome") }
+   .map { it.activityInfo.packageName }
+  excluded=setOf(packageName,"android","com.android.systemui")+homes
   notices.createNotificationChannel(NotificationChannel(CHANNEL,"Waktu layar aktif",NotificationManager.IMPORTANCE_LOW).apply {
    setSound(null,null); enableVibration(false); setShowBadge(false)
   })
