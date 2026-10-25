@@ -6,165 +6,214 @@ import android.content.*
 import android.content.res.Configuration
 import android.os.*
 import android.view.accessibility.AccessibilityEvent
-import org.json.JSONObject
-import java.text.SimpleDateFormat
-import java.util.Date
+import android.view.accessibility.AccessibilityWindowInfo
+import java.time.*
 import java.util.Locale
 
 class WatchService : AccessibilityService() {
  companion object {
-  @Volatile var instance: WatchService? = null
+  @Volatile var instance: WatchService?=null
    private set
-  private const val CHANNEL = "screen_time"
-  private const val NOTICE = 1206
-  fun today() = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-  fun readSnapshot(context: Context): TimeLedger.Snapshot {
-   instance?.let { return it.current() }
-   val p = context.getSharedPreferences("times", MODE_PRIVATE)
-   val day = today()
-   if (p.getString("day", "") != day) return TimeLedger.Snapshot(day, 0, emptyMap(), null)
-   val result = mutableMapOf<String, Long>()
-   try {
-    val obj = JSONObject(p.getString("apps", "{}") ?: "{}")
-    obj.keys().forEach { result[it] = obj.optLong(it) }
-   } catch (_: Exception) {}
-   return TimeLedger.Snapshot(day, p.getLong("screen", 0), result, null)
-  }
+  private const val CHANNEL="screen_time"
+  private const val NOTICE=1206
+  fun today()=LocalDate.now().toString()
+  fun readSnapshot(context: Context): TimeLedger.Snapshot = instance?.current() ?: TimeLedger.Snapshot(today(),0,emptyMap(),null)
   fun format(ms: Long): String {
-   val seconds = ms.coerceAtLeast(0) / 1000
-   return "%02d:%02d:%02d".format(Locale.US, seconds/3600, (seconds/60)%60, seconds%60)
+   val s=ms.coerceAtLeast(0)/1000
+   return "%02d:%02d:%02d".format(Locale.US,s/3600,(s/60)%60,s%60)
   }
   fun short(ms: Long): String {
-   val seconds = ms.coerceAtLeast(0) / 1000
-   val hours = seconds / 3600
-   return if (hours > 0) "${hours}j ${(seconds/60)%60}m" else "${seconds/60}m ${seconds%60}d"
+   val s=ms.coerceAtLeast(0)/1000
+   return if(s>=3600) "${s/3600}j ${(s/60)%60}m ${s%60}d" else "${s/60}m ${s%60}d"
   }
  }
- private lateinit var ledger: TimeLedger
+ private val main=Handler(Looper.getMainLooper())
+ private val thread=HandlerThread("IWatchYou-ledger")
+ private lateinit var worker: Handler
+ @Volatile private var ledger: TimeLedger?=null
+ private lateinit var store: HistoryStore
  private lateinit var overlay: OverlayController
- private val handler = Handler(Looper.getMainLooper())
- private val pm by lazy { getSystemService(POWER_SERVICE) as PowerManager }
- private val keys by lazy { getSystemService(KEYGUARD_SERVICE) as KeyguardManager }
- private val notices by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
- private var lastCheckpoint = 0L
- private var receiverReady = false
- private val receiver = object: BroadcastReceiver() {
+ private val power by lazy { getSystemService(PowerManager::class.java) }
+ private val keyguard by lazy { getSystemService(KeyguardManager::class.java) }
+ private val notices by lazy { getSystemService(NotificationManager::class.java) }
+ private var registered=false
+ @Volatile private var closing=false
+ private var midnightWall=0L
+ private var lastWall=0L
+ private var lastElapsed=0L
+ private var zone=ZoneId.systemDefault()
+ private var excluded=emptySet<String>()
+ private val resolveTask=Runnable { resolveForeground() }
+ private fun unlocked()=power.isInteractive && !keyguard.isKeyguardLocked
+ private val receiver=object: BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
-   val now = SystemClock.elapsedRealtime()
-   rollover(now)
-   when(intent.action) {
-    Intent.ACTION_SCREEN_OFF -> {
-     ledger.screenOff(now)
-     overlay.hide()
-     persist(now)
-     notification()
+   val elapsed=SystemClock.elapsedRealtime(); val wall=System.currentTimeMillis()
+   val isOn=unlocked()
+   worker.post {
+    advanceDay(elapsed,wall)
+    val t=ledger ?: return@post
+    if (intent.action==Intent.ACTION_TIME_CHANGED || intent.action==Intent.ACTION_TIMEZONE_CHANGED) {
+     zone=ZoneId.systemDefault(); t.reanchor(elapsed,wall,zone)
+     switchCalendarDay(elapsed,wall); planMidnight(wall)
     }
-    Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
-     if (!keys.isKeyguardLocked && pm.isInteractive) ledger.screenOn(now)
-     notification()
-    }
-    Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED, Intent.ACTION_DATE_CHANGED -> {
-     rollover(now); notification()
-    }
+    if (!isOn) t.screenOff(elapsed) else t.screenOn(elapsed)
+    persist(elapsed); notification(elapsed)
+    scheduleMaintenance()
+    main.post { if(isOn) resolveForeground() else overlay.hide() }
    }
   }
  }
  override fun onServiceConnected() {
   super.onServiceConnected()
-  val snapshot = readSnapshot(applicationContext)
-  instance = this
-  ledger = TimeLedger(today(), snapshot.apps, snapshot.screenMs)
-  overlay = OverlayController(this) { ledger.snapshot(SystemClock.elapsedRealtime()) }
-  val filter = IntentFilter().apply {
-   addAction(Intent.ACTION_SCREEN_ON); addAction(Intent.ACTION_SCREEN_OFF)
-   addAction(Intent.ACTION_USER_PRESENT); addAction(Intent.ACTION_DATE_CHANGED)
-   addAction(Intent.ACTION_TIME_CHANGED); addAction(Intent.ACTION_TIMEZONE_CHANGED)
+  // A service object can reconnect after an interruption. Do not duplicate workers/receivers.
+  if (::worker.isInitialized) return
+  thread.start(); worker=Handler(thread.looper)
+  overlay=OverlayController(this) { current() }
+  excluded=setOfNotNull(packageName,"android","com.android.systemui",
+   packageManager.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),0)?.activityInfo?.packageName)
+  notices.createNotificationChannel(NotificationChannel(CHANNEL,"Waktu layar aktif",NotificationManager.IMPORTANCE_LOW).apply {
+   setSound(null,null); enableVibration(false); setShowBadge(false)
+  })
+  val filter=IntentFilter().apply {
+   addAction(Intent.ACTION_SCREEN_ON); addAction(Intent.ACTION_SCREEN_OFF); addAction(Intent.ACTION_USER_PRESENT)
+   addAction(Intent.ACTION_DATE_CHANGED); addAction(Intent.ACTION_TIME_CHANGED); addAction(Intent.ACTION_TIMEZONE_CHANGED)
   }
-  if (Build.VERSION.SDK_INT >= 33) registerReceiver(receiver, filter, RECEIVER_NOT_EXPORTED)
-  else { @Suppress("DEPRECATION") registerReceiver(receiver, filter) }
-  receiverReady = true
-  if (pm.isInteractive && !keys.isKeyguardLocked) ledger.screenOn(SystemClock.elapsedRealtime())
-  notices.createNotificationChannel(NotificationChannel(CHANNEL, "Waktu layar aktif", NotificationManager.IMPORTANCE_LOW))
-  notification()
-  handler.post(heartbeat)
+  if(Build.VERSION.SDK_INT>=33) registerReceiver(receiver,filter,RECEIVER_NOT_EXPORTED)
+  else { @Suppress("DEPRECATION") registerReceiver(receiver,filter) }
+  registered=true
+  worker.post {
+   store=HistoryStore(applicationContext); store.migrateLegacy(applicationContext)
+   val elapsed=SystemClock.elapsedRealtime(); val wall=System.currentTimeMillis()
+   val day=Instant.ofEpochMilli(wall).atZone(zone).toLocalDate().toString()
+   val saved=store.read(day)
+   val t=TimeLedger(day,saved?.apps ?: emptyMap(),saved?.screenMs ?: 0L,saved?.hours ?: List(24){0L},wall-elapsed,zone)
+   ledger=t; lastElapsed=elapsed; lastWall=wall; planMidnight(wall)
+   if(unlocked()) t.screenOn(elapsed)
+   if (!closing) instance=this
+   notification(elapsed); scheduleMaintenance()
+   main.post { if(!closing) resolveForeground() }
+  }
  }
- private val heartbeat = object: Runnable {
+ private fun planMidnight(wall: Long) {
+  midnightWall=Instant.ofEpochMilli(wall).atZone(zone).toLocalDate().plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+ }
+ /** Split at the actual midnight, even if this callback was delayed by Doze or scheduling. */
+ private fun advanceDay(elapsed: Long, wall: Long) {
+  val t=ledger ?: return
+  val wallJump=kotlin.math.abs((wall-lastWall)-(elapsed-lastElapsed))>2000
+  if(wallJump) {
+   t.reanchor(elapsed,wall,zone)
+   switchCalendarDay(elapsed,wall); planMidnight(wall)
+  } else {
+   while(wall>=midnightWall) {
+    val boundary=(elapsed-(wall-midnightWall)).coerceAtLeast(lastElapsed)
+    val day=Instant.ofEpochMilli(midnightWall).atZone(zone).toLocalDate().toString()
+    val old=t.nextDay(day,boundary,store.read(day))
+    store.write(old)
+    planMidnight(midnightWall)
+   }
+  }
+  lastElapsed=elapsed; lastWall=wall
+ }
+ private fun switchCalendarDay(elapsed: Long, wall: Long) {
+  val t=ledger ?: return
+  val day=Instant.ofEpochMilli(wall).atZone(zone).toLocalDate().toString()
+  if(day!=t.day) store.write(t.nextDay(day,elapsed,store.read(day)))
+ }
+ private val checkpoint=object: Runnable {
   override fun run() {
-   val now = SystemClock.elapsedRealtime()
-   rollover(now)
-   if (now-lastCheckpoint > 60000) { persist(now); lastCheckpoint=now }
-   handler.postDelayed(this, 15000)
+   val now=SystemClock.elapsedRealtime(); val wall=System.currentTimeMillis()
+   val before=ledger?.day
+   advanceDay(now,wall)
+   // Screen-off receivers normally do this; this guard handles a missed vendor broadcast.
+   if(!unlocked()) { ledger?.screenOff(now); main.post { overlay.hide() }; notification(now) }
+   persist(now)
+   if(before!=ledger?.day) notification(now)
+   scheduleMaintenance()
   }
  }
- private fun rollover(now: Long) {
-  if (::ledger.isInitialized && ledger.day != today()) {
-   ledger.nextDay(today(), now)
-   persist(now)
-   notification()
+ private val midnight=Runnable {
+  val now=SystemClock.elapsedRealtime()
+  advanceDay(now,System.currentTimeMillis()); persist(now); notification(now); scheduleMaintenance()
+ }
+ private fun scheduleMaintenance() {
+  worker.removeCallbacks(checkpoint); worker.removeCallbacks(midnight)
+  if(ledger?.isScreenRunning()==true && !closing) {
+   worker.postDelayed(checkpoint,60_000)
+   worker.postDelayed(midnight,(midnightWall-System.currentTimeMillis()).coerceAtLeast(1))
   }
  }
  override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-  if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED || !::ledger.isInitialized) return
-  val now = SystemClock.elapsedRealtime()
-  rollover(now)
-  if (!pm.isInteractive || keys.isKeyguardLocked) {
-   if (ledger.isScreenRunning()) { ledger.screenOff(now); persist(now); notification() }
-   overlay.hide()
-   return
-  }
-  if (!ledger.isScreenRunning()) { ledger.screenOn(now); notification() }
-  val packageName = event.packageName?.toString() ?: return
-  val home = packageManager.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)?.activityInfo?.packageName
-  val selected = if (packageName == this.packageName || packageName == "android" || packageName == "com.android.systemui" || packageName == home) null else packageName
-  if (ledger.snapshot(now).foreground != selected) {
-   ledger.appChanged(selected, now)
-   persist(now)
-  }
-  if (selected != null) overlay.show(selected) else overlay.hide()
+  if(event==null || !::worker.isInitialized || closing) return
+  if(event.eventType!=AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && event.eventType!=AccessibilityEvent.TYPE_WINDOWS_CHANGED) return
+  // Window-state transitions are immediate; structural churn gets one bounded reconciliation.
+  main.removeCallbacks(resolveTask)
+  if(event.eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) resolveForeground()
+  else main.postDelayed(resolveTask,35)
  }
- override fun onInterrupt() {}
- override fun onConfigurationChanged(newConfig: Configuration) {
-  super.onConfigurationChanged(newConfig)
-  if (::overlay.isInitialized) overlay.recreate()
+ private fun resolveForeground() {
+  if(ledger==null || closing) return
+  val on=unlocked()
+  val selected=if(!on) null else runCatching {
+   ForegroundPolicy.select(windows.map { w ->
+    val pkg=if(w.type==AccessibilityWindowInfo.TYPE_APPLICATION) {
+     val root=w.root
+     val p=root?.packageName?.toString()
+     @Suppress("DEPRECATION") root?.recycle()
+     p
+    } else null
+    ForegroundPolicy.Window(pkg,w.type==AccessibilityWindowInfo.TYPE_APPLICATION,w.isFocused,w.isActive,
+     w.isInPictureInPictureMode,w.type==AccessibilityWindowInfo.TYPE_INPUT_METHOD,
+     w.type==AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY,w.layer)
+   },excluded)
+  }.getOrNull()
+  val elapsed=SystemClock.elapsedRealtime(); val wall=System.currentTimeMillis()
+  worker.post {
+   advanceDay(elapsed,wall)
+   val t=ledger ?: return@post
+   val wasOn=t.isScreenRunning()
+   if(on) t.screenOn(elapsed) else t.screenOff(elapsed)
+   val previous=t.snapshot(elapsed).foreground
+   t.appChanged(selected,elapsed)
+   if(previous!=selected || wasOn!=on) persist(elapsed)
+   if(wasOn!=on) { notification(elapsed); scheduleMaintenance() }
+   main.post { if(!closing && unlocked() && selected!=null) overlay.show(selected) else overlay.hide() }
+  }
  }
  private fun persist(now: Long) {
-  ledger.checkpoint(now)
-  val data = ledger.snapshot(now)
-  val obj = JSONObject()
-  data.apps.forEach { (k,v) -> obj.put(k,v) }
-  getSharedPreferences("times", MODE_PRIVATE).edit()
-   .putString("day",data.day).putString("apps",obj.toString()).putLong("screen",data.screenMs).apply()
+  ledger?.let { it.checkpoint(now); store.write(it.snapshot(now)) }
  }
- fun current(): TimeLedger.Snapshot {
-  val now = SystemClock.elapsedRealtime()
-  rollover(now)
-  return ledger.snapshot(now)
- }
- private fun notification() {
-  if (!::ledger.isInitialized) return
-  if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) return
-  val snapshot = ledger.snapshot(SystemClock.elapsedRealtime())
-  val running = ledger.isScreenRunning()
-  val launch = PendingIntent.getActivity(this, 0, Intent(this,MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-  val builder = Notification.Builder(this,CHANNEL).setSmallIcon(R.drawable.ic_notification)
+ fun current(): TimeLedger.Snapshot=ledger?.snapshot(SystemClock.elapsedRealtime()) ?: TimeLedger.Snapshot(today(),0,emptyMap(),null)
+ fun refreshNotification() { if(::worker.isInitialized) worker.post { notification(SystemClock.elapsedRealtime()) } }
+ private fun notification(now: Long) {
+  if(closing) return
+  val t=ledger ?: return
+  if(Build.VERSION.SDK_INT>=33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED) return
+  val s=t.snapshot(now)
+  val launch=PendingIntent.getActivity(this,0,Intent(this,MainActivity::class.java),PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+  val builder=Notification.Builder(this,CHANNEL).setSmallIcon(R.drawable.ic_notification)
    .setContentTitle("IWatchYou").setContentIntent(launch).setOngoing(true).setOnlyAlertOnce(true)
-   .setVisibility(Notification.VISIBILITY_PUBLIC).setShowWhen(true)
-  if (running) {
-   builder.setContentText("Waktu layar aktif hari ini")
-    .setUsesChronometer(true).setWhen(System.currentTimeMillis()-snapshot.screenMs)
-  } else {
-   builder.setUsesChronometer(false).setShowWhen(false)
-    .setContentText("Waktu layar aktif hari ini · ${format(snapshot.screenMs)}")
-  }
-  notices.notify(NOTICE,builder.build())
+   .setVisibility(Notification.VISIBILITY_PUBLIC).setCategory(Notification.CATEGORY_SERVICE)
+  if(t.isScreenRunning()) builder.setContentText("Waktu layar aktif hari ini").setShowWhen(true).setUsesChronometer(true).setWhen(System.currentTimeMillis()-s.screenMs)
+  else builder.setContentText("Waktu layar aktif hari ini · ${format(s.screenMs)}").setShowWhen(false).setUsesChronometer(false)
+  runCatching { notices.notify(NOTICE,builder.build()) }
  }
+ override fun onConfigurationChanged(newConfig: Configuration) { super.onConfigurationChanged(newConfig); if(::overlay.isInitialized) overlay.recreate() }
+ override fun onInterrupt() { if(::worker.isInitialized) worker.post { val now=SystemClock.elapsedRealtime(); ledger?.appChanged(null,now); persist(now); main.post { overlay.hide() } } }
  override fun onDestroy() {
-  handler.removeCallbacks(heartbeat)
-  if (::ledger.isInitialized) persist(SystemClock.elapsedRealtime())
-  if (::overlay.isInitialized) overlay.hide()
-  if (receiverReady) unregisterReceiver(receiver)
+  closing=true; instance=null
+  main.removeCallbacksAndMessages(null)
+  if(::overlay.isInitialized) overlay.hide()
+  if(registered) unregisterReceiver(receiver)
+  if(::worker.isInitialized) {
+   worker.removeCallbacksAndMessages(null)
+   worker.post {
+    val now=SystemClock.elapsedRealtime(); ledger?.screenOff(now)
+    if(::store.isInitialized) { persist(now); store.close() }
+    thread.quitSafely()
+   }
+  }
   notices.cancel(NOTICE)
-  instance = null
   super.onDestroy()
  }
 }

@@ -5,123 +5,113 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.*
-import android.widget.TextView
-import kotlin.math.abs
+import android.widget.Chronometer
+import kotlin.math.hypot
 import kotlin.math.roundToInt
 
-class OverlayController(
- private val context: AccessibilityService,
- private val snapshot: () -> TimeLedger.Snapshot
-) {
- private val window = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
- private val handler = Handler(Looper.getMainLooper())
- private val prefs = context.getSharedPreferences("overlay",Context.MODE_PRIVATE)
- private var textView: TextView? = null
- private var params: WindowManager.LayoutParams? = null
- private var packageName: String? = null
- private var faded = false
- private val density = context.resources.displayMetrics.density
- private val fadeTask = Runnable { faded=true; paint() }
- private val ticker = object: Runnable {
-  override fun run() {
-   textView?.text = WatchService.format(snapshot().apps[packageName] ?: 0L)
-   if (textView != null) handler.postDelayed(this,1000)
-  }
- }
- private fun orientation(): String = if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) "landscape" else "portrait"
- private fun dp(v:Float) = (v*density).roundToInt()
- fun show(pkg:String) {
-  if (textView != null) {
-   packageName=pkg
-   textView?.text=WatchService.format(snapshot().apps[pkg] ?: 0L)
+class OverlayController(private val context: AccessibilityService, private val snapshot: () -> TimeLedger.Snapshot) {
+ private val window=context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+ private val handler=Handler(Looper.getMainLooper())
+ private val prefs=context.getSharedPreferences("overlay",Context.MODE_PRIVATE)
+ private var view: Chronometer?=null
+ private var params: WindowManager.LayoutParams?=null
+ private var pkg: String?=null
+ private var positionKey="portrait"
+ private var faded=false
+ private val density get()=context.resources.displayMetrics.density
+ private fun dp(n: Int)=(n*density).roundToInt()
+ private fun orientation()=if(context.resources.configuration.orientation==Configuration.ORIENTATION_LANDSCAPE) "landscape" else "portrait"
+ private val fadeTask=Runnable { faded=true; paint() }
+ fun show(packageName: String) {
+  if(view!=null) {
+   if(pkg!=packageName) { pkg=packageName; setTime() }
    return
   }
-  packageName=pkg
-  faded=false
-  val view=TextView(context).apply {
-   setTextColor(Color.WHITE)
-   textSize=16f
-   typeface=android.graphics.Typeface.create("sans-serif-medium",android.graphics.Typeface.NORMAL)
-   setShadowLayer(2f,0f,1f,Color.BLACK)
-   gravity=Gravity.CENTER
-   setPadding(dp(18f),dp(10f),dp(18f),dp(10f))
+  pkg=packageName; positionKey=orientation(); faded=false
+  val timer=Chronometer(context).apply {
+   setTextColor(Color.WHITE); textSize=15f
+   typeface=Typeface.create(context.resources.getFont(R.font.jakarta_medium),Typeface.NORMAL)
+   fontFeatureSettings="tnum"
+   gravity=Gravity.CENTER; includeFontPadding=false
+   setPadding(dp(12),dp(8),dp(12),dp(8))
+   elevation=dp(3).toFloat()
+   contentDescription="Waktu aplikasi. Ketuk untuk membuka kunci posisi, lalu geser."
+   setOnChronometerTickListener { text=WatchService.format(SystemClock.elapsedRealtime()-base) }
   }
-  val key=orientation()
-  val w=WindowManager.LayoutParams(
-   WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT,
-   WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-   WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-   PixelFormat.TRANSLUCENT
-  ).apply {
-   gravity=Gravity.TOP or Gravity.START
-   x=prefs.getInt("x_$key",dp(20f))
-   y=prefs.getInt("y_$key",dp(96f))
-  }
-  var x0=0
-  var y0=0
-  var downX=0f
-  var downY=0f
-  var moved=false
-  view.setOnTouchListener { _,event ->
-   when(event.actionMasked) {
+  val w=WindowManager.LayoutParams(dp(134),dp(44),WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+   WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+   PixelFormat.TRANSLUCENT).apply {
+    gravity=Gravity.TOP or Gravity.LEFT
+    x=prefs.getInt("x_$positionKey",dp(16)); y=prefs.getInt("y_$positionKey",dp(72))
+   }
+  var startX=0; var startY=0; var downX=0f; var downY=0f
+  var moved=false; var lockedGesture=false
+  val slop=ViewConfiguration.get(context).scaledTouchSlop
+  timer.setOnTouchListener { _,e ->
+   when(e.actionMasked) {
     MotionEvent.ACTION_DOWN -> {
-     x0=w.x; y0=w.y; downX=event.rawX; downY=event.rawY; moved=false
+     handler.removeCallbacks(fadeTask)
+     lockedGesture=faded; startX=w.x; startY=w.y; downX=e.rawX; downY=e.rawY; moved=false
      true
     }
     MotionEvent.ACTION_MOVE -> {
-     if (!faded) {
-      val dx=event.rawX-downX
-      val dy=event.rawY-downY
-      if (abs(dx)>dp(4f) || abs(dy)>dp(4f)) moved=true
-      w.x=(x0+dx).roundToInt().coerceAtLeast(0)
-      w.y=(y0+dy).roundToInt().coerceAtLeast(0)
-      try { window.updateViewLayout(view,w) } catch (_:Exception) {}
-     }
+     val dx=e.rawX-downX; val dy=e.rawY-downY
+     if(hypot(dx,dy)>slop) moved=true
+     if(moved && !lockedGesture) { w.x=startX+dx.roundToInt(); w.y=startY+dy.roundToInt(); clamp(w); update(timer,w) }
      true
     }
     MotionEvent.ACTION_UP -> {
-     if (faded) { faded=false; paint() }
-     else if (moved) prefs.edit().putInt("x_$key",w.x).putInt("y_$key",w.y).apply()
-     scheduleFade()
-     true
+     // A swipe beginning while dimmed never moves OR unlocks the timer.
+     if(lockedGesture && !moved) { faded=false; paint(); timer.performClick() }
+     if(moved && !lockedGesture) savePosition(w)
+     if(!moved && !lockedGesture) timer.performClick()
+     scheduleFade(); true
     }
+    MotionEvent.ACTION_CANCEL -> { scheduleFade(); true }
     else -> true
    }
   }
-  textView=view
-  params=w
-  try { window.addView(view,w) } catch (_:Exception) { textView=null; params=null; return }
-  paint()
-  handler.post(ticker)
-  scheduleFade()
+  timer.setOnClickListener { if(faded) { faded=false; paint() }; scheduleFade() }
+  view=timer; params=w
+  clamp(w)
+  if(runCatching { window.addView(timer,w) }.isFailure) { view=null; params=null; pkg=null; return }
+  setTime(); paint(); timer.start(); scheduleFade()
  }
- private fun scheduleFade() {
-  handler.removeCallbacks(fadeTask)
-  handler.postDelayed(fadeTask,3000)
+ private fun setTime() {
+  val total=snapshot().apps[pkg] ?: 0L
+  view?.apply { base=SystemClock.elapsedRealtime()-total; text=WatchService.format(total) }
  }
+ private fun clamp(w: WindowManager.LayoutParams) {
+  val metrics=window.currentWindowMetrics
+  val insets=metrics.windowInsets.getInsetsIgnoringVisibility(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+  w.x=w.x.coerceIn(insets.left,(metrics.bounds.width()-insets.right-w.width).coerceAtLeast(insets.left))
+  // Window coordinates already start below the top system inset without FLAG_LAYOUT_IN_SCREEN.
+  w.y=w.y.coerceIn(0,(metrics.bounds.height()-insets.top-insets.bottom-w.height).coerceAtLeast(0))
+ }
+ private fun update(v: View,w: WindowManager.LayoutParams) { runCatching { window.updateViewLayout(v,w) } }
+ private fun savePosition(w: WindowManager.LayoutParams) { prefs.edit().putInt("x_$positionKey",w.x).putInt("y_$positionKey",w.y).apply() }
+ private fun scheduleFade() { handler.removeCallbacks(fadeTask); handler.postDelayed(fadeTask,3000) }
  private fun paint() {
-  val bg=GradientDrawable().apply {
-   cornerRadius=dp(40f).toFloat()
-   setColor(if(faded) Color.argb(83,17,27,44) else Color.argb(226,18,28,46))
+  view?.apply {
+   background=GradientDrawable().apply { cornerRadius=dp(28).toFloat(); setColor(Color.rgb(26,36,51)); setStroke(dp(1),Color.argb(40,255,255,255)) }
+   // Dark backing is kept for legibility over bright games. Text and pill dim together.
+   animate().alpha(if(faded) 0.56f else 0.94f).setDuration(220).start()
   }
-  textView?.background=bg
-  textView?.alpha=1f
  }
  fun recreate() {
-  val pkg=packageName
+  val previous=pkg; val dim=faded
   hide()
-  if (pkg!=null) show(pkg)
+  if(previous!=null) { show(previous); faded=dim; paint() }
  }
  fun hide() {
-  handler.removeCallbacks(fadeTask)
-  handler.removeCallbacks(ticker)
-  textView?.let { try { window.removeView(it) } catch (_:Exception){} }
-  textView=null
-  params=null
-  packageName=null
+  handler.removeCallbacksAndMessages(null)
+  view?.let { it.stop(); it.animate().cancel(); runCatching { window.removeViewImmediate(it) } }
+  view=null; params=null; pkg=null
  }
 }

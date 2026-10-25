@@ -10,8 +10,10 @@ android {
   applicationId = "id.wynn.iwatchyou"
   minSdk = 30
   targetSdk = 36
-  versionCode = 1
-  versionName = "1.0.0"
+  versionCode = 2
+  versionName = "1.0.1"
+  testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+  resourceConfigurations += listOf("en", "in")
  }
  signingConfigs {
   if (providers.environmentVariable("IW_KEYSTORE_PATH").isPresent) create("production") {
@@ -47,7 +49,13 @@ dependencies {
  implementation("androidx.compose.foundation:foundation")
  implementation("androidx.compose.animation:animation")
  implementation("androidx.compose.material3:material3")
- implementation("androidx.compose.material:material-icons-extended:1.7.8")
+ implementation("androidx.compose.material:material-icons-core:1.7.8")
  implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
  testImplementation("junit:junit:4.13.2")
+ androidTestImplementation("androidx.test.ext:junit:1.3.0")
+ androidTestImplementation("androidx.test:runner:1.7.0")
+ androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+ androidTestImplementation(platform("androidx.compose:compose-bom:2025.12.01"))
+ androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+ debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

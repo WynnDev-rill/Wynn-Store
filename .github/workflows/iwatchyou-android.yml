@@ -1,4 +1,4 @@
-name: IWatchYou — Build and publish Android
+name: IWatchYou Android
 on:
   workflow_dispatch:
   push:
@@ -6,20 +6,24 @@ on:
       - 'iwatchyou/**'
       - '.github/workflows/iwatchyou-android.yml'
       - '!iwatchyou/updates/**'
-
+      - '!iwatchyou/docs/**'
 permissions:
-  contents: write
+  contents: read
 concurrency:
-  group: iwatchyou-release
+  group: iwatchyou-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  android:
+  build:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: screenguard-release
-    timeout-minutes: 40
+    timeout-minutes: 30
+    outputs:
+      staged: ${{ steps.version.outputs.staged }}
     steps:
       - uses: actions/checkout@v4
+      - id: version
+        run: |
+          if test -f iwatchyou/distribution/IWatchYou-1.0.1.apk; then echo 'staged=true' >> "$GITHUB_OUTPUT"; else echo 'staged=false' >> "$GITHUB_OUTPUT"; fi
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -28,97 +32,62 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Run unit tests
-        run: ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest --stacktrace
-      - name: Build testable APK
-        run: ./screenguard-pro/gradlew -p iwatchyou :app:assembleDebug --stacktrace
-      - name: Verify test APK signature
-        run: |
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose iwatchyou/app/build/outputs/apk/debug/app-debug.apk
-      - name: Upload test APK artifact
-        uses: actions/upload-artifact@v4
+        if: steps.version.outputs.staged != 'true'
+      - name: Unit tests, lint and optimized APKs
+        if: steps.version.outputs.staged != 'true'
+        run: ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.version.outputs.staged != 'true'
         with:
-          name: IWatchYou-1.0.0-test
-          path: iwatchyou/app/build/outputs/apk/debug/app-debug.apk
-      - name: Publish test APK (preview, not stable)
+          name: IWatchYou-build
+          path: |
+            iwatchyou/app/build/outputs/apk/
+            iwatchyou/app/build/reports/
+            iwatchyou/app/build/test-results/
+            iwatchyou/app/build/outputs/mapping/release/
+      - name: Verify staged production APK and publish
+        if: steps.version.outputs.staged == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          tag=iwatchyou-preview-v1.0.0
-          cp iwatchyou/app/build/outputs/apk/debug/app-debug.apk IWatchYou-1.0.0-preview.apk
-          gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
-            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --prerelease --title "IWatchYou v1.0.0 — Pratinjau" --notes "APK uji bertanda tangan debug. Belum mendukung pembaruan tanpa reinstall ke rilis produksi."
-          gh release upload "$tag" IWatchYou-1.0.0-preview.apk --repo "$GITHUB_REPOSITORY" --clobber
-      - name: Require existing protected production signing secrets
-        id: production_key
-        continue-on-error: true
-        shell: bash
-        env:
-          KEYSTORE: ${{ secrets.SG_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.SG_STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.SG_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.SG_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          test -n "$KEYSTORE" && test -n "$STORE_PASSWORD" && test -n "$KEY_ALIAS" && test -n "$KEY_PASSWORD"
-          umask 077
-          printf '%s' "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/iwatchyou-release.jks"
-          python3 - <<'PY'
-          import os, pathlib, zipfile
-          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'iwatchyou-release.jks'
-          raw=p.read_bytes()
-          import base64, gzip, re
-          for _ in range(3):
-              candidate=re.sub(rb'\s+',b'',raw.strip().strip(b'"'))
-              try:
-                  decoded=base64.b64decode(candidate,validate=True)
-              except Exception:
-                  break
-              if len(decoded)<64 or decoded==raw: break
-              raw=decoded
-              p.write_bytes(raw)
-          if raw.startswith(b'\x1f\x8b'):
-              raw=gzip.decompress(raw)
-              p.write_bytes(raw)
-          if zipfile.is_zipfile(p):
-              with zipfile.ZipFile(p) as z:
-                  names=[n for n in z.namelist() if not n.endswith('/') and n.lower().endswith(('.jks','.keystore','.p12','.pfx'))]
-                  if len(names)!=1: raise SystemExit('Signing archive must contain exactly one keystore')
-                  raw=z.read(names[0])
-                  p.write_bytes(raw)
-          container='JKS' if raw.startswith(bytes.fromhex('feedfeed')) else 'PKCS12' if raw.startswith(bytes.fromhex('3082')) else 'unknown'
-          print('Signing container format:',container)
-          if container=='unknown':
-              description='PEM' if raw.startswith(b'-----BEGIN') else 'TEXT' if all(32<=b<=126 or b in (9,10,13) for b in raw[:64]) else 'BINARY'
-              print('Unsupported container class:',description)
-              raise SystemExit('Invalid production keystore format')
-          PY
-      - name: Build signed APK
-        if: steps.production_key.outcome == 'success'
-        env:
-          IW_KEYSTORE_PATH: ${{ runner.temp }}/iwatchyou-release.jks
-          IW_STORE_PASSWORD: ${{ secrets.SG_STORE_PASSWORD }}
-          IW_KEY_ALIAS: ${{ secrets.SG_KEY_ALIAS }}
-          IW_KEY_PASSWORD: ${{ secrets.SG_KEY_PASSWORD }}
-        run: |
-          ./screenguard-pro/gradlew -p iwatchyou :app:assembleRelease --stacktrace
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs iwatchyou/app/build/outputs/apk/release/app-release.apk
-      - name: Upload build artifact
-        if: steps.production_key.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        run: python3 iwatchyou/scripts/publish.py
+        # Only this step needs release writes; job permissions are set below.
+    permissions:
+      contents: write
+  device:
+    needs: build
+    if: needs.build.outputs.staged != 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [30, 36]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          name: IWatchYou-1.0.0-signed
-          path: iwatchyou/app/build/outputs/apk/release/app-release.apk
-      - name: Publish release and update metadata
-        if: steps.production_key.outcome == 'success'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/download-artifact@v4
+        with:
+          name: IWatchYou-build
+          path: iwatchyou/app/build
+      - name: Enable KVM
         run: |
-          set -euo pipefail
-          python3 iwatchyou/scripts/publish.py
-      - name: Remove transient signing material
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Native instrumentation and UI tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: false
+          script: bash iwatchyou/qa/run-device.sh
+      - uses: actions/upload-artifact@v4
         if: always()
-        run: rm -f "$RUNNER_TEMP/iwatchyou-release.jks"
+        with:
+          name: IWatchYou-device-api-${{ matrix.api }}
+          path: iwatchyou/qa/output/

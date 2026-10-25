@@ -1,1 +1,1 @@
-<resources><string name="accessibility_description">Menghitung waktu aplikasi yang aktif di layar, tanpa membaca isi layar atau pesan.</string></resources>
+<resources><string name="accessibility_description">Mengenali aplikasi yang sedang mendapat fokus, termasuk layar terbagi. Akses jendela hanya digunakan untuk nama aplikasi; teks, pesan, dan isi layar tidak dikumpulkan atau dikirim. Seluruh riwayat waktu disimpan di perangkat.</string></resources>
