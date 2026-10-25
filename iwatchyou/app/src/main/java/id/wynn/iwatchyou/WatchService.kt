@@ -43,6 +43,7 @@ class WatchService : AccessibilityService() {
  private var lastElapsed=0L
  private var zone=ZoneId.systemDefault()
  private var excluded=emptySet<String>()
+ private var retryBudget=0
  private val resolveTask=Runnable { resolveForeground() }
  private fun unlocked()=power.isInteractive && !keyguard.isKeyguardLocked
  private val receiver=object: BroadcastReceiver() {
@@ -110,6 +111,7 @@ class WatchService : AccessibilityService() {
     val day=Instant.ofEpochMilli(midnightWall).atZone(zone).toLocalDate().toString()
     val old=t.nextDay(day,boundary,store.read(day))
     store.write(old)
+    main.post { overlay.refresh() }
     planMidnight(midnightWall)
    }
   }
@@ -118,7 +120,7 @@ class WatchService : AccessibilityService() {
  private fun switchCalendarDay(elapsed: Long, wall: Long) {
   val t=ledger ?: return
   val day=Instant.ofEpochMilli(wall).atZone(zone).toLocalDate().toString()
-  if(day!=t.day) store.write(t.nextDay(day,elapsed,store.read(day)))
+  if(day!=t.day) { store.write(t.nextDay(day,elapsed,store.read(day))); main.post { overlay.refresh() } }
  }
  private val checkpoint=object: Runnable {
   override fun run() {
@@ -148,14 +150,16 @@ class WatchService : AccessibilityService() {
   if(event.eventType!=AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && event.eventType!=AccessibilityEvent.TYPE_WINDOWS_CHANGED) return
   // Window-state transitions are immediate; structural churn gets one bounded reconciliation.
   main.removeCallbacks(resolveTask)
+  retryBudget=2
   if(event.eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) resolveForeground()
   else main.postDelayed(resolveTask,35)
  }
  private fun resolveForeground() {
   if(ledger==null || closing) return
   val on=unlocked()
+  var needsRetry=false
   val selected=if(!on) null else runCatching {
-   ForegroundPolicy.select(windows.map { w ->
+   val observed=windows.map { w ->
     val pkg=if(w.type==AccessibilityWindowInfo.TYPE_APPLICATION) {
      val root=w.root
      val p=root?.packageName?.toString()
@@ -165,8 +169,12 @@ class WatchService : AccessibilityService() {
     ForegroundPolicy.Window(pkg,w.type==AccessibilityWindowInfo.TYPE_APPLICATION,w.isFocused,w.isActive,
      w.isInPictureInPictureMode,w.type==AccessibilityWindowInfo.TYPE_INPUT_METHOD,
      w.type==AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY,w.layer)
-   },excluded)
+   }
+   needsRetry=observed.isEmpty() || observed.any { it.application && (it.focused || it.active) && it.pkg==null }
+   if(applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) android.util.Log.d("IWatchYou-focus",observed.toString())
+   ForegroundPolicy.select(observed,excluded)
   }.getOrNull()
+  if(on && needsRetry && retryBudget>0) { retryBudget--; main.removeCallbacks(resolveTask); main.postDelayed(resolveTask,100) }
   val elapsed=SystemClock.elapsedRealtime(); val wall=System.currentTimeMillis()
   worker.post {
    advanceDay(elapsed,wall)

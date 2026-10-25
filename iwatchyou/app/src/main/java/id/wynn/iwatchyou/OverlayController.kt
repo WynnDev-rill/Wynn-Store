@@ -34,13 +34,18 @@ class OverlayController(private val context: AccessibilityService, private val s
    return
   }
   pkg=packageName; positionKey=orientation(); faded=false
-  val timer=Chronometer(context).apply {
+  val timer=object: Chronometer(context) {
+   override fun performClick(): Boolean { super.performClick(); return true }
+  }.apply {
    setTextColor(Color.WHITE); textSize=15f
    typeface=Typeface.create(context.resources.getFont(R.font.jakarta_medium),Typeface.NORMAL)
    fontFeatureSettings="tnum"
    gravity=Gravity.CENTER; includeFontPadding=false
    setPadding(dp(12),dp(8),dp(12),dp(8))
    elevation=dp(3).toFloat()
+   val clock=context.getDrawable(R.drawable.ic_notification)?.mutate()
+   clock?.setBounds(0,0,dp(17),dp(17))
+   setCompoundDrawables(clock,null,null,null);compoundDrawablePadding=dp(6)
    contentDescription="Waktu aplikasi. Ketuk untuk membuka kunci posisi, lalu geser."
    setOnChronometerTickListener { text=WatchService.format(SystemClock.elapsedRealtime()-base) }
   }
@@ -83,6 +88,7 @@ class OverlayController(private val context: AccessibilityService, private val s
   if(runCatching { window.addView(timer,w) }.isFailure) { view=null; params=null; pkg=null; return }
   setTime(); paint(); timer.start(); scheduleFade()
  }
+ fun refresh() { if(view!=null) setTime() }
  private fun setTime() {
   val total=snapshot().apps[pkg] ?: 0L
   view?.apply { base=SystemClock.elapsedRealtime()-total; text=WatchService.format(total) }
@@ -101,7 +107,7 @@ class OverlayController(private val context: AccessibilityService, private val s
   view?.apply {
    background=GradientDrawable().apply { cornerRadius=dp(28).toFloat(); setColor(Color.rgb(26,36,51)); setStroke(dp(1),Color.argb(40,255,255,255)) }
    // Dark backing is kept for legibility over bright games. Text and pill dim together.
-   animate().alpha(if(faded) 0.56f else 0.94f).setDuration(220).start()
+   animate().alpha(if(faded) 0.68f else 0.94f).setDuration(220).start()
   }
  }
  fun recreate() {
