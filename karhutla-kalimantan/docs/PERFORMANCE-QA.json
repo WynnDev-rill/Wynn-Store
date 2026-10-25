@@ -1,58 +1,68 @@
 {
-  "lcpMs": 2028,
-  "cls": 0.010875286455948619,
+  "lcpMs": 2216,
+  "cls": 0.012248052669181182,
   "initialThreeLoaded": false,
   "initialVideoLoaded": false,
   "resources": [
     {
       "name": "borneo-smoke-2023-mobile.webp",
       "transferSize": 106078,
-      "duration": 1721
+      "duration": 1807.5
     },
     {
-      "name": "SiteLayout.Cm7HKOZa.css",
-      "transferSize": 93256,
-      "duration": 1594
+      "name": "SiteLayout.CaHWmPj1.css",
+      "transferSize": 106073,
+      "duration": 1800
     },
     {
       "name": "index.C5ChEEfh.css",
       "transferSize": 4387,
-      "duration": 266.30000000004657
+      "duration": 276.8000000002794
+    },
+    {
+      "name": "ForestWorld.astro_astro_type_script_index_0_lang.Dnslbv7U.js",
+      "transferSize": 1901,
+      "duration": 223.8000000002794
+    },
+    {
+      "name": "preload-helper.DHhhL8Zf.js",
+      "transferSize": 1965,
+      "duration": 207.70000000018626
     },
     {
       "name": "manrope-latin-wght-normal.woff2",
       "transferSize": 25136,
-      "duration": 858
+      "duration": 847.5
     },
     {
       "name": "newsreader-latin-wght-italic.woff2",
       "transferSize": 64820,
-      "duration": 1427.6999999999534
+      "duration": 1413.7999999998137
     },
     {
       "name": "newsreader-latin-wght-normal.woff2",
       "transferSize": 58384,
-      "duration": 1367.1000000000931
+      "duration": 1353.3999999999069
     },
     {
       "name": "CurrentMap.astro_astro_type_script_index_0_lang.CI62VnCf.js",
       "transferSize": 1397,
-      "duration": 223.30000000004657
+      "duration": 219.70000000018626
     },
     {
       "name": "DataMap.astro_astro_type_script_index_0_lang.BpwdVvrY.js",
       "transferSize": 3780,
-      "duration": 171.4000000001397
+      "duration": 170.6999999997206
     },
     {
-      "name": "index.astro_astro_type_script_index_0_lang.BR6QFWv_.js",
-      "transferSize": 11761,
-      "duration": 227.30000000004657
+      "name": "index.astro_astro_type_script_index_0_lang.Be5behR2.js",
+      "transferSize": 13000,
+      "duration": 229.60000000009313
     },
     {
-      "name": "SiteLayout.astro_astro_type_script_index_0_lang.BBlckSfJ.js",
-      "transferSize": 2069,
-      "duration": 182
+      "name": "SiteLayout.astro_astro_type_script_index_0_lang.fv0F9fbN.js",
+      "transferSize": 2138,
+      "duration": 176.39999999990687
     }
   ],
   "conditions": {

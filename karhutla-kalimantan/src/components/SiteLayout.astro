@@ -3,10 +3,11 @@ import '../styles/global.css';
 import '../styles/experience.css';
 import '../styles/season-experience.css';
 import '../styles/portrait.css';
+import '../styles/immersive.css';
 import Icon from './Icon.astro';
 interface Props { title?: string; description?: string; home?:boolean; }
 const {title='Kalimantan: Di balik asap',description='Dokumenter interaktif tentang kebakaran hutan dan lahan di Kalimantan. Januari–Oktober 2026: jejak kejadian, laporan terbaru, deteksi hotspot, mekanisme gambut, dampak dan operasi pengendalian.',home=false}=Astro.props;
-const chapters=[['cerita','Bentang yang berubah'],['musim','Jejak musim api 2026'],['gambut','Di bawah permukaan'],['peta','Peta kebakaran'],['dampak','Yang ikut hilang'],['pulih','Merawat kembali'],['wynn','Tentang Wynn']];
+const chapters=[['ruang','Masuk ke ruang hutan'],['cerita','Bentang yang berubah'],['musim','Jejak musim api 2026'],['gambut','Di bawah permukaan'],['peta','Peta kebakaran'],['dampak','Yang ikut hilang'],['pulih','Merawat kembali'],['wynn','Tentang Wynn']];
 ---
 <!doctype html>
 <html lang="id">

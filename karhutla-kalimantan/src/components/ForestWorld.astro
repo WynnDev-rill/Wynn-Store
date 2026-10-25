@@ -1,0 +1,22 @@
+<section id="ruang" class="forest-world" aria-labelledby="forest-title">
+  <div class="forest-shell">
+    <div class="forest-renderer" data-forest-world tabindex="0" role="img" aria-label="Ilustrasi ruang hutan gambut. Geser atau gunakan tombol panah untuk melihat; Escape mengembalikan pandangan. Bukan dokumentasi lokasi nyata.">
+      <svg class="forest-fallback" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="forest-sky" x2="0" y2="1"><stop stop-color="#5c665d"/><stop offset=".6" stop-color="#a29b81"/><stop offset="1" stop-color="#26332a"/></linearGradient><linearGradient id="forest-mist"><stop stop-color="#b6ab89" stop-opacity="0"/><stop offset=".5" stop-color="#b6ab89" stop-opacity=".25"/><stop offset="1" stop-color="#b6ab89" stop-opacity="0"/></linearGradient></defs><path fill="url(#forest-sky)" d="M0 0h1600v1000H0z"/><path fill="#29392f" d="M0 640 800 570 1600 640v360H0Z"/><g stroke="#26332b" fill="none" stroke-linecap="round"><path stroke-width="19" d="M320 730 345-50m-5 300-90-145m90 105 110-135M1230 700 1190-60m24 410 120-160m-130 70-110-170"/><path stroke-width="8" d="M620 660 630 0m-3 290-70-100M940 680 960-10m-6 230 55-80M710 630 720 10M825 650 840 0"/><path stroke-width="40" d="M60 950 120-50m-20 430-120-200m115 80 120-160M1520 930 1460-50m30 500 130-280m-150 65-150-180"/></g><path fill="url(#forest-mist)" d="M0 360h1600v280H0z"/><path d="m1100 825 80-15 70 8m-190 29 45-5" stroke="#c78e55" stroke-width="3" fill="none"/></svg>
+    </div>
+    <div class="forest-shade" aria-hidden="true"></div>
+    <div class="forest-ui"><p class="forest-world-label">Ruang gambut / Ilustrasi interaktif</p><h2 id="forest-title">Di antara asap<br/><em>dan akar.</em></h2><p class="forest-deck">Masuk lebih dekat ke bentang yang menyimpan api di bawah permukaannya.</p><button class="forest-explore" data-forest-explore aria-pressed="false">Jelajahi ruang <span aria-hidden="true">↗</span></button><div class="forest-state-controls" role="group" aria-label="Kondisi ilustrasi hutan"><button data-forest-stage="0" aria-pressed="false">Sebelum api</button><button data-forest-stage="1" aria-pressed="true">Di dalam asap</button><button data-forest-stage="2" aria-pressed="false">Setelah hujan</button></div></div>
+    <div class="forest-bottom"><p class="forest-caption" data-forest-status role="status">Ilustrasi mekanisme · bukan rekonstruksi lokasi nyata</p><p class="forest-navigation">Geser atau gunakan panah · gulir untuk bergerak</p><span class="forest-progress" aria-hidden="true"><i data-forest-progress></i></span></div>
+  </div>
+</section>
+<script>
+const forest=document.querySelector<HTMLElement>('[data-forest-world]');
+const forestSection=forest?.closest<HTMLElement>('section');
+const explore=forestSection?.querySelector<HTMLButtonElement>('[data-forest-explore]');
+function setExplore(active:boolean){forestSection?.classList.toggle('is-exploring',active);explore?.setAttribute('aria-pressed',String(active));if(explore)explore.textContent=active?'Kembali ke cerita ↙':'Jelajahi ruang ↗';}
+explore?.addEventListener('click',()=>setExplore(!forestSection?.classList.contains('is-exploring')));
+forestSection?.addEventListener('keydown',e=>{if(e.key==='Escape')setExplore(false);});
+const labels=['Sebelum api · vegetasi, air dan tanah membentuk satu bentang','Di dalam asap · bara dapat bertahan dekat permukaan gambut','Setelah hujan · pembasahan belum berarti pemulihan selesai'];
+forestSection?.querySelectorAll<HTMLButtonElement>('[data-forest-stage]').forEach((button,i)=>button.addEventListener('click',()=>{forestSection.dataset.forestStage=String(i);forestSection.querySelectorAll('[data-forest-stage]').forEach((el,j)=>el.setAttribute('aria-pressed',String(i===j)));const status=forestSection.querySelector('[data-forest-status]');if(status)status.textContent=labels[i]!;}));
+
+if(forest){const loader=new IntersectionObserver(async entries=>{if(!entries.some(e=>e.isIntersecting))return;loader.disconnect();try{const {initForestWorld}=await import('../scripts/forest-world');initForestWorld(forest);}catch{forest.dataset.ready='false';const status=forest.closest('section')?.querySelector('[data-forest-status]');if(status)status.textContent='Ilustrasi statis · tampilan 3D tidak tersedia di browser ini';}},{rootMargin:'0px',threshold:.08});loader.observe(forest);}
+</script>

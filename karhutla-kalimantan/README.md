@@ -55,3 +55,7 @@ Lisensi kode repositori tidak menghapus hak media. Citra NASA/USGS dan NASA SVS:
 `test:browser` menguji layout 320–1440px, keyboard/menu, 25 kombinasi data, grafik kronologi, profil/avatar, motion teks/kontur, WebGL, reduced motion, fallback tanpa JavaScript dan audit axe. Hasil dan screenshot di `test-results/` (tidak dikomit). Untuk memakai Chromium sistem: `BROWSER_EXECUTABLE_PATH=/path/to/chromium npm run test:browser`. Tes mobile adalah emulasi viewport/touch, bukan pengukuran di HP fisik.
 
 `test:experience` memeriksa perubahan transform kontur saat gulir, fallback ketika WebGL sengaja dimatikan, serta reduced motion. Galeri arsip/pemutar telah diganti profil Wynn; bibliografi dan kredit media yang masih digunakan tetap tersedia. Runtime produksi tetap gratis dan mandiri; studi Spline tidak menjadi dependensi frontend.
+
+## Edisi ruang interaktif
+
+Bab Ruang menambahkan hutan Three.js dengan tiga keadaan, drag/panah/orientasi otomatis ketika tersedia, serta audio sintetis opsional. Wynn tampil berdampingan dengan kartu optik tanpa tombol sensor. Detail implementasi dan perbandingan premium: [docs/IMMERSIVE-REVIEW.md](docs/IMMERSIVE-REVIEW.md).

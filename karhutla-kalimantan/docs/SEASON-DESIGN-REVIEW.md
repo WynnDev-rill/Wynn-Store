@@ -6,7 +6,7 @@ Fokus baru: dokumentasi jejak kejadian Januari–Oktober 2026, hingga rilis yang
 
 - Jejak musim menjadi bagian tersendiri dengan lima tahap bertanggal, navigasi bulan, ringkasan dan detail sumber. Tanggal 17 Januari hanya berlaku pada catatan Kalimantan Barat, tidak diklaim sebagai satu tanggal penyalaan seluruh pulau.
 - Peta diperbarui sampai cuplikan 24 Oktober 21.00 WIB, rilis 25 Oktober: Tengah 60, Barat 55, Selatan nihil deteksi high confidence. Timur/Utara tidak dirinci; nol deteksi tidak berarti seluruh kebakaran telah padam.
-- Teks yang bertumpuk di atas avatar dihapus. Lapisan kaca, foil dan kilau mengikuti pointer/sentuhan/keyboard; sensor orientasi hanya aktif setelah tombol ditekan. Izin tidak diminta otomatis.
+- Teks yang bertumpuk di atas avatar dihapus. Lapisan kaca, foil dan kilau mengikuti pointer/sentuhan/keyboard; sensor orientasi digunakan otomatis ketika browser telah mengizinkannya. Tidak ada tombol sensor maupun permintaan izin otomatis.
 - Komposisi hero, medan sinyal, tekstur bidang, grafik, penampang, dampak dan pemulihan diselaraskan. Navigasi mobile dipadatkan menjadi header 64 px dan rail bab di bawah; kontrol model tetap terjangkau.
 - Pengurangan gerak menghentikan animasi dan transisi, mempertahankan isi dan kontrol. Tidak ada audio otomatis atau gulir yang diambil alih.
 
@@ -28,6 +28,6 @@ Tidak ada dasar untuk memberi peringkat objektif “di atas seluruh situs rata-r
 2. Rail bab mempertahankan status Peta ketika kembali ke pembuka: pemilihan bab memakai posisi scroll, pembuka tidak memilih bab lama.
 3. Transisi tersisa pada reduced motion: animasi dan transisi dimatikan secara eksplisit.
 4. Screenshot mobile memakai offset header lama: diperbarui mengikuti header ringkas agar tidak memasukkan sisa bab sebelumnya.
-5. Pengujian Escape kartu sempat membaca frame lama pada tab latar: tab diaktifkan sebelum memeriksa hasil input. Fallback sensor tetap menampilkan status bila perangkat tidak mengirim data.
+5. Pengujian Escape kartu sempat membaca frame lama pada tab latar: tab diaktifkan sebelum memeriksa hasil input. Input sentuh dan keyboard tetap tersedia bila sensor tidak mengirim data.
 
-Giroskop fisik belum diuji pada HP. Uji orientasi menggunakan event simulasi setelah gesture izin, sehingga membuktikan jalur logika, bukan kompatibilitas semua sensor/browser. Semua gambar dokumenter tetap bertanggal; avatar adalah ilustrasi pilihan Wynn, bukan dokumentasi karhutla.
+Giroskop fisik belum diuji pada HP. Uji orientasi menggunakan event simulasi tanpa tombol aktivasi, sehingga membuktikan jalur logika, bukan kompatibilitas semua sensor/browser. Semua gambar dokumenter tetap bertanggal; avatar adalah ilustrasi pilihan Wynn, bukan dokumentasi karhutla.

@@ -17,7 +17,19 @@
       "pass": true
     },
     {
-      "name": "Simulated orientation after permission gesture",
+      "name": "Automatic orientation without enable button",
+      "pass": true
+    },
+    {
+      "name": "Immersive forest three states",
+      "pass": true
+    },
+    {
+      "name": "Audio start and stop",
+      "pass": true
+    },
+    {
+      "name": "Mobile portrait beside biography",
       "pass": true
     }
   ],
