@@ -111,6 +111,33 @@ class DeviceTest {
   assertEquals(paused,WatchService.instance!!.current().apps["id.wynn.iwatchyou.test"])
   shell("am start -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.ProbeActivity --activity-clear-task --activity-new-task --ez finish true")
  }
+ @Test fun activityEventsTrackWhenWindowRootsAreUnavailable() {
+  automation
+  if(android.os.Build.VERSION.SDK_INT>=33) shell("pm grant id.wynn.iwatchyou android.permission.POST_NOTIFICATIONS")
+  shell("settings put secure enabled_accessibility_services id.wynn.iwatchyou/.WatchService")
+  shell("settings put secure accessibility_enabled 1")
+  waitFor { WatchService.instance!=null }
+  val service=WatchService.instance!!
+  val info=service.serviceInfo
+  val oldFlags=info.flags
+  InstrumentationRegistry.getInstrumentation().runOnMainSync {
+   info.flags=oldFlags and android.accessibilityservice.AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS.inv()
+   service.serviceInfo=info
+  }
+  try {
+   repeat(3) {
+    shell("am start -a android.settings.SETTINGS")
+    waitFor(20_000) { service.current().foreground=="com.android.settings" }
+    val start=service.current().apps["com.android.settings"] ?: 0L
+    SystemClock.sleep(250)
+    assertTrue(service.current().apps["com.android.settings"]!!>start)
+    device.pressHome()
+    waitFor { service.current().foreground==null }
+   }
+  } finally {
+   InstrumentationRegistry.getInstrumentation().runOnMainSync { info.flags=oldFlags; service.serviceInfo=info }
+  }
+ }
  @Test fun mainScreenSurvivesRotationAndLargeText() {
   device.wakeUp();shell("wm dismiss-keyguard")
   shell("am start -n id.wynn.iwatchyou/.MainActivity")
