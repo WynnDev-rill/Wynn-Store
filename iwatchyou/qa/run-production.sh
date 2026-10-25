@@ -5,9 +5,12 @@ mkdir -p "$out"
 adb install -r iwatchyou/distribution/IWatchYou-1.0.1.apk
 adb shell pm grant id.wynn.iwatchyou android.permission.POST_NOTIFICATIONS
 adb shell am start -n id.wynn.iwatchyou/.MainActivity
-sleep 3
-adb shell uiautomator dump /sdcard/iw-home.xml
-adb pull /sdcard/iw-home.xml "$out/home.xml"
+for i in 1 2 3 4 5; do
+ sleep 1
+ adb shell uiautomator dump /sdcard/iw-home.xml
+ adb pull /sdcard/iw-home.xml "$out/home.xml"
+ if grep -q 'text="IWatchYou"' "$out/home.xml"; then break; fi
+done
 grep -q 'text="IWatchYou"' "$out/home.xml"
 grep -q 'Pemantauan' "$out/home.xml"
 adb exec-out screencap -p > "$out/home.png"

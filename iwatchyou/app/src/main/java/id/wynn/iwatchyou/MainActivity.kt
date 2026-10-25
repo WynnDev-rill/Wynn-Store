@@ -42,7 +42,7 @@ import java.util.Locale
 
 private val Ink=Color(0xFF142033)
 private val Muted=Color(0xFF637087)
-private val Blue=Color(0xFF347CF4)
+private val Blue=Color(0xFF246ADC)
 private val Back=Color(0xFFF6F8FC)
 private val Track=Color(0xFFE9EEF6)
 private val Jakarta=FontFamily(Font(R.font.jakarta_regular,FontWeight.Normal),Font(R.font.jakarta_medium,FontWeight.Medium),Font(R.font.jakarta_bold,FontWeight.Bold))
@@ -179,7 +179,7 @@ class MainActivity: ComponentActivity() {
    val stateColor by animateColorAsState(if(active)Blue else Muted,label="monitoring")
    Surface(color=Color.White,shape=RoundedCornerShape(24.dp),shadowElevation=2.dp,modifier=Modifier.padding(start=16.dp,end=16.dp,bottom=12.dp).fillMaxWidth()) {
     Row(Modifier.padding(14.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-     Box(Modifier.size(46.dp).background(stateColor.copy(alpha=0.10f),RoundedCornerShape(16.dp)),contentAlignment=Alignment.Center) { Text("⏻",color=stateColor,fontSize=28.sp) }
+     Box(Modifier.size(46.dp).background(stateColor.copy(alpha=0.10f),RoundedCornerShape(16.dp)),contentAlignment=Alignment.Center) { PowerGlyph(Modifier.size(24.dp),stateColor) }
      Column(Modifier.weight(1f)) {
       Text(if(active)"Pemantauan aktif" else "Aktifkan pemantauan",fontSize=14.sp,fontWeight=FontWeight.Bold,color=Ink)
       Spacer(Modifier.height(3.dp))
@@ -231,5 +231,13 @@ private fun dayLabel(day: String)=runCatching { LocalDate.parse(day).format(Date
    }
   }
   Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { listOf("00","04","08","12","16","20","24").forEach { Text(it,color=Muted,fontSize=9.sp) } }
+ }
+}
+
+@Composable private fun PowerGlyph(modifier: Modifier,color: Color) {
+ Canvas(modifier) {
+  val stroke=2.dp.toPx();val r=size.minDimension*0.39f
+  drawArc(color,-50f,280f,false,topLeft=androidx.compose.ui.geometry.Offset(center.x-r,center.y-r),size=androidx.compose.ui.geometry.Size(r*2,r*2),style=androidx.compose.ui.graphics.drawscope.Stroke(stroke,cap=androidx.compose.ui.graphics.StrokeCap.Round))
+  drawLine(color,center.copy(y=center.y-r*1.15f),center.copy(y=center.y-r*0.12f),stroke,androidx.compose.ui.graphics.StrokeCap.Round)
  }
 }

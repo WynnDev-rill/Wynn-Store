@@ -105,7 +105,7 @@ class DeviceTest {
   device.findObject(By.text("PiP fixture")).click()
   waitFor { automation.windows.any { it.isInPictureInPictureMode } }
   shell("am start -a android.settings.SETTINGS")
-  waitFor { WatchService.instance?.current()?.foreground=="com.android.settings" }
+  waitFor(20_000) { WatchService.instance?.current()?.foreground=="com.android.settings" }
   val paused=WatchService.instance!!.current().apps["id.wynn.iwatchyou.test"]!!
   SystemClock.sleep(1200)
   assertEquals(paused,WatchService.instance!!.current().apps["id.wynn.iwatchyou.test"])

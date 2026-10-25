@@ -15,7 +15,9 @@ sdk=pathlib.Path(os.environ['ANDROID_HOME'])/'build-tools/36.0.0'
 cert='eca17e8afa84775e941e0e490741b01636e7941da545c508f85b8a256a4f346a'
 signature=subprocess.check_output([str(sdk/'apksigner'),'verify','--verbose','--print-certs',str(apk)],text=True)
 assert 'Signer #1 certificate SHA-256 digest: '+cert in signature
-assert 'Verified using v2 scheme (APK Signature Scheme v2): true' in signature
+assert 'Verified using v3 scheme (APK Signature Scheme v3): true' in signature
+v2=subprocess.check_output([str(sdk/'apksigner'),'verify','--min-sdk-version','24','--max-sdk-version','27','--verbose',str(apk)],text=True)
+assert 'Verified using v2 scheme (APK Signature Scheme v2): true' in v2
 badging=subprocess.check_output([str(sdk/'aapt'),'dump','badging',str(apk)],text=True)
 assert f"name='id.wynn.iwatchyou' versionCode='{code}' versionName='{version}'" in badging
 assert 'application-debuggable' not in badging
