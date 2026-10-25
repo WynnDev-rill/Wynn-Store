@@ -6,8 +6,12 @@ out=pathlib.Path('iwatchyou/qa/upgrade-output');out.mkdir(parents=True,exist_ok=
 def adb(*args):return subprocess.check_output(['adb',*args],text=True,timeout=40)
 def shell(command):return adb('shell',command)
 def tree():
+ shell('rm -f /sdcard/iw-upgrade.xml')
  shell('uiautomator dump /sdcard/iw-upgrade.xml >/dev/null')
- text=shell('cat /sdcard/iw-upgrade.xml');(out/'last-ui.xml').write_text(text)
+ result=subprocess.run(['adb','shell','cat /sdcard/iw-upgrade.xml'],capture_output=True,text=True,timeout=30)
+ text=result.stdout
+ if result.returncode or not text.lstrip().startswith('<?xml'):return ET.Element('hierarchy')
+ (out/'last-ui.xml').write_text(text)
  return ET.fromstring(text)
 def find(label,attr='text'):
  return next((n for n in tree().iter('node') if n.get(attr)==label),None)

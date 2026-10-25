@@ -119,10 +119,7 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: false
-          script: |
-            bash iwatchyou/qa/run-production.sh
-            python3 iwatchyou/scripts/publish.py
-            python3 iwatchyou/qa/upgrade_driver.py
+          script: bash iwatchyou/qa/release-and-verify.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:

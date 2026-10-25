@@ -7,8 +7,8 @@ adb shell pm grant id.wynn.iwatchyou android.permission.POST_NOTIFICATIONS
 adb shell am start -n id.wynn.iwatchyou/.MainActivity
 for i in 1 2 3 4 5; do
  sleep 1
- adb shell uiautomator dump /sdcard/iw-home.xml
- adb pull /sdcard/iw-home.xml "$out/home.xml"
+ if ! adb shell uiautomator dump /sdcard/iw-home.xml; then continue; fi
+ if ! adb pull /sdcard/iw-home.xml "$out/home.xml"; then continue; fi
  if grep -q 'text="IWatchYou"' "$out/home.xml"; then break; fi
 done
 grep -q 'text="IWatchYou"' "$out/home.xml"
