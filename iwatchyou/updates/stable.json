@@ -1,1 +1,11 @@
-{"versionCode":0,"versionName":"0.0.0","packageName":"id.wynn.iwatchyou","apkUrl":"","sha256":"","signerSha256":"","sizeBytes":0,"notes":"Belum ada rilis."}
+{
+  "versionCode": 2,
+  "versionName": "1.0.1",
+  "packageName": "id.wynn.iwatchyou",
+  "minSdk": 30,
+  "apkUrl": "https://github.com/WynnDev-rill/Wynn-Store/releases/download/iwatchyou-v1.0.1/IWatchYou-1.0.1.apk",
+  "sha256": "b0c2a7c5d1c170f7e45e4671703045f0a96008448a4083d169b94a13a1f4cbc5",
+  "signerSha256": "eca17e8afa84775e941e0e490741b01636e7941da545c508f85b8a256a4f346a",
+  "sizeBytes": 2003492,
+  "notes": "Pencatatan berbasis fokus jendela, riwayat harian, timer mengambang yang terkunci saat redup, serta tampilan dan ukuran APK yang dioptimalkan."
+}
