@@ -1,0 +1,7 @@
+{
+  "purpose": "Disposable-emulator upgrade rehearsal; exact production payload except manifest versionCode=1 and versionName=1.0.0. Not a public application release.",
+  "sha256": "613f64aa063fcfbf0b5cf75594370760dc8d1bb3e9051b4d6fd5a43f35873e8f",
+  "sourceCommit": "c2cfaec63c70bb0334c3200769e7895ad5db8070",
+  "productionVersion": "1.0.1",
+  "signerSha256": "eca17e8afa84775e941e0e490741b01636e7941da545c508f85b8a256a4f346a"
+}

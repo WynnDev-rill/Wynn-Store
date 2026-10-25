@@ -32,6 +32,8 @@ def duration():
 def capture(name):
  with open(out/name,'wb') as f:subprocess.run(['adb','exec-out','screencap','-p'],stdout=f,check=True)
 try:
+ # Reset the disposable smoke-test installation before seeding the lower-version fixture.
+ subprocess.run(['adb','uninstall','id.wynn.iwatchyou'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  adb('install','-r','iwatchyou/qa/fixtures/upgrade-baseline.apk')
  assert version()==1
  shell('pm grant id.wynn.iwatchyou android.permission.POST_NOTIFICATIONS')
