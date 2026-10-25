@@ -1,0 +1,83 @@
+---
+import { seasonEntries, seasonResearchDate, latestSeasonSnapshot } from '../data/season';
+---
+
+<section class="season-journey section" id="musim" aria-labelledby="season-title">
+  <div class="section-meta">
+    <span>Jejak penanganan 2026</span>
+    <span>Diperiksa {seasonResearchDate}</span>
+  </div>
+  <div class="season-header">
+    <h2 id="season-title" data-reveal>Dari catatan awal,<br />hingga operasi Oktober.</h2>
+    <p class="season-intro">Kebakaran berlangsung di lokasi dan waktu yang berbeda. Dari catatan Januari di Kalimantan Barat, kesiagaan saat kemarau, hingga operasi yang masih berjalan di Oktober.</p>
+  </div>
+
+  <nav class="season-month-nav" aria-label="Lompati tahap penanganan 2026">
+    {seasonEntries.map(entry => <a href={`#${entry.id}`}>{entry.month}</a>)}
+  </nav>
+
+  <div class="season-track">
+    {seasonEntries.map(entry => (
+      <article class="season-entry" data-reveal id={entry.id} tabindex="-1" aria-labelledby={`${entry.id}-title`}>
+        <div class="season-date">
+          <time datetime={entry.dateTime}>{entry.date}</time>
+          <span>{entry.place}</span>
+        </div>
+        <div class="season-copy">
+          <h3 id={`${entry.id}-title`}>{entry.title}</h3>
+          <p>{entry.lead}</p>
+          <details class="season-detail">
+            <summary>Selengkapnya tentang {entry.month.toLocaleLowerCase('id-ID')}</summary>
+            <p>{entry.detail}</p>
+          </details>
+          <a class="season-source" href={entry.sourceUrl} target="_blank" rel="noopener noreferrer">
+            {entry.sourceTitle}<span aria-hidden="true"> ↗</span>
+            <span class="season-publication">Rilis {entry.publicationDate}</span>
+          </a>
+        </div>
+      </article>
+    ))}
+  </div>
+
+  <aside class="season-latest" aria-label="Batas waktu data terbaru pada kronologi">
+    <p><strong>Pembaruan terakhir pada kronologi: {latestSeasonSnapshot.publicationLabel}.</strong> Cuplikan pengamatannya bertanggal {latestSeasonSnapshot.observedLabel}. Rangkaian ini bukan laporan waktu nyata atau daftar seluruh kejadian.</p>
+    <a href="#peta">Lihat cuplikan deteksi per provinsi<span aria-hidden="true"> ↗</span></a>
+  </aside>
+</section>
+
+<style>
+  .season-header { display: grid; grid-template-columns: 1.2fr 1fr; gap: clamp(2rem, 6vw, 6rem); align-items: end; }
+  .season-header h2 { margin: 0; max-width: 17ch; }
+  .season-intro { max-width: 51ch; margin: 0; font-size: 1.05rem; line-height: 1.8; }
+  .season-month-nav { display: flex; flex-wrap: wrap; gap: .5rem; margin: 2.25rem 0 1rem; }
+  .season-month-nav a { display: inline-flex; align-items: center; min-height: 44px; padding: .65rem 1rem; border: 1px solid currentColor; border-radius: 99px; font-size: .85rem; text-decoration: none; }
+  .season-month-nav a:hover { background: #e8eeea; }
+  .season-month-nav a:focus-visible, .season-source:focus-visible, .season-latest a:focus-visible, .season-detail summary:focus-visible { outline: 3px solid #365f4b; outline-offset: 5px; }
+  .season-entry { display: grid; grid-template-columns: minmax(150px, .65fr) 1.5fr; gap: clamp(1.5rem, 5vw, 5rem); padding: clamp(1.5rem, 3vw, 2.4rem) 0; border-top: 1px solid #ccd6cf; scroll-margin-top: 110px; }
+  .season-entry:target { border-top-color: #365f4b; }
+  .season-entry:target .season-date time { color: #365f4b; }
+  .season-date { display: flex; flex-direction: column; gap: .55rem; }
+  .season-date time { font-size: clamp(1.25rem, 2.1vw, 1.8rem); line-height: 1.25; letter-spacing: -.04em; }
+  .season-date span { max-width: 26ch; font-size: .83rem; line-height: 1.6; }
+  .season-copy h3 { font-size: clamp(1.2rem, 2vw, 1.6rem); margin: 0 0 .6rem; letter-spacing: -.035em; }
+  .season-copy > p, .season-detail p { max-width: 67ch; margin: 0; font-size: .98rem; line-height: 1.85; }
+  .season-detail { margin-top: .7rem; }
+  .season-detail summary { width: fit-content; min-height: 44px; padding: .65rem 0; font-size: .85rem; cursor: pointer; text-decoration: underline; text-underline-offset: .2em; }
+  .season-detail p { padding: .4rem 0 .7rem; }
+  .season-source { display: inline-block; max-width: 100%; min-height: 44px; margin-top: .5rem; padding-top: .65rem; font-size: .78rem; line-height: 1.6; text-underline-offset: .2em; overflow-wrap: anywhere; }
+  .season-publication { display: block; opacity: .76; }
+  .season-latest { display: grid; grid-template-columns: 1.5fr .65fr; gap: 1.5rem; align-items: center; padding: 1.4rem 0; border-top: 1px solid #ccd6cf; }
+  .season-latest p { max-width: 74ch; margin: 0; font-size: .84rem; line-height: 1.8; }
+  .season-latest a { justify-self: end; min-height: 44px; display: inline-flex; align-items: center; font-size: .84rem; text-underline-offset: .2em; }
+  @media (max-width: 760px) {
+    .season-header { grid-template-columns: 1fr; gap: 1.25rem; }
+    .season-entry { grid-template-columns: 1fr; gap: .8rem; padding: 1.5rem 0; scroll-margin-top: 100px; }
+    .season-date { gap: .3rem; }
+    .season-date span { max-width: none; }
+    .season-month-nav { margin-top: 1.5rem; }
+    .season-month-nav a { padding: .55rem .8rem; font-size: .8rem; }
+    .season-latest { grid-template-columns: 1fr; gap: .5rem; }
+    .season-latest a { justify-self: start; }
+  }
+  @media (prefers-reduced-motion: reduce) { .season-journey { scroll-behavior: auto; } }
+</style>

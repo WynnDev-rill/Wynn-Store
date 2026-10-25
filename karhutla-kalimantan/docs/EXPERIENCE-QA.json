@@ -11,6 +11,14 @@
     {
       "name": "Reduced motion keeps stable perspective and no running animations",
       "pass": true
+    },
+    {
+      "name": "Portrait keyboard and clean artwork",
+      "pass": true
+    },
+    {
+      "name": "Simulated orientation after permission gesture",
+      "pass": true
     }
   ],
   "errors": []

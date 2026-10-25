@@ -1,1 +1,27 @@
-{"metric":"hotspots high confidence","timezone":"Asia/Jakarta","time":"21:00 WIB","not":"fire incident count, burned area, annual total or realtime feed","missing_provinces":["Kalimantan Timur","Kalimantan Utara"],"sources":[{"snapshot":"2026-10-22","published":"2026-10-23","url":"https://www.kehutanan.go.id/news/hotspot-naik-operasi-dan-perlindungan-satwa-diperkuat"},{"snapshot":"2026-10-23","published":"2026-10-24","url":"https://www.kehutanan.go.id/news/menhut-pimpin-operasi-di-kalimantan-barat-omc-diperkuat"}]}
+{
+  "metric": "hotspots high confidence",
+  "timezone": "Asia/Jakarta",
+  "time": "21:00 WIB",
+  "not": "fire incident count, burned area, annual total or realtime feed",
+  "missing_provinces": [
+    "Kalimantan Timur",
+    "Kalimantan Utara"
+  ],
+  "sources": [
+    {
+      "snapshot": "2026-10-22",
+      "published": "2026-10-23",
+      "url": "https://www.kehutanan.go.id/news/hotspot-naik-operasi-dan-perlindungan-satwa-diperkuat"
+    },
+    {
+      "snapshot": "2026-10-23",
+      "published": "2026-10-24",
+      "url": "https://www.kehutanan.go.id/news/menhut-pimpin-operasi-di-kalimantan-barat-omc-diperkuat"
+    },
+    {
+      "snapshot": "2026-10-24",
+      "published": "2026-10-25",
+      "url": "https://www.kehutanan.go.id/news/hotspot-turun-1-019-titik-operasi-karhutla-dan-perlindungan-satwa-tetap-diperkuat-2"
+    }
+  ]
+}

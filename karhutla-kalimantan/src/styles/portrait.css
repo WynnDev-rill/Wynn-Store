@@ -1,0 +1,42 @@
+/* A quiet optical finish: illustration, glass, light. No text over the image. */
+.creator-image-wrap.lightcone{
+  --portrait-rx:0deg;--portrait-ry:0deg;--portrait-lx:50%;--portrait-ly:42%;--portrait-shift:0%;
+  width:min(100%,390px);max-width:390px;aspect-ratio:0.64;margin:20px auto 24px;padding:0;
+  position:relative;isolation:isolate;overflow:visible;border-radius:7px;
+  background:#d9ddda;box-shadow:0 26px 42px -22px #19302a75,0 9px 13px -9px #10241b80;
+  transform:perspective(1100px) rotateX(var(--portrait-rx)) rotateY(var(--portrait-ry)) rotateZ(-3deg);
+  transform-style:preserve-3d;transition:transform .35s cubic-bezier(.22,1,.36,1),box-shadow .35s;
+  touch-action:pan-y;will-change:auto;
+}
+.lightcone[data-portrait-active=true]{transition-duration:.12s;box-shadow:0 32px 48px -23px #19302a85,0 12px 17px -11px #10241b8c}
+.lightcone-surface{position:absolute;inset:0;overflow:hidden;border-radius:7px;background:#d6dbd7;transform:translateZ(0);backface-visibility:hidden}
+.creator-image-wrap.lightcone img{
+  display:block;width:100%;height:100%;max-height:none;object-fit:cover;object-position:50% 38%;
+  filter:saturate(.9) contrast(1.035);transform:none;user-select:none;-webkit-user-drag:none;
+}
+.lightcone-foil,.lightcone-gloss,.lightcone-edge{position:absolute;inset:0;pointer-events:none;border-radius:inherit}
+.lightcone-foil{
+  background:linear-gradient(123deg,transparent 8%,#a9e5df30 21%,#e2c2ef22 32%,transparent 43%,#ffe9bc30 60%,#bde9ef2b 72%,transparent 86%);
+  background-size:180% 180%;background-position:var(--portrait-lx) var(--portrait-ly);
+  mix-blend-mode:color;opacity:.48;
+}
+.lightcone-gloss{
+  background:radial-gradient(ellipse at var(--portrait-lx) var(--portrait-ly),#ffffff3d 0%,#ffffff0d 26%,transparent 62%),linear-gradient(116deg,transparent 12%,#ffffff04 22%,#ffffff30 28%,#ffffff06 35%,transparent 47%);
+  background-size:100% 100%,165% 100%;background-position:center,var(--portrait-shift) center;
+  mix-blend-mode:screen;opacity:.42;transition:opacity .3s;
+}
+.lightcone[data-portrait-active=true] .lightcone-gloss{opacity:.72}
+.lightcone-edge{
+  border:1px solid #ffffffa6;
+  box-shadow:inset 0 0 0 1px #425c5829,inset 2px 2px 1px #ffffff90,inset -2px -2px 2px #193b3850,inset 0 0 17px #ffffff13;
+}
+.lightcone-edge:after{content:"";position:absolute;inset:7px;border:1px solid #ffffff4d;border-radius:2px;box-shadow:0 0 0 1px #26433b12}
+.lightcone:before{content:"";position:absolute;inset:2px -3px -3px 2px;border-radius:7px;background:linear-gradient(135deg,#f2f6f1,#829890 46%,#e9f4ed 60%,#61756c);transform:translateZ(-2px);z-index:-1}
+.lightcone:focus-visible{outline:3px solid var(--ember,#aa3e20);outline-offset:9px}
+.sensor-toggle{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 17px;border:1px solid #74887d;border-radius:2px;font-size:11px;background:#f7f8f580;color:#182c28;text-align:center}
+.sensor-toggle:hover:not(:disabled){background:#fff9}
+.sensor-toggle:disabled{color:#52665a;background:#dce3d9;border-color:#a8b8aa;cursor:default}
+[data-sensor-status]{max-width:390px;margin:12px auto 0;font-size:11px;line-height:1.6;color:#46594e;text-wrap:pretty}
+@media(max-width:1000px){.creator-image-wrap.lightcone{width:min(100%,350px);max-width:350px}}
+@media(max-width:760px){.creator-image-wrap.lightcone{width:min(78vw,300px);max-width:300px;margin:8px auto 24px;aspect-ratio:.64}.creator-image-wrap.lightcone img{height:100%}.sensor-toggle{font-size:11px}[data-sensor-status]{font-size:10px;max-width:300px}}
+@media(prefers-reduced-motion:reduce){.creator-image-wrap.lightcone{transform:rotate(-3deg)!important;transition:none!important}.lightcone-gloss,.lightcone-foil{background-position:center!important;transition:none!important}.lightcone[data-portrait-active=true] .lightcone-gloss{opacity:.42}}

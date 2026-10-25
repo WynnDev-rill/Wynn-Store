@@ -39,13 +39,14 @@ Astro static HTML + TypeScript; CSS orisinal; SVG choropleth geometri nyata; sat
 
 - [Riset lingkungan](docs/RESEARCH.md)
 - [Referensi desain (10 utama)](docs/DESIGN-REFERENCES.md)
+- [Tinjauan musim & kartu optik terbaru](docs/SEASON-DESIGN-REVIEW.md)
 - [Revisi pengalaman visual & profil Wynn](docs/EXPERIENCE-REDESIGN.md)
 - [Audit terbaru & screenshot](docs/QA.md)
 - [Art direction awal](docs/DESIGN.md)
 - [Audit isi](docs/CONTENT-QA.md)
 - [Batas wilayah & sumber lisensi](docs/boundary-metadata.json)
 
-Kredit media dan metode tersedia bagi pembaca di `/sumber/`. Fokus laporan Kemenhut Oktober 2026; cuplikan sampai 23 Oktober 21.00 WIB, bukan feed langsung. Data luas historis 2019–2023 tersedia sebagai konteks terpisah. Citra dokumenter bukan generatif. Avatar profil dipilih dan disediakan Wynn. Penampang gambut adalah ilustrasi edukatif tidak berskala, bukan alat prediksi.
+Kredit media dan metode tersedia bagi pembaca di `/sumber/`. Jejak Januari–Oktober 2026; pembaruan rilis sampai 25 Oktober dan cuplikan sampai 24 Oktober 21.00 WIB, bukan feed langsung. Data luas historis 2019–2023 tersedia sebagai konteks terpisah. Citra dokumenter bukan generatif. Avatar profil dipilih dan disediakan Wynn. Penampang gambut adalah ilustrasi edukatif tidak berskala, bukan alat prediksi.
 
 ## Hak pihak ketiga
 

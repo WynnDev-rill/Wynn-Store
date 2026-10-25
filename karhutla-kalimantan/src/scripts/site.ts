@@ -26,7 +26,6 @@ function renderScroll(){
   ticking=false;
 }
 window.addEventListener('scroll',()=>{if(!ticking){requestAnimationFrame(renderScroll);ticking=true;}},{passive:true});
-renderScroll();
 const chapterLinks=document.querySelectorAll<HTMLAnchorElement>('[data-chapter-link]');
-const chapterObserver=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){chapterLinks.forEach(a=>{const active=a.dataset.chapterLink===entry.target.id;a.classList.toggle('current',active);if(active)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});}}, {rootMargin:'-20% 0px -65% 0px'});
-document.querySelectorAll('main section[id]').forEach(s=>chapterObserver.observe(s));
+function updateChapter(){const sections=Array.from(chapterLinks).map(a=>document.getElementById(a.dataset.chapterLink!)).filter((e):e is HTMLElement=>!!e);const edge=innerWidth<=760?100:200;const active=sections.filter(e=>e.getBoundingClientRect().top<=edge).sort((a,b)=>b.getBoundingClientRect().top-a.getBoundingClientRect().top)[0]?.id;chapterLinks.forEach(a=>{const selected=a.dataset.chapterLink===active;a.classList.toggle('current',selected);if(selected)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});}
+window.addEventListener('scroll',updateChapter,{passive:true});window.addEventListener('resize',updateChapter,{passive:true});renderScroll();updateChapter();
