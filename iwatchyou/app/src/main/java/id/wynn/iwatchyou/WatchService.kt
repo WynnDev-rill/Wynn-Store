@@ -69,6 +69,7 @@ class WatchService : AccessibilityService() {
  private var retryBudget=0
  private var activityHint: String?=null
  private var hasActivityHint=false
+ private var hintUntil=0L
  private val resolveTask=Runnable { resolveForeground() }
  private fun unlocked()=!screenOffSignal && power.isInteractive && !keyguard.isKeyguardLocked
  private val receiver=object: BroadcastReceiver() {
@@ -185,7 +186,7 @@ class WatchService : AccessibilityService() {
    val pkg=event.packageName?.toString()
    val cls=event.className?.toString().orEmpty()
    if(pkg!=null && (pkg in excluded || cls.endsWith("Activity") || cls.endsWith("Launcher"))) {
-    activityHint=pkg.takeUnless { it in excluded };hasActivityHint=true
+    activityHint=pkg.takeUnless { it in excluded };hasActivityHint=true;hintUntil=SystemClock.uptimeMillis()+250
    }
   }
   // Window-state transitions are immediate; structural churn gets one bounded reconciliation.
@@ -215,7 +216,7 @@ class WatchService : AccessibilityService() {
    val focused=observed.firstOrNull { it.focused && !it.keyboard && !it.overlay }
    val resolved=ForegroundPolicy.select(observed,excluded)
    if(focused!=null && (!focused.application || focused.pip)) resolved
-   else if(hasActivityHint && (needsRetry || focused?.pkg!=activityHint)) activityHint
+   else if(hasActivityHint && (needsRetry || (SystemClock.uptimeMillis()<hintUntil && focused?.pkg!=activityHint))) activityHint
    else resolved
   }.getOrElse { if(hasActivityHint)activityHint else null }
   if(on && needsRetry && retryBudget>0) { retryBudget--; main.removeCallbacks(resolveTask); main.postDelayed(resolveTask,100) }
