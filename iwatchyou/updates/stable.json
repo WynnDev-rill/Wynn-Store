@@ -1,11 +1,11 @@
 {
-  "versionCode": 2,
-  "versionName": "1.0.1",
+  "versionCode": 3,
+  "versionName": "1.0.2",
   "packageName": "id.wynn.iwatchyou",
   "minSdk": 30,
-  "apkUrl": "https://github.com/WynnDev-rill/Wynn-Store/releases/download/iwatchyou-v1.0.1/IWatchYou-1.0.1.apk",
-  "sha256": "b0c2a7c5d1c170f7e45e4671703045f0a96008448a4083d169b94a13a1f4cbc5",
+  "apkUrl": "https://github.com/WynnDev-rill/Wynn-Store/releases/download/iwatchyou-v1.0.2/IWatchYou-1.0.2.apk",
+  "sha256": "4329817577bdd9ce4739ccb676c82e371ab83de1afa75424f6ad1614212de5fb",
   "signerSha256": "eca17e8afa84775e941e0e490741b01636e7941da545c508f85b8a256a4f346a",
   "sizeBytes": 2003492,
-  "notes": "Pencatatan berbasis fokus jendela, riwayat harian, timer mengambang yang terkunci saat redup, serta tampilan dan ukuran APK yang dioptimalkan."
+  "notes": "Perbaikan timer yang tidak mulai pada sebagian perangkat: deteksi langsung dari event perpindahan aplikasi, dengan fallback saat data jendela belum tersedia."
 }
