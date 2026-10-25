@@ -75,6 +75,8 @@ try:
  end=time.monotonic()+50
  while time.monotonic()<end and version()!=2:time.sleep(1)
  assert version()==2,'Production update did not install'
+ # Dismiss the installer's completion dialog through its normal Open action.
+ tap(wait_for('Open',timeout=25))
  shell('am start -n id.wynn.iwatchyou/.MainActivity');wait_for('Pengaturan',attr='content-desc')
  end=time.monotonic()+15
  after=duration()
