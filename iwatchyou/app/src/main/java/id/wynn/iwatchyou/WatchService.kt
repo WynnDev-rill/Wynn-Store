@@ -66,6 +66,8 @@ class WatchService : AccessibilityService() {
  private var lastElapsed=0L
  private var zone=ZoneId.systemDefault()
  private var excluded=emptySet<String>()
+ private val windowReader=java.util.concurrent.Executors.newSingleThreadExecutor()
+ @Volatile private var focusGeneration=0L
  private var retryBudget=0
  private var activityHint: String?=null
  private var hasActivityHint=false
@@ -180,47 +182,65 @@ class WatchService : AccessibilityService() {
  override fun onAccessibilityEvent(event: AccessibilityEvent?) {
   if(event==null || !::worker.isInitialized || closing) return
   if(event.eventType!=AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && event.eventType!=AccessibilityEvent.TYPE_WINDOWS_CHANGED) return
+  var directTransition=false
   // Some OEMs expose a window before its accessibility root (or never expose that root).
   // Activity transition metadata is sufficient to start the timer without waiting for text nodes.
   if(event.eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
    val pkg=event.packageName?.toString()
    val cls=event.className?.toString().orEmpty()
    if(pkg!=null && (pkg!=packageName || cls.endsWith("Activity")) && !cls.contains("Dialog") && !cls.contains("Popup") && (pkg in excluded || cls.endsWith("Activity") || cls.endsWith("Launcher") || packageManager.getLaunchIntentForPackage(pkg)!=null)) {
-    activityHint=pkg.takeUnless { it in excluded };hasActivityHint=true;hintUntil=SystemClock.uptimeMillis()+250
+    activityHint=pkg.takeUnless { it in excluded };hasActivityHint=true;hintUntil=SystemClock.uptimeMillis()+250;directTransition=true
    }
   }
   // Window-state transitions are immediate; structural churn gets one bounded reconciliation.
   main.removeCallbacks(resolveTask)
   retryBudget=2
-  if(event.eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) resolveForeground()
+  if(directTransition) {
+   focusGeneration++
+   commitSelection(activityHint,unlocked())
+   main.postDelayed(resolveTask,80)
+  } else if(event.eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) resolveForeground()
   else main.postDelayed(resolveTask,35)
  }
  private fun resolveForeground() {
   if(ledger==null || closing) return
+  val ticket=++focusGeneration
   val on=unlocked()
-  var needsRetry=false
-  val selected=if(!on) null else runCatching {
-   val observed=windows.map { w ->
-    val pkg=if(w.type==AccessibilityWindowInfo.TYPE_APPLICATION) {
-     val root=w.root
-     val p=root?.packageName?.toString()
-     @Suppress("DEPRECATION") root?.recycle()
-     p
-    } else null
-    ForegroundPolicy.Window(pkg,w.type==AccessibilityWindowInfo.TYPE_APPLICATION,w.isFocused,w.isActive,
-     w.isInPictureInPictureMode,w.type==AccessibilityWindowInfo.TYPE_INPUT_METHOD,
-     w.type==AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY,w.layer)
+  val hint=activityHint;val hadHint=hasActivityHint;val until=hintUntil
+  // OEM accessibility root retrieval may block. Keep both UI and time/storage worker free.
+  windowReader.execute {
+   if(ticket!=focusGeneration || closing)return@execute
+   var needsRetry=false
+   var rememberFocus=false
+   val selected=if(!on)null else runCatching {
+    val observed=windows.map { w ->
+     val pkg=if(w.type==AccessibilityWindowInfo.TYPE_APPLICATION) {
+      val root=w.root
+      val name=root?.packageName?.toString()
+      @Suppress("DEPRECATION") root?.recycle()
+      name
+     } else null
+     ForegroundPolicy.Window(pkg,w.type==AccessibilityWindowInfo.TYPE_APPLICATION,w.isFocused,w.isActive,
+      w.isInPictureInPictureMode,w.type==AccessibilityWindowInfo.TYPE_INPUT_METHOD,
+      w.type==AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY,w.layer)
+    }
+    needsRetry=observed.isEmpty() || observed.any { it.application && (it.focused || it.active) && it.pkg==null }
+    val focused=observed.firstOrNull { it.focused && !it.keyboard && !it.overlay }
+    val resolved=ForegroundPolicy.select(observed,excluded)
+    if(focused!=null && (!focused.application || focused.pip)) { rememberFocus=true;resolved }
+    else if(hadHint && (needsRetry || (SystemClock.uptimeMillis()<until && focused?.pkg!=hint))) hint
+    else { rememberFocus=true;resolved }
+   }.getOrElse { if(hadHint)hint else null }
+   main.post {
+    if(closing || ticket!=focusGeneration)return@post
+    if(rememberFocus) { activityHint=selected;hasActivityHint=true }
+    if(on && needsRetry && retryBudget>0) { retryBudget--;main.removeCallbacks(resolveTask);main.postDelayed(resolveTask,100) }
+    commitSelection(selected,on && unlocked())
    }
-   needsRetry=observed.isEmpty() || observed.any { it.application && (it.focused || it.active) && it.pkg==null }
-   if(applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) android.util.Log.d("IWatchYou-focus",observed.toString())
-   val focused=observed.firstOrNull { it.focused && !it.keyboard && !it.overlay }
-   val resolved=ForegroundPolicy.select(observed,excluded)
-   if(focused!=null && (!focused.application || focused.pip)) resolved
-   else if(hasActivityHint && (needsRetry || (SystemClock.uptimeMillis()<hintUntil && focused?.pkg!=activityHint))) activityHint
-   else resolved.also { activityHint=it;hasActivityHint=true }
-  }.getOrElse { if(hasActivityHint)activityHint else null }
-  if(on && needsRetry && retryBudget>0) { retryBudget--; main.removeCallbacks(resolveTask); main.postDelayed(resolveTask,100) }
-  val elapsed=SystemClock.elapsedRealtime(); val wall=System.currentTimeMillis()
+  }
+ }
+ private fun commitSelection(selected: String?,on: Boolean) {
+  val elapsed=SystemClock.elapsedRealtime();val wall=System.currentTimeMillis()
   worker.post {
    advanceDay(elapsed,wall)
    val t=ledger ?: return@post
@@ -230,8 +250,7 @@ class WatchService : AccessibilityService() {
    t.appChanged(selected,elapsed)
    main.post { if(!closing && unlocked() && selected!=null) overlay.show(selected) else overlay.hide() }
    if(previous!=selected || wasOn!=on) persist(elapsed)
-   if(wasOn!=on) { notification(elapsed); scheduleMaintenance() }
-   main.post { if(!closing && unlocked() && selected!=null) overlay.show(selected) else overlay.hide() }
+   if(wasOn!=on) { notification(elapsed);scheduleMaintenance() }
   }
  }
  private fun persist(now: Long) {
@@ -256,6 +275,7 @@ class WatchService : AccessibilityService() {
  override fun onInterrupt() { if(::worker.isInitialized) worker.post { val now=SystemClock.elapsedRealtime(); ledger?.appChanged(null,now); persist(now); main.post { overlay.hide() } } }
  override fun onDestroy() {
   closing=true; instance=null
+  focusGeneration++;windowReader.shutdownNow()
   main.removeCallbacksAndMessages(null)
   if(::overlay.isInitialized) overlay.hide()
   if(registered) { unregisterReceiver(receiver);displays.unregisterDisplayListener(displayListener) }
