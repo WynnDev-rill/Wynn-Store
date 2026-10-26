@@ -17,6 +17,7 @@ import kotlin.random.Random
  * https://github.com/Live2D/CubismJavaSamples/tree/develop/Sample/src/minimum */
 class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : CubismUserModel() {
  private val textures=mutableListOf<Int>()
+ private var meshRenderer: NativeMeshRenderer?=null
  private val params=mutableMapOf<String,Int>()
  private val cache=object : LinkedHashMap<String,CubismMotion>(8,0.75f,true) {
   override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String,CubismMotion>?): Boolean = size>8
@@ -48,9 +49,6 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
     }
    }
    if(minX.isFinite() && maxX>minX && maxY>minY) bounds=floatArrayOf(minX,maxX,minY,maxY)
-   setupRenderer(CubismRendererAndroid.create(width,height))
-   val renderer=getRenderer<CubismRendererAndroid>()
-   renderer.isPremultipliedAlpha(true)
    repeat(setting.textureCount) { i ->
     val path=File(dir,setting.getTextureFileName(i)).path
     val opts=BitmapFactory.Options().apply { inJustDecodeBounds=true }
@@ -64,10 +62,11 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
      glBindTexture(GL_TEXTURE_2D,ids[0]); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR)
      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR)
      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE)
-     GLUtils.texImage2D(GL_TEXTURE_2D,0,bitmap,0); renderer.bindTexture(i,ids[0])
+     GLUtils.texImage2D(GL_TEXTURE_2D,0,bitmap,0)
     } finally { bitmap.recycle() }
    }
    glBindTexture(GL_TEXTURE_2D,0)
+   meshRenderer=NativeMeshRenderer(model,textures)
   } catch(e: Exception) { close(); throw e }
  }
  private fun add(name: String, value: Float) { params[name]?.let { model.addParameterValue(it,value) } }
@@ -134,12 +133,10 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   val matrix=CubismMatrix44.create()
   matrix.scale(s,s*aspect)
   matrix.translate(-(bounds[0]+bounds[1])*0.5f*s,-(bounds[2]+bounds[3])*0.5f*s*aspect)
-  val offscreen=com.live2d.sdk.cubism.framework.rendering.android.CubismOffscreenManagerAndroid.getInstance()
-  offscreen.beginFrameProcess()
-  try { getRenderer<CubismRendererAndroid>().apply { setMvpMatrix(matrix); drawModel() } }
-  finally { offscreen.endFrameProcess(); offscreen.releaseStaleRenderTextures() }
+  meshRenderer?.draw(matrix.array,width,height)
  }
  fun close() {
+  meshRenderer?.close();meshRenderer=null
   if(textures.isNotEmpty()) glDeleteTextures(textures.size,textures.toIntArray(),0)
   textures.clear(); cache.clear(); delete()
  }

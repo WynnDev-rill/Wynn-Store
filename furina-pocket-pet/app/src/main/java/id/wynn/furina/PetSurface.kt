@@ -48,9 +48,7 @@ class PetSurface(context: Context, private val file: File, private val failed: (
       CubismFramework.startUp(option)
      }
      if(!CubismFramework.isInitialized()) CubismFramework.initialize()
-     com.live2d.sdk.cubism.framework.rendering.android.CubismShaderAndroid.getInstance().releaseInvalidShaderProgram()
-     // Official context-loss sequence: discard cached programs so the new EGL context recompiles them.
-     com.live2d.sdk.cubism.framework.rendering.android.CubismShaderAndroid.deleteInstance()
+
     } catch(e: Exception) { report(e) }
     last=0
    }
@@ -58,7 +56,7 @@ class PetSurface(context: Context, private val file: File, private val failed: (
     w=width; h=height; glViewport(0,0,w,h)
     try {
      if(model==null) model=LivePetModel(ModelStore(context).inspect(file),w,h)
-     else model?.setRenderTargetSize(w,h)
+     else Unit
      ready=true
      PetRuntime.update { it.copy(renderer="Cubism Java R5 · OpenGL ES 2",parameters=model?.parameterCount ?: 0,error="") }
     } catch(e: Exception) { report(e) }
