@@ -41,8 +41,8 @@ class ShakeDetector {
   val dt=(time-lastTime).coerceAtLeast(1)/1000f
   val distance=hypot(x-lastX,y-lastY)/density.coerceAtLeast(0.5f)
   val velocity=distance/dt
-  energy=max(0f,energy-dt*300f)+if(velocity>1100f && distance>5f) distance else 0f
+  energy=max(0f,energy-dt*300f)+if(velocity>850f && distance>5f) distance else 0f
   lastX=x;lastY=y;lastTime=time
  }
- fun isDizzy()=energy>=180f
+ fun isDizzy()=energy>=140f
 }

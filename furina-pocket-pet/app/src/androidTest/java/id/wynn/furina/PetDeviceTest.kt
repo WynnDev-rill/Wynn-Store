@@ -107,10 +107,28 @@ class PetDeviceTest {
   try {
    await {PetRuntime.status.value.running && PetRuntime.status.value.frames>15}
    SystemClock.sleep(5200)
-   val pet=device.findObject(androidx.test.uiautomator.By.desc("Pocket Pet"))
-   assertNotNull(pet)
-   val bounds=pet.visibleBounds
-   device.swipe(bounds.centerX(),bounds.centerY(),device.displayWidth-30,bounds.centerY(),4)
+   // Replay precise dp/time events through the real overlay view. UIAutomator swipe timing
+   // can be throttled by the emulator, so it cannot establish a velocity threshold reliably.
+   inst.runOnMainSync {
+    fun find(v: android.view.View): PetSurface? {
+     if(v is PetSurface) return v
+     if(v is android.view.ViewGroup) repeat(v.childCount) {find(v.getChildAt(it))?.let {return it}}
+     return null
+    }
+    val pet=android.view.inspector.WindowInspector.getGlobalWindowViews().firstNotNullOfOrNull {find(it)}
+    assertNotNull(pet)
+    val d=app.resources.displayMetrics.density
+    val start=SystemClock.uptimeMillis()
+    fun send(action: Int,time: Long,x: Float) {
+     val e=android.view.MotionEvent.obtain(start,time,action,x*d,100*d,0)
+     try {pet!!.dispatchTouchEvent(e)} finally {e.recycle()}
+    }
+    send(android.view.MotionEvent.ACTION_DOWN,start,20f)
+    send(android.view.MotionEvent.ACTION_MOVE,start+20,100f)
+    send(android.view.MotionEvent.ACTION_MOVE,start+40,20f)
+    send(android.view.MotionEvent.ACTION_MOVE,start+60,100f)
+    send(android.view.MotionEvent.ACTION_UP,start+65,100f)
+   }
    await(4000) {PetRuntime.status.value.mode=="DIZZY"}
    assertTrue(device.hasObject(androidx.test.uiautomator.By.textContains("🌀")))
    inst.runOnMainSync {PetService.command(app,PetService.HIDE)}

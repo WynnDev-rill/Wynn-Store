@@ -56,7 +56,7 @@ class PetService : Service() {
     Intent.ACTION_SCREEN_ON,Intent.ACTION_USER_PRESENT -> screenAwake=(getSystemService(PowerManager::class.java).isInteractive && !getSystemService(KeyguardManager::class.java).isKeyguardLocked)
    }
    schedule()
-   if(screenAwake) speak(PetCue.WAKE)
+   if(screenAwake && (intent.action==Intent.ACTION_SCREEN_ON || intent.action==Intent.ACTION_USER_PRESENT)) speak(PetCue.WAKE)
   }
  }
  private val tick=object: Runnable {
