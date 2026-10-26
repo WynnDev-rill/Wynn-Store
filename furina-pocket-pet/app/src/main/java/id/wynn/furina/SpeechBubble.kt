@@ -19,7 +19,7 @@ class SpeechBubble(private val context: Context,private val wm: WindowManager) {
   setTextColor(Color.rgb(27,44,70));textSize=13f;maxLines=3
   setPadding((14*d).toInt(),(10*d).toInt(),(14*d).toInt(),(10*d).toInt())
   background=GradientDrawable().apply {setColor(Color.rgb(241,245,255));cornerRadius=18*d;setStroke((d).toInt().coerceAtLeast(1),Color.rgb(206,222,249))}
-  importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_NO
+  importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_YES
  }
  private val p=WindowManager.LayoutParams((220*d).toInt(),WindowManager.LayoutParams.WRAP_CONTENT,
   WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,

@@ -130,10 +130,20 @@ class PetDeviceTest {
     send(android.view.MotionEvent.ACTION_UP,start+65,100f)
    }
    await(4000) {PetRuntime.status.value.mode=="DIZZY"}
-   assertTrue(device.hasObject(androidx.test.uiautomator.By.textContains("🌀")))
+   fun bubbleVisible(): Boolean {
+    var found=false
+    inst.runOnMainSync {
+     found=android.view.inspector.WindowInspector.getGlobalWindowViews().filterIsInstance<android.widget.TextView>().any {
+      it.isAttachedToWindow && it.text.contains("🌀") &&
+       ((it.layoutParams as? android.view.WindowManager.LayoutParams)?.flags ?: 0) and android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE != 0
+     }
+    }
+    return found
+   }
+   await(2000) {bubbleVisible()}
    inst.runOnMainSync {PetService.command(app,PetService.HIDE)}
    await {PetRuntime.status.value.suspended}
-   assertFalse(device.hasObject(androidx.test.uiautomator.By.textContains("🌀")))
+   assertFalse(bubbleVisible())
   } finally {
    inst.runOnMainSync {PetService.command(app,PetService.STOP)};await {!PetRuntime.status.value.running}
    prefs.save(PetConfig())
