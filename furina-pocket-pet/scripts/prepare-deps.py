@@ -2,7 +2,13 @@
 """Pinned official SDK + MIT test model. SDK binaries never enter source control.
 Use --accept-sdk-license only after reviewing both Live2D agreements.
 """
-import argparse, hashlib, json, pathlib, tempfile, urllib.request, zipfile
+import argparse, hashlib, json, pathlib, shutil, urllib.request, zipfile
+
+def download(url, destination):
+ request=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36','Referer':'https://www.live2d.com/en/sdk/download/java/'})
+ with urllib.request.urlopen(request,timeout=90) as response, open(destination,'wb') as out:
+  shutil.copyfileobj(response,out)
+
 
 parser=argparse.ArgumentParser()
 parser.add_argument('--accept-sdk-license',action='store_true')
@@ -15,7 +21,7 @@ if not sdk.exists():
  if not args.accept_sdk_license:
   raise SystemExit('Read https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html and https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html then rerun with --accept-sdk-license for development. Publication is a separate approval.')
  archive=deps/'sdk.zip'
- urllib.request.urlretrieve('https://cubism.live2d.com/sdk-java/bin/CubismSdkForJava-5-r.5.zip',archive)
+ download('https://cubism.live2d.com/sdk-java/bin/CubismSdkForJava-5-r.5.zip',archive)
  assert hashlib.sha256(archive.read_bytes()).hexdigest()==SDK_SHA,'SDK checksum changed'
  with zipfile.ZipFile(archive) as z:
   for entry in z.infolist():
@@ -32,7 +38,7 @@ for name,sha in lock.items():
  if dest.is_file() and hashlib.sha256(dest.read_bytes()).hexdigest()==sha: continue
  path='LICENSE' if name=='LICENSE.txt' else 'source/webassets/model/'+name
  dest.parent.mkdir(parents=True,exist_ok=True)
- urllib.request.urlretrieve(f'https://raw.githubusercontent.com/7l-ui/whalegirl-pet/{commit}/{path}',dest)
+ download(f'https://raw.githubusercontent.com/7l-ui/whalegirl-pet/{commit}/{path}',dest)
  assert hashlib.sha256(dest.read_bytes()).hexdigest()==sha,f'Model checksum mismatch: {name}'
 # Ship full upstream notices alongside generated assets.
 notices=deps/'assets/licenses'; notices.mkdir(exist_ok=True)
