@@ -1,0 +1,9 @@
+.gradle/
+.deps/
+**/build/
+local.properties
+signing/
+qa/output/
+*.apk
+*.jks
+*.keystore
