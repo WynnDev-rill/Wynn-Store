@@ -31,7 +31,10 @@ class PetDeviceTest {
   try {
    await(40000) { PetRuntime.status.value.frames>8 && PetRuntime.status.value.parameters>0 }
    await(20000) { PetRuntime.status.value.meshChanges>0 }
-   assertTrue("GPU must draw model pixels",PetRuntime.status.value.visiblePixels>100)
+   val image=inst.uiAutomation.takeScreenshot()
+   val probe=File(app.getExternalFilesDir(null),"live-overlay.png")
+   probe.outputStream().use { image.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it) }; image.recycle()
+   assertTrue("GPU must draw model pixels: ${PetRuntime.status.value}",PetRuntime.status.value.visiblePixels>100)
    assertTrue("Background must remain transparent",PetRuntime.status.value.transparentPixels>100)
    assertEquals("",PetRuntime.status.value.error)
    val initial=PetRuntime.status.value.frames

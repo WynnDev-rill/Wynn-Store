@@ -41,6 +41,7 @@ class PetSurface(context: Context, private val file: File, private val failed: (
      if(!CubismFramework.isStarted()) {
       val appAssets=context.applicationContext.assets
       val option=CubismFramework.Option().apply {
+       if(BuildConfig.DEBUG) loggingLevel=CubismFramework.LogLevel.DEBUG
        loadFileFunction=com.live2d.sdk.cubism.framework.ICubismLoadFileFunction { path -> appAssets.open(path).use { it.readBytes() } }
        logFunction=com.live2d.sdk.cubism.core.ICubismLogger { message -> android.util.Log.d("Cubism",message) }
       }
@@ -74,6 +75,8 @@ class PetSurface(context: Context, private val file: File, private val failed: (
       glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,data)
       var opaque=0; var transparent=0
       for(i in 3 until w*h*4 step 4) { val alpha=data.get(i).toInt() and 255; if(alpha>16) opaque++ else transparent++ }
+      val fbo=IntArray(1); glGetIntegerv(GL_FRAMEBUFFER_BINDING,fbo,0)
+      android.util.Log.i("FurinaGPU","${w}x$h, pixels=$opaque/$transparent, fbo=${fbo[0]}, glError=${glGetError()}, ${model?.diagnostics()}")
       PetRuntime.update { it.copy(visiblePixels=opaque,transparentPixels=transparent) }
      }
      // Sample mesh deformation during startup only; no continuing pixel reads or profiling loop.

@@ -3,7 +3,7 @@ set -euo pipefail
 task_root="$(cd "$(dirname "$0")/.." && pwd)"
 output="$task_root/qa/output"
 mkdir -p "$output"
-trap 'adb logcat -d > "$output/logcat.txt"; adb exec-out screencap -p > "$output/settings.png"' EXIT
+trap 'adb logcat -d > "$output/logcat.txt"; adb exec-out screencap -p > "$output/settings.png"; adb pull /sdcard/Android/data/id.wynn.furina/files/live-overlay.png "$output/live-overlay.png" || true' EXIT
 adb install -r "$task_root/app/build/outputs/apk/debug/app-debug.apk"
 adb install -r "$task_root/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk"
 adb shell appops set id.wynn.furina SYSTEM_ALERT_WINDOW allow

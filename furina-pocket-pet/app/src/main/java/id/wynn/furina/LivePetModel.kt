@@ -60,6 +60,7 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
     val bitmap=BitmapFactory.decodeFile(path,BitmapFactory.Options().apply { inSampleSize=sample }) ?: error("Tekstur gagal dibaca")
     try {
      val ids=IntArray(1); glGenTextures(1,ids,0); textures+=ids[0]
+     glActiveTexture(GL_TEXTURE0)
      glBindTexture(GL_TEXTURE_2D,ids[0]); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR)
      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR)
      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE)
@@ -133,7 +134,10 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   val matrix=CubismMatrix44.create()
   matrix.scale(s,s*aspect)
   matrix.translate(-(bounds[0]+bounds[1])*0.5f*s,-(bounds[2]+bounds[3])*0.5f*s*aspect)
-  getRenderer<CubismRendererAndroid>().apply { setMvpMatrix(matrix); drawModel() }
+  val offscreen=com.live2d.sdk.cubism.framework.rendering.android.CubismOffscreenManagerAndroid.getInstance()
+  offscreen.beginFrameProcess()
+  try { getRenderer<CubismRendererAndroid>().apply { setMvpMatrix(matrix); drawModel() } }
+  finally { offscreen.endFrameProcess(); offscreen.releaseStaleRenderTextures() }
  }
  fun close() {
   if(textures.isNotEmpty()) glDeleteTextures(textures.size,textures.toIntArray(),0)
@@ -146,5 +150,11 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
    for(j in vertices.indices step 6) sum+=vertices[j].toDouble()*(i+1)*(j+1)
   }
   return sum
+ }
+ fun diagnostics(): String {
+  val visible=(0 until model.drawableCount).count { model.getDrawableDynamicFlagIsVisible(it) }
+  val opacity=(0 until model.drawableCount).map { model.getDrawableOpacity(it) }
+  val points=if(model.drawableCount>0) model.getDrawableVertexPositions(0).take(8) else emptyList()
+  return "drawables=${model.drawableCount}, visible=$visible, opacity=${opacity.minOrNull()}..${opacity.maxOrNull()}, modelAlpha=${model.modelOpacity}, bounds=${bounds.toList()}, points=$points, textures=$textures, blend=${model.isBlendModeEnabled}, masks=${model.isUsingMasking}"
  }
 }
