@@ -33,6 +33,7 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
  private val lipIds=mutableListOf<Int>()
  private var mouthLevel=0f
  private var previousMood=PetMood.REST
+ private var activityFile: File?=null
  private var bounds=floatArrayOf(-1f,1f,-1f,1f)
  val parameterCount: Int get() = model.parameterCount
  init {
@@ -102,7 +103,8 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   val selected=when(frame.mood) {PetMood.SIT -> c.sitMotion;PetMood.SWING -> c.swingMotion;else -> ""}
   val activity=info.motions.firstOrNull {selected.isNotEmpty() && it.first==selected} ?:
    ActivityCatalog.motion(info.motions.map {"${it.first} ${it.second.name}" to it.second},frame.mood)
-  activity?.let {motion(it.second)}
+  activityFile=activity?.second
+  activityFile?.let {motion(it)}
   if(!c.reactions) return
   val wave=info.motions.firstOrNull { it.first==c.waveMotion } ?: info.motions.firstOrNull {
    listOf("wave","手を振","挥手","揮手").any { word -> it.first.contains(word,true) || it.second.name.contains(word,true) }
@@ -134,9 +136,7 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   if(frame.mood==PetMood.ROAM && walk!=null) {
    if(motionManager.isFinished) motion(walk.second)
   } else if(frame.mood in ActivityCatalog.sustained && motionManager.isFinished) {
-   val selected=when(frame.mood) {PetMood.SIT -> c.sitMotion;PetMood.SWING -> c.swingMotion;else -> ""}
-   (info.motions.firstOrNull {selected.isNotEmpty() && it.first==selected} ?:
-    ActivityCatalog.motion(info.motions.map {"${it.first} ${it.second.name}" to it.second},frame.mood))?.let {motion(it.second)}
+   activityFile?.let {motion(it)}
   } else if(frame.mood !in ActivityCatalog.sustained && motionManager.isFinished && elapsed>=idleAt) {
    info.motions.filter { it.first.contains("idle",true) }.randomOrNull()?.let { motion(it.second) }
    idleAt=elapsed+3f+Random.nextFloat()*4f

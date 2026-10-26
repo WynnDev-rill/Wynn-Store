@@ -19,6 +19,8 @@ class PetSurface(context: Context, private val file: File, private val failed: (
  @Volatile var config = PetConfig()
  @Volatile var lipLevel=0f
  @Volatile var speaking=false
+ @Volatile internal var requestPropProbe=false
+ @Volatile internal var propPixelsChanged=-1
  @Volatile var renderedFrames = 0L; private set
  @Volatile var ready = false; private set
  private var model: LivePetModel?=null
@@ -69,7 +71,25 @@ class PetSurface(context: Context, private val file: File, private val failed: (
     val now=System.nanoTime(); val dt=if(last==0L) 1f/30 else ((now-last)/1e9).toFloat().coerceIn(0f,0.1f)
     last=now
     try {
-     model?.draw(dt,frame,config,w,h,lipLevel,speaking);props?.draw(frame); renderedFrames++
+     model?.draw(dt,frame,config,w,h,lipLevel,speaking)
+     if(BuildConfig.DEBUG && requestPropProbe) {
+      // Compare the same framebuffer immediately before/after props. White clothing is not
+      // a reliable background reference for an open-book texture with white pages.
+      val before=java.nio.ByteBuffer.allocateDirect(w*h*4)
+      glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,before)
+      props?.draw(frame)
+      val after=java.nio.ByteBuffer.allocateDirect(w*h*4)
+      glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,after)
+      var changed=0
+      for(i in 0 until w*h*4 step 4) {
+       var delta=0
+       repeat(4) {j -> delta+=kotlin.math.abs((before.get(i+j).toInt() and 255)-(after.get(i+j).toInt() and 255))}
+       if(delta>35) changed++
+      }
+      propPixelsChanged=changed;requestPropProbe=false
+      android.util.Log.i("FurinaPropProbe","${frame.mood}, effect=${frame.effect}, changed=$changed, glError=${glGetError()}")
+     } else props?.draw(frame)
+     renderedFrames++
      // A one-time startup probe confirms actual GPU pixels, including transparent background.
      if(renderedFrames==8L && model!=null) {
       val data=java.nio.ByteBuffer.allocateDirect(w*h*4)

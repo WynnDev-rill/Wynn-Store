@@ -77,6 +77,8 @@ class PetVoice(private val context: Context) {
   } catch(_: Exception) {stop();false}
  }
  fun level(): Float {
+  // An idle companion must not poll three Android audio services on every animation frame.
+  if(player==null) return 0f
   if(!audible()) {if(player!=null) stop();return 0f}
   val value=runCatching {if(playing) envelope.at(player!!.currentPosition) else 0f}.getOrDefault(0f)
   return value.coerceIn(0f,1f)

@@ -16,8 +16,6 @@ import org.junit.runner.RunWith
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class CompanionDeviceTest {
@@ -74,23 +72,16 @@ class CompanionDeviceTest {
   start()
   try {
    val v=pet()
-   fun whitePixels(): Int {
-    val latch=CountDownLatch(1);var count=0
-    v.queueEvent {
-     try {
-      val w=v.width;val h=v.height;val b=ByteBuffer.allocateDirect(w*h*4)
-      android.opengl.GLES20.glBindFramebuffer(android.opengl.GLES20.GL_FRAMEBUFFER,0)
-      android.opengl.GLES20.glReadPixels(0,0,w,h,android.opengl.GLES20.GL_RGBA,android.opengl.GLES20.GL_UNSIGNED_BYTE,b)
-      for(y in (h*.18f).toInt() until (h*.48f).toInt()) for(x in (w*.3f).toInt() until (w*.7f).toInt()) {
-       val i=(y*w+x)*4;val r=b.get(i).toInt() and 255;val g=b.get(i+1).toInt() and 255;val blue=b.get(i+2).toInt() and 255;val a=b.get(i+3).toInt() and 255
-       if(r>190 && g>190 && blue>180 && a>120) count++
-      }
-     } finally {latch.countDown()}
-    };v.requestRender();assertTrue(latch.await(5,TimeUnit.SECONDS));return count
+   fun propPixels(): Int {
+    v.propPixelsChanged=-1;v.requestPropProbe=true;v.requestRender()
+    await(5000) {v.propPixelsChanged>=0}
+    return v.propPixelsChanged
    }
-   val baseline=whitePixels()
    command(PetService.READ);await {PetRuntime.status.value.mode==PetMood.READ.name};SystemClock.sleep(1000)
-   val book=whitePixels();assertTrue("Book must add visible page pixels: $baseline -> $book",book>baseline+100)
+   inst.uiAutomation.takeScreenshot().also {image ->
+    File(app.getExternalFilesDir(null),"props-read.png").outputStream().use {image.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)};image.recycle()
+   }
+   val book=propPixels();assertTrue("Book must change actual framebuffer pixels: $book",book>1000)
    inst.runOnMainSync {
     val now=SystemClock.uptimeMillis()
     fun send(a: Int,t: Long,x: Float) {val e=MotionEvent.obtain(now,t,a,x,v.height*.25f,0);try {v.dispatchTouchEvent(e)} finally {e.recycle()}}
@@ -100,9 +91,13 @@ class CompanionDeviceTest {
     send(MotionEvent.ACTION_UP,now+250,x)
    }
    await {PetRuntime.status.value.mode==PetMood.PETTED.name}
-   command(PetService.CAKE);await {PetRuntime.status.value.mode==PetMood.CAKE.name}
+   command(PetService.CAKE);await {PetRuntime.status.value.mode==PetMood.CAKE.name};SystemClock.sleep(800)
+   assertTrue("Cake/fork must change actual framebuffer pixels",propPixels()>500)
    val prefs=PetSettings(app);prefs.save(prefs.read().copy(activities=false));command(PetService.REFRESH)
    await {PetRuntime.status.value.mode==PetMood.REST.name}
+   assertEquals("Disabled activity must remove all prop pixels",0,propPixels())
+   inst.runOnMainSync {v.performClick()}
+   await {PetRuntime.status.value.mode==PetMood.PETTED.name}
    assertEquals("",PetRuntime.status.value.error)
   } finally {stop()}
  }

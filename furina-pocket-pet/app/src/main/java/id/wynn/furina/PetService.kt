@@ -26,6 +26,7 @@ class PetService : Service() {
  private val touchIntent=PetTouch()
  private lateinit var voice: PetVoice
  private var strokeAt=0L
+ private var suppressClick=false
  private fun vocal(cue: String) {
   if(config.voice && !config.paused && !config.hidden && screenAwake) voice.play(cue,config.voiceVolume)
  }
@@ -163,6 +164,11 @@ class PetService : Service() {
     params.x=(left+config.x*(right-left)).roundToInt(); params.y=(top+config.y*(bottom-top)).roundToInt()
     view!!.contentDescription="Pocket Pet"
     view!!.setOnTouchListener { _,event -> touch(event) }
+    view!!.setOnClickListener {
+     if(!suppressClick && config.reactions && !config.paused && !config.hidden) {
+      engine.pet();vocal("PET");speak(PetCue.PET);view?.frame=engine.frame;view?.requestRender()
+     }
+    }
     wm.addView(view,params)
     visible=true
    } else {
@@ -235,7 +241,9 @@ class PetService : Service() {
       if(lastTap>0 && e.eventTime-lastTap<350 && config.jump) {engine.action(PetMood.HOP);vocal("HOP")}
       else if(kind==TouchKind.HEAD) {engine.pet();vocal("PET");speak(PetCue.PET)}
       else {engine.poke();vocal("POKE");speak(PetCue.POKE)}
-      lastTap=e.eventTime;view?.performClick()
+      lastTap=e.eventTime
+      suppressClick=true
+      try {view?.performClick()} finally {suppressClick=false}
      }
      else -> Unit
     }
@@ -275,7 +283,7 @@ class PetService : Service() {
   visible=show
   val active=show && !config.paused
   if(!active || !config.comments || config.ghost) bubble?.hide()
-  if(!active || !config.voice) {voice.stop();v.lipLevel=0f;v.speaking=false}
+  if(!active || !config.voice || config.voiceVolume<=0f) {voice.stop();v.lipLevel=0f;v.speaking=false}
   if(active) { v.onResume(); handler.post(tick) } else { v.onPause() }
   PetRuntime.update { it.copy(suspended=!active) }
  }

@@ -65,7 +65,7 @@ class ActivityProps(context: Context) {
  }
  fun draw(frame: PetFrame) {
   if(frame.effect<=0f) return
-  if(frame.mood !in setOf(PetMood.READ,PetMood.CAKE,PetMood.PETTED)) return
+  if(frame.mood!=PetMood.READ && frame.mood!=PetMood.CAKE && frame.mood!=PetMood.PETTED) return
   glBindFramebuffer(GL_FRAMEBUFFER,0);glDisable(GL_DEPTH_TEST);glDisable(GL_CULL_FACE);glDisable(GL_SCISSOR_TEST)
   glBindBuffer(GL_ARRAY_BUFFER,0);glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0)
   glEnable(GL_BLEND);glBlendFuncSeparate(GL_ONE,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE_MINUS_SRC_ALPHA)
