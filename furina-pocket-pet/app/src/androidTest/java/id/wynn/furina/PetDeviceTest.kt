@@ -22,6 +22,30 @@ class PetDeviceTest {
   while(SystemClock.elapsedRealtime()<end) { if(test()) return; SystemClock.sleep(150) }
   assertTrue("Condition did not become true: ${PetRuntime.status.value}",test())
  }
+ @Test fun nativeOfficialSdkSampleRenders() {
+  val zip=File(app.cacheDir,"sdk-probe.zip")
+  ZipOutputStream(zip.outputStream()).use { out ->
+   fun pack(path: String,relative: String) {
+    val children=app.assets.list(path) ?: emptyArray()
+    if(children.isEmpty()) { out.putNextEntry(ZipEntry(relative)); app.assets.open(path).use { it.copyTo(out) }; out.closeEntry() }
+    else children.forEach { pack("$path/$it","$relative/$it") }
+   }
+   pack("sdk-test/Haru","Haru")
+  }
+  val imported=ModelStore(app).importZip(android.net.Uri.fromFile(zip))
+  device.executeShellCommand("appops set ${app.packageName} SYSTEM_ALERT_WINDOW allow")
+  app.startActivity(Intent(app,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); device.waitForIdle()
+  PetSettings(app).save(PetConfig(model=imported.file.path))
+  inst.runOnMainSync { PetService.command(app) }
+  try {
+   await(50000) { PetRuntime.status.value.running && PetRuntime.status.value.frames>30 }
+   android.util.Log.i("FurinaSDKProbe",PetRuntime.status.value.toString())
+   assertTrue("Official SDK model must render: ${PetRuntime.status.value}",PetRuntime.status.value.visiblePixels>100)
+  } finally {
+   inst.runOnMainSync { PetService.command(app,PetService.STOP) }; await { !PetRuntime.status.value.running }
+   PetSettings(app).save(PetConfig()); zip.delete()
+  }
+ }
  @Test fun nativePetAcrossAppsPauseScreenOffAndStop() {
   device.executeShellCommand("appops set ${app.packageName} SYSTEM_ALERT_WINDOW allow")
   app.startActivity(Intent(app,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))

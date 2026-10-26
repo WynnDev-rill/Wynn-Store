@@ -35,6 +35,7 @@ android {
  kotlinOptions { jvmTarget = "17" }
  buildFeatures { compose = true; buildConfig = true }
  sourceSets["main"].assets.srcDir("../.deps/assets")
+ sourceSets["debug"].assets.srcDir("../.deps/test-assets")
  packaging { jniLibs.useLegacyPackaging = false; resources.excludes += "META-INF/DEPENDENCIES" }
 }
 dependencies {

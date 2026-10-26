@@ -45,3 +45,7 @@ notices=deps/'assets/licenses'; notices.mkdir(exist_ok=True)
 for name,source in {'CubismCore.md':sdk/'Core/LICENSE.md','CubismFramework.md':sdk/'Framework/LICENSE.md','CubismRedistributableFiles.txt':sdk/'Core/RedistributableFiles.txt'}.items():
  (notices/name).write_bytes(source.read_bytes())
 print('Verified Cubism Java R5 and pinned WhaleGirl MIT test model.')
+# Official SDK sample is restricted to internal evaluation here and is never packaged in release.
+test_model=deps/'test-assets/sdk-test/Haru'
+if not test_model.exists():
+ shutil.copytree(sdk/'Sample/src/main/assets/Haru',test_model)
