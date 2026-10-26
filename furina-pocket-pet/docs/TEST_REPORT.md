@@ -1,3 +1,15 @@
+# Behavior/update release — 1.1.0 (26 October 2026)
+
+- Package `id.wynn.furina`, versionCode 3. Owner release signed with the original certificate; `apksigner verify`, APK identity and `zipalign -c -P 16 4` passed. Local `assembleRelease` completed successfully offline after build dependencies were restored. Initial local attempts were interrupted by missing JDK/compiler and network/dependency availability, not application test failures.
+- APK SHA-256: `62cbb05cd859e631188cf18c2c49988522be4a7bfbee539c481034651eefb800`.
+- Fifteen JVM tests passed locally (0 failures/errors): prior archive/behavior checks plus mid-roam disable, bounded drag/touch decay, model-owned motion selection, phased hops, two-axis coverage, and release parsing for missing/current/new/draft/unrelated channels.
+- [Android 16 CI run 40326130059](https://github.com/WynnDev-rill/Wynn-Store/actions/runs/40326130059), code commit `f5d60da20732646e3ca4281ab2aa40bab66ba3c1`: unit tests, lint and native debug build succeeded; native instrumentation reports `OK (3 tests)`. Renderer, real transparent/deformed meshes, nested Unicode import, overlay across apps and lifecycle stop/pause/hide/screen-off/restart checks all passed. These are the debug variant, not a physical Poco F6 test of the optimized signed release.
+- Auto-check runs on entry/foreground with cooldown and availability dialog; manual check shows progress and snackbar result. Parsing is tested with fixtures; a real production upgrade installation/dialog against a newly published APK is not verified because the publication gate remains closed and no public channel APK is published.
+- Owner Furina archive was inspected locally: wave motion and four expressions, no walking/sitting cycle or clearly labeled independent leg rig. Its runtime rendering and natural footfalls are NOT claimed as verified. Original model bytes are neither bundled nor committed. This version improves wandering, touch/drag gaze, double-tap hops, jump phasing and model-owned gait selection; it does not create missing articulated legs.
+- Reduced repetitive UI instructions and removed on-screen renderer diagnostics; added Sapa/Lompat buttons and a movement-motion selector. Motion discovery now deduplicates canonical paths.
+
+---
+
 # Import-size fix — 1.0.1 (26 October 2026)
 
 - Raised ZIP input and individual extracted-file limits to 500 MiB; aggregate extraction limit to 2 GiB. Previous 160 MiB per-file check produced the reported "File model terlalu besar" even with a ZIP below the old 300 MiB input limit.
