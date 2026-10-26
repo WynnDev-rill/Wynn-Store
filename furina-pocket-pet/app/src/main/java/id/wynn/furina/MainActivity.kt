@@ -41,6 +41,7 @@ private val Pale=Color(0xFFF1F5FF)
 class MainActivity : ComponentActivity() {
  private val configState=mutableStateOf(PetConfig())
  private val overlayState=mutableStateOf(false)
+ private val resumes=mutableLongStateOf(0L)
  private lateinit var prefs: PetSettings
  private lateinit var changes: SharedPreferences.OnSharedPreferenceChangeListener
  override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,7 +55,7 @@ class MainActivity : ComponentActivity() {
    }
   }
  }
- override fun onResume() { super.onResume(); overlayState.value=Settings.canDrawOverlays(this); if(::prefs.isInitialized) configState.value=prefs.read() }
+ override fun onResume() { super.onResume(); resumes.longValue=android.os.SystemClock.elapsedRealtime(); overlayState.value=Settings.canDrawOverlays(this); if(::prefs.isInitialized) configState.value=prefs.read() }
  override fun onDestroy() {
   if(::changes.isInitialized) getSharedPreferences("pet",MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(changes)
   super.onDestroy()
@@ -76,6 +77,9 @@ class MainActivity : ComponentActivity() {
   var updateText by remember { mutableStateOf("") }
   var update by remember { mutableStateOf<AppUpdate?>(null) }
   var checking by remember { mutableStateOf(false) }
+  var updateDialog by remember { mutableStateOf(false) }
+  var lastCheck by remember { mutableLongStateOf(0L) }
+  val snack=remember { SnackbarHostState() }
   var modelMenu by remember { mutableStateOf(false) }
   val notifications=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
   suspend fun refreshModel() { withContext(Dispatchers.IO) {
@@ -84,26 +88,35 @@ class MainActivity : ComponentActivity() {
    val files=store.list()
    withContext(Dispatchers.Main) { info=data.getOrNull(); available=files; data.exceptionOrNull()?.let { message=it.message ?: "Gagal membaca model" } }
   } }
-  fun checkUpdates() { scope.launch {
-   checking=true
-   val result=withContext(Dispatchers.IO) { runCatching { UpdateChecker.check() } }
-   update=result.getOrNull()
-   updateText=result.fold({ if(it==null) "Belum ada versi baru yang dipublikasikan." else "Versi ${it.version} tersedia." },{ "Pemeriksaan gagal. Coba lagi saat tersambung internet." })
-   checking=false
-  } }
+  fun checkUpdates(manual: Boolean=false) {
+   if(checking) return
+   checking=true; updateText="Memeriksa pembaruan…"
+   scope.launch {
+    try {
+     val result=withContext(Dispatchers.IO) { runCatching { UpdateChecker.check() } }
+     result.onSuccess { resultValue ->
+      update=resultValue.update
+      updateText=when { update!=null -> "Versi ${update!!.version} tersedia."; resultValue.published -> "Versi ${BuildConfig.VERSION_NAME} sudah terbaru."; else -> "Saluran pembaruan belum memiliki rilis APK." }
+      if(update!=null) updateDialog=true
+     }.onFailure { updateText="Gagal memeriksa pembaruan. Periksa internet lalu coba lagi." }
+     lastCheck=android.os.SystemClock.elapsedRealtime()
+     if(manual) snack.showSnackbar(updateText)
+    } finally { checking=false }
+   }
+  }
   val picker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
    if(uri!=null) scope.launch {
     importing=true
     // Keep the current pet/model until a complete import validates successfully.
     val result=withContext(Dispatchers.IO) { runCatching { ModelStore(this@MainActivity).importZip(uri) } }
-    result.onSuccess { m -> save(prefs.read().copy(model=m.file.path,tapMotion="",waveMotion="",expression="")); message="Model berhasil diimpor. Pilih aksi yang tersedia di bawah." }
+    result.onSuccess { m -> save(prefs.read().copy(model=m.file.path,tapMotion="",waveMotion="",expression="",walkMotion="")); message="Model berhasil diimpor." }
      .onFailure { message=it.message ?: "Impor gagal" }
     refreshModel(); importing=false
    }
   }
   LaunchedEffect(c.model) { refreshModel() }
-  LaunchedEffect(Unit) { checkUpdates() }
-  Scaffold(containerColor=MaterialTheme.colorScheme.background) { padding ->
+  LaunchedEffect(resumes.longValue) { if(lastCheck==0L || android.os.SystemClock.elapsedRealtime()-lastCheck>60_000) checkUpdates() }
+  Scaffold(snackbarHost={SnackbarHost(snack)},containerColor=MaterialTheme.colorScheme.background) { padding ->
    Box(Modifier.fillMaxSize().padding(padding)) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal=22.dp).padding(top=24.dp,bottom=32.dp),verticalArrangement=Arrangement.spacedBy(18.dp)) {
      Row(verticalAlignment=Alignment.CenterVertically) {
@@ -148,47 +161,48 @@ class MainActivity : ComponentActivity() {
        Column(Modifier.weight(1f)) { Text(info?.name ?: "Memuat model…",fontWeight=FontWeight.SemiBold); Text("${info?.motions?.size ?: 0} gerakan · ${info?.expressions?.size ?: 0} ekspresi",fontSize=12.sp,color=Muted) }
        TextButton(onClick={ modelMenu=true }) { Text("Ganti") }
        DropdownMenu(expanded=modelMenu,onDismissRequest={modelMenu=false}) {
-        available.forEach { f -> DropdownMenuItem(text={ Text(f.name.removeSuffix(".model3.json")) },onClick={ modelMenu=false; save(prefs.read().copy(model=if(f.parentFile?.name=="whalegirl") "" else f.path,tapMotion="",waveMotion="",expression="")) }) }
+        available.forEach { f -> DropdownMenuItem(text={ Text(f.name.removeSuffix(".model3.json")) },onClick={ modelMenu=false; save(prefs.read().copy(model=if(f.parentFile?.name=="whalegirl") "" else f.path,tapMotion="",waveMotion="",expression="",walkMotion="")) }) }
        }
       }
       OutlinedButton(onClick={consent=true},Modifier.fillMaxWidth(),shape=RoundedCornerShape(14.dp),enabled=!importing) { Text("Impor ZIP Live2D") }
       Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
        TextButton(onClick={open("https://booth.pm/en/items/5876181")}) { Text("Model Furina",fontSize=12.sp) }
-       TextButton(onClick={save(prefs.read().copy(model="",tapMotion="",waveMotion="",expression=""))}) { Text("Pakai model uji",fontSize=12.sp) }
+       TextButton(onClick={save(prefs.read().copy(model="",tapMotion="",waveMotion="",expression="",walkMotion=""))}) { Text("Pakai model uji",fontSize=12.sp) }
       }
-      Text("Mendukung .model3.json, .moc3, tekstur, motion dan ekspresi dalam satu ZIP hingga 500 MB. Model disimpan lokal.",fontSize=12.sp,color=Muted,lineHeight=18.sp)
      }
      Section("Tampilan & gerak") {
       SettingSlider("Ukuran",c.size,"${c.size.toInt()} dp",100f..280f) { save(prefs.read().copy(size=it)) }
       SettingSlider("Kecepatan",c.speed,"${String.format(java.util.Locale.US,"%.1f",c.speed)}×",0.4f..2f) { save(prefs.read().copy(speed=it)) }
       SettingSlider("Keaktifan",c.activity,when { c.activity<0.33f -> "Tenang"; c.activity<0.7f -> "Seimbang"; else -> "Ceria" },0f..1f) { save(prefs.read().copy(activity=it)) }
-      Toggle("Berkeliaran otomatis","Melayang halus mengikuti kemampuan rig",c.roam) { save(prefs.read().copy(roam=it)) }
+      Toggle("Berkeliaran otomatis","Jelajah layar dengan arah dan jeda acak",c.roam) { save(prefs.read().copy(roam=it)) }
       Toggle("Lompatan kecil","Sesekali melompat dengan gerak lembut",c.jump) { save(prefs.read().copy(jump=it)) }
       Toggle("Reaksi & ekspresi","Bereaksi saat disentuh dan sesekali menyapa",c.reactions) { save(prefs.read().copy(reactions=it)) }
       Toggle("Animasi 60 fps","30 fps lebih hemat · mode hemat baterai 15 fps",c.fps==60) { save(prefs.read().copy(fps=if(it) 60 else 30)) }
       TextButton(onClick={ save(prefs.read().copy(x=0.5f,y=0.8f)); if(status.running) PetService.command(this@MainActivity,PetService.HOME) },Modifier.align(Alignment.End)) { Text("Atur ulang posisi") }
      }
      Section("Aksi model") {
+      Row {
+       TextButton(onClick={PetService.command(this@MainActivity,PetService.GREET)},enabled=status.running && c.reactions && !c.paused && !c.hidden) { Text("Sapa") }
+       TextButton(onClick={PetService.command(this@MainActivity,PetService.HOP)},enabled=status.running && c.jump && !c.paused && !c.hidden) { Text("Lompat") }
+      }
+      Choice("Saat bergerak",c.walkMotion,info?.motions?.map { it.first } ?: emptyList()) { save(prefs.read().copy(walkMotion=it)) }
       Choice("Saat disentuh",c.tapMotion,info?.motions?.map { it.first } ?: emptyList()) { save(prefs.read().copy(tapMotion=it)) }
       Choice("Gerakan menyapa",c.waveMotion,info?.motions?.map { it.first } ?: emptyList()) { save(prefs.read().copy(waveMotion=it)) }
       Choice("Ekspresi favorit",c.expression,info?.expressions?.map { it.first } ?: emptyList()) { save(prefs.read().copy(expression=it)) }
-      Text("Lambaian memakai motion model yang tersedia. Jika rig tidak mendukung, karakter menoleh atau bereaksi tanpa memaksakan gerakan tangan.",fontSize=12.sp,lineHeight=18.sp,color=Muted)
      }
      Section("Android & pembaruan") {
       Toggle("Izin tampil di atas aplikasi","Diperlukan agar karakter muncul di aplikasi lain",overlayState.value) {
        startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:$packageName")))
       }
       TextButton(onClick={startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:$packageName")))}) { Text("Pengaturan aplikasi & baterai") }
-      Text("Pada HyperOS, aktifkan mulai otomatis dan pilih baterai Tanpa batas bila karakter sering berhenti. Setelah reboot atau paksa berhenti, buka aplikasi dan tampilkan lagi.",fontSize=12.sp,color=Muted,lineHeight=19.sp)
+      Text("HyperOS: pilih baterai Tanpa batas bila karakter sering berhenti.",fontSize=12.sp,color=Muted,lineHeight=19.sp)
       HorizontalDivider(color=Pale)
-      TextButton(onClick={if(update!=null) open(update!!.page) else checkUpdates()},enabled=!checking) { Text(if(checking) "Memeriksa…" else if(update!=null) "Unduh versi ${update!!.version}" else "Periksa pembaruan") }
+      TextButton(onClick={if(update!=null) open(update!!.page) else checkUpdates(true)},enabled=!checking) { Text(if(checking) "Memeriksa…" else if(update!=null) "Unduh versi ${update!!.version}" else "Periksa pembaruan") }
       if(updateText.isNotEmpty()) Text(updateText,fontSize=12.sp,color=Muted)
+      Text("Versi ${BuildConfig.VERSION_NAME}",fontSize=11.sp,color=Muted)
      }
      Section("Tentang") {
-      Text("Offline · Tanpa akun · Tanpa percakapan AI",fontSize=13.sp,fontWeight=FontWeight.Medium)
       Text("Model uji WhaleGirl © 7l-ui, MIT. This application contains Live2D Cubism SDK developed by Live2D Inc. Live2D dan karakter Furina dimiliki pemegang hak masing-masing.",fontSize=12.sp,color=Muted,lineHeight=18.sp)
-      Text("Build pengujian pribadi. Impor lokal tidak memberikan izin penggunaan model. Publikasi umum menunggu peninjauan lisensi Expandable Application Live2D.",fontSize=12.sp,color=Muted,lineHeight=18.sp)
-      if(status.running) Text("${status.renderer}\n${status.parameters} parameter · ${status.frames} frame · ${if(status.suspended) "Dijeda" else status.mode}",fontSize=11.sp,color=Muted,lineHeight=17.sp)
       TextButton(onClick={open("https://github.com/WynnDev-rill/Wynn-Store/tree/main/furina-pocket-pet")}) { Text("Kode sumber & lisensi") }
      }
      Text("made by wynn",Modifier.align(Alignment.CenterHorizontally),fontSize=11.sp,color=Muted)
@@ -200,6 +214,7 @@ class MainActivity : ComponentActivity() {
     }
    }
   }
+  if(updateDialog && update!=null) AlertDialog(onDismissRequest={updateDialog=false},title={Text("Pembaruan tersedia")},text={Text("Versi ${update!!.version} siap diunduh.")},confirmButton={TextButton(onClick={updateDialog=false;open(update!!.page)}) { Text("Unduh pembaruan") }},dismissButton={TextButton(onClick={updateDialog=false}) { Text("Nanti") }})
   if(consent) AlertDialog(onDismissRequest={consent=false},title={Text("Impor model lokal")},text={Text("Gunakan model yang kamu berhak pakai di aplikasi ini. Model BOOTH Furina melarang distribusi ulang; ketentuan aplikasinya perlu izin pembuat. File tidak diunggah atau dibagikan.")},confirmButton={TextButton(onClick={consent=false;picker.launch(arrayOf("application/zip","application/x-zip-compressed","application/octet-stream"))}) { Text("Pilih ZIP milikku") }},dismissButton={TextButton(onClick={consent=false}) { Text("Batal") }})
  }
 }

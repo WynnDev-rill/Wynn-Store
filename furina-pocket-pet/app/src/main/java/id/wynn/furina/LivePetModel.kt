@@ -28,6 +28,8 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
  private var lastEvent=-1L
  private var expressionUntil=0f
  private var idleAt=0f
+ private var locomotion=0f
+ private var wasRoaming=false
  private var bounds=floatArrayOf(-1f,1f,-1f,1f)
  val parameterCount: Int get() = model.parameterCount
  init {
@@ -91,7 +93,7 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
     val selected=info.motions.firstOrNull { it.first==c.tapMotion } ?: wave ?:
      info.motions.firstOrNull { it.first.contains("nod",true) || it.first.contains("tap",true) }
     selected?.let { motion(it.second) }
-    val e=info.expressions.firstOrNull { it.first==c.expression } ?: info.expressions.randomOrNull()
+    val e=info.expressions.firstOrNull { it.first==c.expression } ?: info.expressions.firstOrNull { it.first.contains("挥手") || it.first.contains("wave",true) } ?: info.expressions.randomOrNull()
     e?.let { expression(it.second) }
    }
    PetMood.EXPRESSION -> if(Random.nextBoolean() && wave!=null) motion(wave.second)
@@ -101,9 +103,14 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
  }
  fun draw(dt: Float,frame: PetFrame,c: PetConfig,width: Int,height: Int) {
   elapsed+=dt
+  if(wasRoaming != (frame.mood==PetMood.ROAM)) motionManager.stopAllMotions()
+  wasRoaming=frame.mood==PetMood.ROAM
   event(frame,c)
   model.loadParameters()
-  if(motionManager.isFinished && elapsed>=idleAt) {
+  val walk=MotionCatalog.walk(info.motions,c.walkMotion)
+  if(frame.mood==PetMood.ROAM && walk!=null) {
+   if(motionManager.isFinished) motion(walk.second)
+  } else if(motionManager.isFinished && elapsed>=idleAt) {
    info.motions.filter { it.first.contains("idle",true) }.randomOrNull()?.let { motion(it.second) }
    idleAt=elapsed+3f+Random.nextFloat()*4f
   }
@@ -111,6 +118,14 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   model.saveParameters()
   if(c.reactions && expressionUntil>elapsed) expressionManager.updateMotion(model,dt)
   else expressionManager.stopAllMotions()
+  locomotion+=(frame.movement-locomotion)*(1f-exp(-dt*7f))
+  // Explicit standard leg IDs only; unknown custom IDs are never guessed.
+  if(walk==null) {
+   add("ParamLegL",frame.stride*12f); add("ParamLegR",-frame.stride*12f)
+   add("ParamLegLAngle",frame.stride*12f); add("ParamLegRAngle",-frame.stride*12f)
+  }
+  add("ParamBodyAngleZ",frame.stride*1.5f+frame.dragLean*7f)
+  add("ParamBodyAngleY",-frame.crouch*5f)
   // Only existing rig parameters are touched; no generated fake limbs or image-based blinking.
   add("ParamAngleX",frame.gazeX*22f)
   add("ParamAngleY",frame.gazeY*15f+sin(elapsed*0.65f)*2f)
@@ -131,8 +146,9 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   val aspect=width.toFloat()/height.coerceAtLeast(1)
   val s=min(1.8f/(bounds[1]-bounds[0]),1.8f/((bounds[3]-bounds[2])*aspect))
   val matrix=CubismMatrix44.create()
+  val bob=if(frame.mood==PetMood.ROAM && walk==null) abs(frame.stride)*0.025f else 0f
   matrix.scale(s,s*aspect)
-  matrix.translate(-(bounds[0]+bounds[1])*0.5f*s,-(bounds[2]+bounds[3])*0.5f*s*aspect)
+  matrix.translate(-(bounds[0]+bounds[1])*0.5f*s,-(bounds[2]+bounds[3])*0.5f*s*aspect+bob-frame.crouch*0.025f)
   meshRenderer?.draw(matrix.array,width,height)
  }
  fun close() {

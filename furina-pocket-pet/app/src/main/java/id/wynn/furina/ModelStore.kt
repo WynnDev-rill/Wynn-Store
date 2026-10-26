@@ -87,7 +87,7 @@ class ModelStore(private val context: Context) {
   // VTS hotkeys may refer to standalone files absent from model3.json.
   file.parentFile!!.walkTopDown().filter { it.isFile && (it.name.endsWith(".motion3.json") || it.name.endsWith(".exp3.json")) }.forEach { f ->
    val list=if(f.name.endsWith(".exp3.json")) expressions else motions
-   if(list.none { it.second == f }) list += f.name.substringBefore('.') to f
+   if(list.none { it.second.canonicalFile == f.canonicalFile }) list += f.name.substringBefore('.') to f
   }
   require(motions.size <= 128 && expressions.size <= 128) { "Terlalu banyak animasi" }
   (motions+expressions).forEach { require(it.second.length()<=8*1024*1024) { "Animasi terlalu besar" } }

@@ -10,10 +10,11 @@ The app starts with the **WhaleGirl MIT test model**, not Furina. It imports a u
 - Smooth time-based roaming, stops, looking around, small hops, blinking and breathing through actual rig parameters, physics, model motions and expressions. Random timing, weighted choices and eased transitions reduce repetition.
 - Natural walking is deliberately not synthesized: the default model floats. Waves use an existing compatible motion or expression. Rig support determines what a model can do. VTS hotkeys are not executed; unlisted `.motion3.json` and `.exp3.json` are discovered for manual mapping.
 - Standard ArtMesh clipping, inverted masks, premultiplied alpha, normal/additive/multiplicative blending. Advanced Cubism 5.3 offscreen blend modes are explicitly unsupported.
+- Model-owned walk/run motion auto-detection and a manual movement action selector; stops locomotion motion when leaving roaming. Unsupported rigs use a subtle bob, never a claimed natural footstep cycle. Double-tap to hop, touch-directed gaze, drag lean, phased hop anticipation/flight/landing.
 - Size, speed, activity, roaming, hops, reactions, 30/60 fps, favorite actions, pause/hide/stop, and reset position. An ongoing quiet notification exposes controls.
 - Screen-off/locked/hidden/paused stops the animation loop and pauses GL. Battery saver caps animation at 15 fps. Textures are decoded at at most 2048 pixels per side, then CPU bitmaps are recycled; motion caching is limited.
 - ZIP extraction enforces app-private paths, 500 MiB input / 2 GiB extracted / 500 MiB per file / 4096 entries, plus reference, texture, JSON and motion validation. Import is transactional; a failed ZIP does not replace the current model.
-- Optional GitHub Releases update check on app open. It only recognizes `furina-vX.Y.Z` releases with matching APK names. Download/install is handed to the release page and Android installer. No silent installation.
+- GitHub Releases checks on app open/foreground return (60-second cooldown), automatic availability dialog, visible manual-check progress and snackbar results. Empty release channel is distinguished from an up-to-date installed version. It only recognizes `furina-vX.Y.Z` releases with matching APK names. Download/install is handed to the release page and Android installer. No silent installation.
 
 ## Build
 

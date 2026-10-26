@@ -19,3 +19,12 @@ Licenses and primary references:
 - [Background service starts](https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start): start from the app's visible user action, do not rely on an invisible overlay exemption.
 - [Window flags](https://developer.android.com/reference/android/view/WindowManager.LayoutParams#FLAG_NOT_TOUCH_MODAL): pass input outside the window; no full-screen interception.
 - [Android 12 overlay touch protections](https://developer.android.com/about/versions/12/behavior-changes-all#untrusted-touch-events).
+
+
+## 1.1.0 behavior review
+
+Studied primary sources [Shimeji-ee actions](https://github.com/TigerHix/shimeji-ee/blob/master/conf/actions.xml) and [VPet animation architecture](https://github.com/LorisYounger/VPet/blob/main/Secondary%20Development%20Support%20Documentation.md). Shimeji separates random destinations/behavior sequences from pose-specific walk/run/sit assets; VPet separates interaction and animation start/loop/end. Their sprite/WPF runtime and character artwork are not Cubism animations. No source or artwork was copied; reused the existing Cubism motion/expression pipeline instead, with a model-owned locomotion selector, phased hops, drag feedback and touch gaze. Existing Akimeji/WhaleGirl findings remain above.
+
+Owner-provided Furina ZIP inspected locally (not committed or bundled): one wave motion, wave/anger/heart/blush expressions; CDI metadata exposes head/body/eye/cloth/hair controls but no clearly labeled independent walking-leg parameters. No walking or sitting cycle was found. A single leg part is not an articulated walking rig. This build does not claim natural Furina footfalls or sitting. The original model data stays private. Procedural leg sway touches only explicit recognized IDs; unknown parameters are not guessed.
+
+Updater reuses the ScreenGuard pattern of a guarded check, bounded network response, clear progress/result and an automatic availability dialog. The actual implementation is small and independent; ScreenGuard's Shizuku/usage infrastructure is not included. No public APK channel is fabricated or published: the existing license/publication gate still applies.

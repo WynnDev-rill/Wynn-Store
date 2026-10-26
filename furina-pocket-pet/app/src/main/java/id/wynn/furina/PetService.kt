@@ -35,6 +35,7 @@ class PetService : Service() {
  private var baseX=0f; private var baseY=0f
  private var downX=0f; private var downY=0f
  private var downAt=0L
+ private var lastTap=0L
  private val receiver=object: BroadcastReceiver() {
   override fun onReceive(context: Context,intent: Intent) {
    when(intent.action) {
@@ -107,7 +108,7 @@ class PetService : Service() {
     engine.place(config.x,config.y)
     params.x=(left+config.x*(right-left)).roundToInt(); params.y=(top+config.y*(bottom-top)).roundToInt()
     view!!.setOnTouchListener { _,event -> touch(event) }
-    view!!.setOnClickListener { if(config.reactions) { engine.react(); view?.frame=engine.frame; view?.requestRender() } }
+    view!!.setOnClickListener { if(config.reactions) { if(SystemClock.elapsedRealtime()-lastTap<350 && config.jump) engine.action(PetMood.HOP) else engine.react(); lastTap=SystemClock.elapsedRealtime(); view?.frame=engine.frame; view?.requestRender() } }
     wm.addView(view,params)
     visible=true
    } else {
@@ -117,6 +118,8 @@ class PetService : Service() {
     params.x=(left+engine.frame.x*(right-left)).roundToInt(); params.y=(top+engine.frame.y*(bottom-top)).roundToInt()
     updateWindow()
    }
+   if(intent?.action==HOP && config.jump) engine.action(PetMood.HOP)
+   if(intent?.action==GREET && config.reactions) engine.react()
    view?.config=config
    PetRuntime.update { it.copy(running=true,error="") }
    schedule()
@@ -131,6 +134,10 @@ class PetService : Service() {
    MotionEvent.ACTION_MOVE -> {
     params.x=(baseX+e.rawX-downX).roundToInt().coerceIn(left,right)
     params.y=(baseY+e.rawY-downY).roundToInt().coerceIn(top,bottom)
+    val nx=(params.x-left).toFloat()/(right-left).coerceAtLeast(1)
+    val ny=(params.y-top).toFloat()/(bottom-top).coerceAtLeast(1)
+    engine.drag(nx,ny,(e.rawX-downX)/(100*density))
+    view?.frame=engine.frame
     updateWindow()
    }
    MotionEvent.ACTION_UP,MotionEvent.ACTION_CANCEL -> {
@@ -139,6 +146,7 @@ class PetService : Service() {
     val nx=(params.x-left).toFloat()/(right-left).coerceAtLeast(1)
     val ny=(params.y-top).toFloat()/(bottom-top).coerceAtLeast(1)
     engine.place(nx,ny)
+    engine.lookAt((e.x/params.width*2-1),-(e.y/params.height*2-1))
     config=config.copy(x=nx,y=ny)
     // Read latest UI settings before saving only position.
     prefs.save(prefs.read().copy(x=nx,y=ny))
@@ -215,6 +223,7 @@ class PetService : Service() {
  companion object {
   private const val CHANNEL="pet-active"
   private const val NOTIFICATION=41
+  const val HOP="hop"; const val GREET="greet"
   const val START="start"; const val STOP="stop"; const val PAUSE="pause"; const val HIDE="hide"; const val HOME="home"; const val REFRESH="refresh"
   fun command(context: Context,action: String=START) {
    val intent=Intent(context,PetService::class.java).setAction(action)
