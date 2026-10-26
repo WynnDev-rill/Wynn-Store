@@ -62,8 +62,18 @@ class CompanionDeviceTest {
    command(PetService.GHOST)
    await {!PetSettings(app).read().ghost}
    inst.runOnMainSync {assertEquals(0,(view.layoutParams as WindowManager.LayoutParams).flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)}
+   val updatedAt=view.renderedFrames
+   await {view.renderedFrames>updatedAt+2}
+   inst.waitForIdleSync()
    val restored=OverlayProbeActivity.clicks
-   device.click(point[0]+view.width/2,point[1]+view.height*2/3)
+   // Keep the real system input route, with calibrated event timestamps. A loaded emulator
+   // can delay UIAutomator's up event enough to turn click() into our intentional long-hold.
+   val now=SystemClock.uptimeMillis()
+   for((action,time) in listOf(MotionEvent.ACTION_DOWN to now,MotionEvent.ACTION_UP to now+60)) {
+    val e=MotionEvent.obtain(now,time,action,(point[0]+view.width/2).toFloat(),(point[1]+view.height*2/3).toFloat(),0)
+    e.source=android.view.InputDevice.SOURCE_TOUCHSCREEN
+    try {assertTrue(inst.uiAutomation.injectInputEvent(e,true))} finally {e.recycle()}
+   }
    await {PetRuntime.status.value.mode==PetMood.POKE.name}
    assertEquals(restored,OverlayProbeActivity.clicks)
   } finally {stop()}
