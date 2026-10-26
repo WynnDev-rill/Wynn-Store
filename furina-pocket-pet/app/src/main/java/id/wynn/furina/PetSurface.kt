@@ -48,6 +48,8 @@ class PetSurface(context: Context, private val file: File, private val failed: (
      }
      if(!CubismFramework.isInitialized()) CubismFramework.initialize()
      com.live2d.sdk.cubism.framework.rendering.android.CubismShaderAndroid.getInstance().releaseInvalidShaderProgram()
+     // Official context-loss sequence: discard cached programs so the new EGL context recompiles them.
+     com.live2d.sdk.cubism.framework.rendering.android.CubismShaderAndroid.deleteInstance()
     } catch(e: Exception) { report(e) }
     last=0
    }

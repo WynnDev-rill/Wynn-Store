@@ -57,6 +57,13 @@ class PetDeviceTest {
    device.wakeUp(); device.executeShellCommand("wm dismiss-keyguard")
    await { PetRuntime.status.value.frames>screenOff+5 }
    assertEquals("",PetRuntime.status.value.error)
+   inst.runOnMainSync { PetService.command(app,PetService.STOP) }
+   await { !PetRuntime.status.value.running }
+   app.startActivity(Intent(app,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); device.waitForIdle()
+   inst.runOnMainSync { PetService.command(app) }
+   await(40000) { PetRuntime.status.value.running && PetRuntime.status.value.frames>8 && PetRuntime.status.value.visiblePixels>100 }
+   assertTrue(PetRuntime.status.value.transparentPixels>100)
+   assertEquals("",PetRuntime.status.value.error)
   } finally {
    inst.runOnMainSync { PetService.command(app,PetService.STOP) }
    await { !PetRuntime.status.value.running }

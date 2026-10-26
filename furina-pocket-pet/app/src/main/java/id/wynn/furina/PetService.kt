@@ -94,6 +94,7 @@ class PetService : Service() {
    val selected=ModelStore(this).selected(config)
    if(view==null || view?.tag!=selected.path) {
     removePet()
+    PetRuntime.update { PetStatus(running=true) }
     view=PetSurface(this,selected) { fail(it) }.apply { tag=selected.path }
     params=WindowManager.LayoutParams(dp(config.size),dp(config.size*1.22f),WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
      WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
