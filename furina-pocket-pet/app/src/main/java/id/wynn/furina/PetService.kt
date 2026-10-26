@@ -21,6 +21,19 @@ class PetService : Service() {
  private lateinit var wm: WindowManager
  private val handler=Handler(Looper.getMainLooper())
  private val engine=BehaviorEngine()
+ private val dialogue=PetDialogue()
+ private val shake=ShakeDetector()
+ private var bubble: SpeechBubble?=null
+ private var dialogueEvent=-1L
+ private var idleCommentAt=0L
+ private var batteryCheckAt=0L
+ private fun speak(cue: PetCue) {
+  if(!config.comments || config.hidden || config.paused || !screenAwake) return
+  dialogue.line(cue,SystemClock.elapsedRealtime())?.let { line ->
+   runCatching { bubble?.show(line);positionBubble() }
+  }
+ }
+ private fun positionBubble() {runCatching {bubble?.position(params.x,params.y,params.width,params.height,left,top,right+params.width,bottom+params.height)}.onFailure {bubble?.hide()}}
  private var view: PetSurface?=null
  private var config=PetConfig()
  private var params=WindowManager.LayoutParams()
@@ -43,6 +56,7 @@ class PetService : Service() {
     Intent.ACTION_SCREEN_ON,Intent.ACTION_USER_PRESENT -> screenAwake=(getSystemService(PowerManager::class.java).isInteractive && !getSystemService(KeyguardManager::class.java).isKeyguardLocked)
    }
    schedule()
+   if(screenAwake) speak(PetCue.WAKE)
   }
  }
  private val tick=object: Runnable {
@@ -59,6 +73,23 @@ class PetService : Service() {
     val ny=(top+frame.y*(bottom-top)-frame.bounce*42*density).roundToInt().coerceAtLeast(top)
     if(nx!=params.x || ny!=params.y) { params.x=nx; params.y=ny; if(!updateWindow()) return }
    }
+   if(frame.event!=dialogueEvent) {
+    dialogueEvent=frame.event
+    when(frame.mood) {
+     PetMood.HOP -> speak(PetCue.HOP)
+     PetMood.ROAM -> speak(if(frame.running) PetCue.RUN else PetCue.ROAM)
+     PetMood.NAP -> speak(PetCue.NAP)
+     PetMood.STRETCH -> speak(PetCue.STRETCH)
+     else -> Unit
+    }
+   }
+   if(now-idleCommentAt>120000) {idleCommentAt=now;speak(PetCue.IDLE)}
+   if(now-batteryCheckAt>60000) {
+    batteryCheckAt=now
+    val battery=getSystemService(BatteryManager::class.java).getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+    if(battery in 0..19) speak(PetCue.BATTERY)
+   }
+   positionBubble()
    v.requestRender()
    if(now-lastStatus>=1000) {
     lastStatus=now
@@ -72,6 +103,8 @@ class PetService : Service() {
  override fun onCreate() {
   super.onCreate()
   prefs=PetSettings(this); wm=getSystemService(WindowManager::class.java)
+  bubble=SpeechBubble(this,wm)
+  idleCommentAt=SystemClock.elapsedRealtime()
   density=resources.displayMetrics.density
   val power=getSystemService(PowerManager::class.java)
   screenAwake=power.isInteractive && !getSystemService(KeyguardManager::class.java).isKeyguardLocked
@@ -107,8 +140,9 @@ class PetService : Service() {
     bounds()
     engine.place(config.x,config.y)
     params.x=(left+config.x*(right-left)).roundToInt(); params.y=(top+config.y*(bottom-top)).roundToInt()
+    view!!.contentDescription="Pocket Pet"
     view!!.setOnTouchListener { _,event -> touch(event) }
-    view!!.setOnClickListener { if(config.reactions) { if(SystemClock.elapsedRealtime()-lastTap<350 && config.jump) engine.action(PetMood.HOP) else engine.react(); lastTap=SystemClock.elapsedRealtime(); view?.frame=engine.frame; view?.requestRender() } }
+    view!!.setOnClickListener { if(config.reactions) { if(SystemClock.elapsedRealtime()-lastTap<350 && config.jump) engine.action(PetMood.HOP) else engine.react(); lastTap=SystemClock.elapsedRealtime(); speak(PetCue.TAP); view?.frame=engine.frame; view?.requestRender() } }
     wm.addView(view,params)
     visible=true
    } else {
@@ -123,6 +157,7 @@ class PetService : Service() {
    view?.config=config
    PetRuntime.update { it.copy(running=true,error="") }
    schedule()
+   if(intent?.action==START) speak(PetCue.HELLO)
   } catch(e: Exception) { fail(e.message ?: "Overlay tidak dapat dimulai") }
   return START_NOT_STICKY // Never silently restart a user-stopped pet or start a restricted FGS in background.
  }
@@ -130,8 +165,10 @@ class PetService : Service() {
   when(e.actionMasked) {
    MotionEvent.ACTION_DOWN -> {
     downX=e.rawX; downY=e.rawY; baseX=params.x.toFloat(); baseY=params.y.toFloat(); downAt=SystemClock.elapsedRealtime(); dragging=true
+    shake.begin(e.rawX,e.rawY,e.eventTime)
    }
    MotionEvent.ACTION_MOVE -> {
+    shake.move(e.rawX,e.rawY,e.eventTime,density)
     params.x=(baseX+e.rawX-downX).roundToInt().coerceIn(left,right)
     params.y=(baseY+e.rawY-downY).roundToInt().coerceIn(top,bottom)
     val nx=(params.x-left).toFloat()/(right-left).coerceAtLeast(1)
@@ -149,7 +186,10 @@ class PetService : Service() {
     engine.lookAt((e.x/params.width*2-1),-(e.y/params.height*2-1))
     config=config.copy(x=nx,y=ny)
     // Read latest UI settings before saving only position.
-    prefs.save(prefs.read().copy(x=nx,y=ny))
+    prefs.savePosition(nx,ny)
+    if(moved && e.actionMasked==MotionEvent.ACTION_UP) {
+     if(shake.isDizzy() && config.reactions) {engine.dizzy();speak(PetCue.DIZZY)} else speak(PetCue.DRAG)
+    }
     if(e.actionMasked==MotionEvent.ACTION_UP && !moved) {
      if(SystemClock.elapsedRealtime()-downAt>650) {
       startActivity(Intent(this,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -184,6 +224,7 @@ class PetService : Service() {
   v.visibility=if(show) View.VISIBLE else View.INVISIBLE
   visible=show
   val active=show && !config.paused
+  if(!active || !config.comments) bubble?.hide()
   if(active) { v.onResume(); handler.post(tick) } else { v.onPause() }
   PetRuntime.update { it.copy(suspended=!active) }
  }
@@ -208,11 +249,12 @@ class PetService : Service() {
  private fun fail(message: String) { PetRuntime.update { it.copy(error=message) }; stopSelf() }
  private fun removePet() {
   handler.removeCallbacks(tick)
+  bubble?.hide()
   view?.let { v -> v.release(); if(v.isAttachedToWindow) runCatching { wm.removeViewImmediate(v) } }
   view=null; visible=false
  }
  override fun onDestroy() {
-  prefs.save(prefs.read().copy(x=engine.frame.x,y=engine.frame.y))
+  prefs.savePosition(engine.frame.x,engine.frame.y)
   removePet()
   if(receiverRegistered) unregisterReceiver(receiver)
   stopForeground(STOP_FOREGROUND_REMOVE)

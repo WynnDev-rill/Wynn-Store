@@ -96,8 +96,33 @@ class PetDeviceTest {
    await { !PetRuntime.status.value.running }
   }
  }
+ @Test fun fastDragDizzyAndPositionSavePreserveModel() {
+  device.executeShellCommand("appops set ${app.packageName} SYSTEM_ALERT_WINDOW allow")
+  app.startActivity(Intent(app,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));device.waitForIdle()
+  val prefs=PetSettings(app)
+  val model=ModelStore(app).testModel().path
+  prefs.save(PetConfig(model=model,roam=false,x=0.1f,y=0.5f,comments=true))
+  prefs.savePosition(0.15f,0.5f);assertEquals(model,prefs.read().model)
+  inst.runOnMainSync {PetService.command(app)}
+  try {
+   await {PetRuntime.status.value.running && PetRuntime.status.value.frames>15}
+   SystemClock.sleep(5200)
+   val pet=device.findObject(androidx.test.uiautomator.By.desc("Pocket Pet"))
+   assertNotNull(pet)
+   val bounds=pet.visibleBounds
+   device.swipe(bounds.centerX(),bounds.centerY(),device.displayWidth-30,bounds.centerY(),4)
+   await(4000) {PetRuntime.status.value.mode=="DIZZY"}
+   assertTrue(device.hasObject(androidx.test.uiautomator.By.textContains("🌀")))
+   inst.runOnMainSync {PetService.command(app,PetService.HIDE)}
+   await {PetRuntime.status.value.suspended}
+   assertFalse(device.hasObject(androidx.test.uiautomator.By.textContains("🌀")))
+  } finally {
+   inst.runOnMainSync {PetService.command(app,PetService.STOP)};await {!PetRuntime.status.value.running}
+   prefs.save(PetConfig())
+  }
+ }
  @Test fun importRealModelAndRejectCorruptZip() {
-  val store=ModelStore(app); val f=store.fallback()
+  val store=ModelStore(app); val f=store.testModel()
   val info=store.inspect(f)
   assertTrue(info.motions.size>=4)
   val zip=File(app.cacheDir,"device-model.zip")

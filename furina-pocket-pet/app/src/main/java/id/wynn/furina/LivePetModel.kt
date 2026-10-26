@@ -68,7 +68,15 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
     } finally { bitmap.recycle() }
    }
    glBindTexture(GL_TEXTURE_2D,0)
-   meshRenderer=NativeMeshRenderer(model,textures)
+   val legParts=mutableSetOf<String>()
+   setting.displayInfoFileName.takeIf {it.isNotEmpty()}?.let { name ->
+    val display=JSONObject(File(dir,name).readText()).optJSONArray("Parts")
+    if(display!=null) repeat(display.length()) { i ->
+     val item=display.getJSONObject(i); val label=item.optString("Name").lowercase()
+     if(label=="腿" || label=="足" || label=="legs" || label=="leg" || label=="left leg" || label=="right leg") legParts+=item.getString("Id")
+    }
+   }
+   meshRenderer=NativeMeshRenderer(model,textures,legParts)
   } catch(e: Exception) { close(); throw e }
  }
  private fun add(name: String, value: Float) { params[name]?.let { model.addParameterValue(it,value) } }
@@ -119,12 +127,18 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   if(c.reactions && expressionUntil>elapsed) expressionManager.updateMotion(model,dt)
   else expressionManager.stopAllMotions()
   locomotion+=(frame.movement-locomotion)*(1f-exp(-dt*7f))
-  // Explicit standard leg IDs only; unknown custom IDs are never guessed.
-  if(walk==null) {
-   add("ParamLegL",frame.stride*12f); add("ParamLegR",-frame.stride*12f)
-   add("ParamLegLAngle",frame.stride*12f); add("ParamLegRAngle",-frame.stride*12f)
-  }
   add("ParamBodyAngleZ",frame.stride*1.5f+frame.dragLean*7f)
+  if(frame.mood==PetMood.DIZZY) {
+   add("ParamAngleZ",sin(elapsed*9f)*9f*frame.effect)
+   add("ParamEyeBallX",sin(elapsed*12f)*0.7f*frame.effect)
+   add("ParamEyeBallY",cos(elapsed*12f)*0.5f*frame.effect)
+   add("ParamMouthOpenY",0.2f*frame.effect)
+  }
+  if(frame.mood==PetMood.NAP) {
+   multiply("ParamEyeLOpen",1f-frame.effect);multiply("ParamEyeROpen",1f-frame.effect)
+   add("ParamAngleZ",frame.effect*9f)
+  }
+  if(frame.mood==PetMood.STRETCH) {add("ParamBodyAngleY",frame.effect*4f);add("ParamAngleY",frame.effect*12f)}
   add("ParamBodyAngleY",-frame.crouch*5f)
   // Only existing rig parameters are touched; no generated fake limbs or image-based blinking.
   add("ParamAngleX",frame.gazeX*22f)
@@ -149,6 +163,8 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   val bob=if(frame.mood==PetMood.ROAM && walk==null) abs(frame.stride)*0.025f else 0f
   matrix.scale(s,s*aspect)
   matrix.translate(-(bounds[0]+bounds[1])*0.5f*s,-(bounds[2]+bounds[3])*0.5f*s*aspect+bob-frame.crouch*0.025f)
+  meshRenderer?.gaitFrame=frame
+  meshRenderer?.gaitEnabled=c.legMotion && walk==null
   meshRenderer?.draw(matrix.array,width,height)
  }
  fun close() {
@@ -168,6 +184,6 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   val visible=(0 until model.drawableCount).count { model.getDrawableDynamicFlagIsVisible(it) }
   val opacity=(0 until model.drawableCount).map { model.getDrawableOpacity(it) }
   val points=if(model.drawableCount>0) model.getDrawableVertexPositions(0).take(8) else emptyList()
-  return "drawables=${model.drawableCount}, visible=$visible, opacity=${opacity.minOrNull()}..${opacity.maxOrNull()}, modelAlpha=${model.modelOpacity}, bounds=${bounds.toList()}, points=$points, textures=$textures, blend=${model.isBlendModeEnabled}, masks=${model.isUsingMasking}"
+  return "legMeshes=${meshRenderer?.animatedLegMeshes}, drawables=${model.drawableCount}, visible=$visible, opacity=${opacity.minOrNull()}..${opacity.maxOrNull()}, modelAlpha=${model.modelOpacity}, bounds=${bounds.toList()}, points=$points, textures=$textures, blend=${model.isBlendModeEnabled}, masks=${model.isUsingMasking}"
  }
 }

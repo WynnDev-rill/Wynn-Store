@@ -13,12 +13,35 @@ import java.nio.ShortBuffer
  * https://github.com/Live2D/CubismJavaFramework/tree/develop/framework/src/main/assets
  * Advanced Cubism 5.3 offscreen blend modes are rejected explicitly instead of being misrendered.
  */
-class NativeMeshRenderer(private val model: CubismModel,private val textureIds: List<Int>) {
+class NativeMeshRenderer(private val model: CubismModel,private val textureIds: List<Int>,legParts: Set<String> = emptySet()) {
  private data class Mesh(val vertices: FloatBuffer,val uv: FloatBuffer,val indices: ShortBuffer,val count: Int)
  private val meshes=Array(model.drawableCount) { i ->
   val p=model.getDrawableVertexPositions(i); val uv=model.getDrawableVertexUvs(i); val indices=model.getDrawableVertexIndices(i)
   Mesh(floats(p),floats(uv),ByteBuffer.allocateDirect(indices.size*2).order(ByteOrder.nativeOrder()).asShortBuffer().apply { put(indices);position(0) },indices.size)
  }
+ private val legWeights=mutableMapOf<Int,Pair<Float,FloatArray>>()
+ private var legLength=0f
+ var gaitFrame=PetFrame()
+ var gaitEnabled=false
+ init {
+  val indices=(0 until model.drawableCount).filter { i ->
+   val p=model.getDrawableParentPartIndex(i)
+   p>=0 && model.getPartId(p).string in legParts
+  }
+  if(indices.size>=2) {
+   val all=indices.flatMap { model.getDrawableVertexPositions(it).toList().chunked(2) }
+   val minY=all.minOf { it[1] };val maxY=all.maxOf { it[1] }
+   val midX=(all.minOf {it[0]}+all.maxOf {it[0]})/2
+   legLength=maxY-minY
+   if(legLength>0.01f) indices.forEach { i ->
+    val v=model.getDrawableVertexPositions(i)
+    val center=(v.indices step 2).map {v[it]}.average().toFloat()
+    val weights=FloatArray(v.size/2) {j -> ((maxY-v[j*2+1])/legLength).coerceIn(0f,1f) }
+    legWeights[i]=(if(center<midX) -1f else 1f) to weights
+   }
+  }
+ }
+ val animatedLegMeshes: Int get()=legWeights.size
  private var program=0
  private var position=0; private var texCoord=0; private var matrix=0; private var texture=0; private var maskSampler=0
  private var useMask=0; private var invertMask=0; private var viewport=0; private var alpha=0; private var multiply=0; private var screen=0
@@ -111,7 +134,19 @@ class NativeMeshRenderer(private val model: CubismModel,private val textureIds: 
   val part=meshes[i]
   val ti=model.getDrawableTextureIndex(i)
   require(ti in textureIds.indices) { "Indeks tekstur model tidak valid: $ti" }
-  part.vertices.clear();part.vertices.put(model.getDrawableVertexPositions(i));part.vertices.position(0)
+  part.vertices.clear()
+  val points=model.getDrawableVertexPositions(i)
+  val leg=if(gaitEnabled) legWeights[i] else null
+  if(leg!=null && gaitFrame.movement>0f) {
+   val cycle=kotlin.math.sin(gaitFrame.phase+if(leg.first<0) 0f else kotlin.math.PI.toFloat())
+   val dx=cycle*legLength*(if(gaitFrame.running) 0.16f else 0.09f)*gaitFrame.movement
+   val dy=kotlin.math.max(0f,cycle)*legLength*(if(gaitFrame.running) 0.13f else 0.07f)*gaitFrame.movement
+   for(j in points.indices step 2) {
+    val weight=leg.second[j/2]
+    part.vertices.put(points[j]+dx*weight);part.vertices.put(points[j+1]+dy*weight*weight)
+   }
+  } else part.vertices.put(points)
+  part.vertices.position(0)
   glActiveTexture(GL_TEXTURE0);glBindTexture(GL_TEXTURE_2D,textureIds[ti])
   glVertexAttribPointer(position,2,GL_FLOAT,false,0,part.vertices)
   glVertexAttribPointer(texCoord,2,GL_FLOAT,false,0,part.uv)

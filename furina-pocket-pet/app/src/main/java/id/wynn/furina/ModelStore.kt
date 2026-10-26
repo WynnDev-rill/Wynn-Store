@@ -11,7 +11,24 @@ data class ModelInfo(val file: File, val name: String, val motions: List<Pair<St
 
 class ModelStore(private val context: Context) {
  val root = File(context.filesDir,"models").apply { mkdirs() }
- fun fallback(): File {
+ companion object { private val defaultLock=Any() }
+ fun fallback(): File = synchronized(defaultLock) {
+  if(context.assets.list("personal")?.contains("model.zip")==true) {
+   val dest=File(root,"personal-furina-v1")
+   if(!dest.isDirectory) {
+    val stage=File(root,"stage-${UUID.randomUUID()}")
+    try {
+     context.assets.open("personal/model.zip").use { SafeArchive.extract(it,stage) }
+     val candidate=stage.walkTopDown().firstOrNull { it.name.endsWith(".model3.json") } ?: error("Model awal tidak ditemukan")
+     inspect(candidate,stage)
+     require(stage.renameTo(dest)) { "Gagal menyiapkan Furina" }
+    } finally { stage.deleteRecursively() }
+   }
+   return@synchronized dest.walkTopDown().first { it.name.endsWith(".model3.json") }
+  }
+  testModel()
+ }
+ fun testModel(): File {
   val dest = File(root,"whalegirl")
   if (!File(dest,"whalegirl.model3.json").isFile) {
    dest.deleteRecursively(); copyAsset("fallback",dest)
@@ -28,7 +45,7 @@ class ModelStore(private val context: Context) {
   require(f.path.startsWith(root.canonicalPath + "/") && f.isFile) { "Model tidak ditemukan. Impor ulang atau pilih model uji." }
   f
  }
- fun list(): List<File> = root.walkTopDown().filter { it.isFile && it.name.endsWith(".model3.json") }.toList()
+ fun list(): List<File> = root.walkTopDown().onEnter { !it.name.startsWith("stage-") }.filter { it.isFile && it.name.endsWith(".model3.json") }.toList()
  fun importZip(uri: Uri): ModelInfo {
   val archive = File(context.cacheDir,"import-${UUID.randomUUID()}.zip")
   val stage = File(root,"stage-${UUID.randomUUID()}")

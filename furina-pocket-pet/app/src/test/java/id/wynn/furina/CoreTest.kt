@@ -148,6 +148,40 @@ class CoreTest {
   }
   assertTrue(maxY-minY>0.5f)
  }
+ @Test fun dizzyInterruptsRoamingAndRecovers() {
+  val e=BehaviorEngine(Random(3));e.action(PetMood.ROAM);e.step(0.1f,1f,1f,true,true)
+  e.dizzy();val x=e.frame.x;val y=e.frame.y
+  repeat(40) {val f=e.step(0.1f,1f,1f,true,true);assertEquals(PetMood.DIZZY,f.mood);assertEquals(x,f.x,0f);assertEquals(y,f.y,0f)}
+  repeat(5) {e.step(0.1f,1f,1f,true,true)}
+  assertNotEquals(PetMood.DIZZY,e.frame.mood)
+ }
+ @Test fun shakeUsesDensityAndTimeAndIgnoresNormalDragging() {
+  val slow=ShakeDetector();slow.begin(0f,0f,1000)
+  repeat(10) {slow.move(it*10f,0f,1100L+it*100,1f)}
+  assertFalse(slow.isDizzy())
+  for(density in listOf(1f,3f)) {
+   val fast=ShakeDetector();fast.begin(0f,0f,1000)
+   repeat(5) {fast.move((if(it%2==0) 80f else 0f)*density,0f,1020L+it*20,density)}
+   assertTrue(fast.isDizzy())
+   fast.move(0f,0f,5000,density);assertFalse(fast.isDizzy())
+  }
+ }
+ @Test fun localCommentsAreCausalVariedAndRateLimited() {
+  val d=PetDialogue(Random(2));val first=d.line(PetCue.TAP,1000)
+  assertNotNull(first);assertNull(d.line(PetCue.TAP,2000))
+  assertNull(d.line(PetCue.HOP,3000))
+  val next=d.line(PetCue.TAP,50000);assertNotNull(next);assertNotEquals(first,next)
+  assertNotNull(d.line(PetCue.DIZZY,56000))
+ }
+ @Test fun chibiStepKeepsHipFixedAlternatesFeetAndScalesForRun() {
+  val phase=kotlin.math.PI.toFloat()/2
+  val hip=LegGait.offset(phase,-1f,0f,1f,1f,false);assertEquals(0f,hip.first,0f);assertEquals(0f,hip.second,0f)
+  val l=LegGait.offset(phase,-1f,1f,1f,1f,false)
+  val r=LegGait.offset(phase,1f,1f,1f,1f,false)
+  assertTrue(l.first>0 && r.first<0);assertTrue(l.second>0 && r.second==0f)
+  val run=LegGait.offset(phase,-1f,1f,1f,1f,true);assertTrue(run.first>l.first && run.second>l.second)
+  assertEquals(0f,LegGait.offset(phase,1f,1f,1f,0f,true).first,0f)
+ }
  @Test fun versionComparisonIsNumericAndChannelSpecific() {
   assertTrue(UpdateChecker.newer("furina-v1.10.0","1.9.9"))
   assertFalse(UpdateChecker.newer("furina-v1.0.0","1.0.0"))

@@ -10,8 +10,8 @@ android {
   applicationId = "id.wynn.furina"
   minSdk = 26
   targetSdk = 36
-  versionCode = 3
-  versionName = "1.1.0"
+  versionCode = 4
+  versionName = "1.2.0"
   testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
  }
@@ -36,6 +36,7 @@ android {
  buildFeatures { compose = true; buildConfig = true }
  sourceSets["main"].assets.srcDir("../.deps/assets")
  sourceSets["debug"].assets.srcDir("../.deps/test-assets")
+ if(System.getenv("FP_PERSONAL_MODEL") == "true") sourceSets["main"].assets.srcDir("../.deps/personal-assets")
  packaging { jniLibs.useLegacyPackaging = false; resources.excludes += "META-INF/DEPENDENCIES" }
 }
 dependencies {

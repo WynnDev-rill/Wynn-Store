@@ -82,11 +82,11 @@ class MainActivity : ComponentActivity() {
   val snack=remember { SnackbarHostState() }
   var modelMenu by remember { mutableStateOf(false) }
   val notifications=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
-  suspend fun refreshModel() { withContext(Dispatchers.IO) {
+  suspend fun refreshModel() { val snapshot=prefs.read(); withContext(Dispatchers.IO) {
    val store=ModelStore(this@MainActivity)
-   val data=runCatching { store.inspect(store.selected(prefs.read())) }
+   val data=runCatching { store.inspect(store.selected(snapshot)) }
    val files=store.list()
-   withContext(Dispatchers.Main) { info=data.getOrNull(); available=files; data.exceptionOrNull()?.let { message=it.message ?: "Gagal membaca model" } }
+   withContext(Dispatchers.Main) { if(prefs.read().model!=snapshot.model) return@withContext; info=data.getOrNull(); available=files; data.exceptionOrNull()?.let { message=it.message ?: "Gagal membaca model" } }
   } }
   fun checkUpdates(manual: Boolean=false) {
    if(checking) return
@@ -109,7 +109,7 @@ class MainActivity : ComponentActivity() {
     importing=true
     // Keep the current pet/model until a complete import validates successfully.
     val result=withContext(Dispatchers.IO) { runCatching { ModelStore(this@MainActivity).importZip(uri) } }
-    result.onSuccess { m -> save(prefs.read().copy(model=m.file.path,tapMotion="",waveMotion="",expression="",walkMotion="")); message="Model berhasil diimpor." }
+    result.onSuccess { m -> save(prefs.read().copy(model=m.file.path,tapMotion="",waveMotion="",expression="",walkMotion="")); message="${m.name} berhasil diimpor." }
      .onFailure { message=it.message ?: "Impor gagal" }
     refreshModel(); importing=false
    }
@@ -134,7 +134,7 @@ class MainActivity : ComponentActivity() {
         Text(when { !status.running -> "SIAP MENEMANI"; c.hidden -> "DISEMBUNYIKAN"; c.paused -> "SEDANG JEDA"; else -> "SEDANG MENEMANI" },Modifier.padding(start=8.dp),fontSize=10.sp,letterSpacing=1.2.sp,color=Muted,fontWeight=FontWeight.SemiBold)
        }
        Text("Teman kecil,\ndi mana saja.",fontSize=32.sp,lineHeight=38.sp,fontWeight=FontWeight.SemiBold,letterSpacing=(-1).sp)
-       Text(if(c.model.isEmpty()) "Model uji WhaleGirl aktif. Impor model Furina milikmu untuk menggantinya." else "${info?.name ?: "Model lokal"} · Live2D",fontSize=13.sp,color=Muted,lineHeight=20.sp)
+       Text(if(c.model.isEmpty()) "${info?.name ?: "Menyiapkan karakter…"} · Live2D" else "${info?.name ?: "Model lokal"} · Live2D",fontSize=13.sp,color=Muted,lineHeight=20.sp)
        Button(onClick={
         if(status.running) PetService.command(this@MainActivity,PetService.STOP)
         else if(!Settings.canDrawOverlays(this@MainActivity)) startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:$packageName")))
@@ -161,13 +161,13 @@ class MainActivity : ComponentActivity() {
        Column(Modifier.weight(1f)) { Text(info?.name ?: "Memuat model…",fontWeight=FontWeight.SemiBold); Text("${info?.motions?.size ?: 0} gerakan · ${info?.expressions?.size ?: 0} ekspresi",fontSize=12.sp,color=Muted) }
        TextButton(onClick={ modelMenu=true }) { Text("Ganti") }
        DropdownMenu(expanded=modelMenu,onDismissRequest={modelMenu=false}) {
-        available.forEach { f -> DropdownMenuItem(text={ Text(f.name.removeSuffix(".model3.json")) },onClick={ modelMenu=false; save(prefs.read().copy(model=if(f.parentFile?.name=="whalegirl") "" else f.path,tapMotion="",waveMotion="",expression="",walkMotion="")) }) }
+        available.forEach { f -> DropdownMenuItem(text={ Text(f.name.removeSuffix(".model3.json")) },onClick={ modelMenu=false; save(prefs.read().copy(model=f.path,tapMotion="",waveMotion="",expression="",walkMotion="")) }) }
        }
       }
       OutlinedButton(onClick={consent=true},Modifier.fillMaxWidth(),shape=RoundedCornerShape(14.dp),enabled=!importing) { Text("Impor ZIP Live2D") }
       Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
        TextButton(onClick={open("https://booth.pm/en/items/5876181")}) { Text("Model Furina",fontSize=12.sp) }
-       TextButton(onClick={save(prefs.read().copy(model="",tapMotion="",waveMotion="",expression="",walkMotion=""))}) { Text("Pakai model uji",fontSize=12.sp) }
+       TextButton(onClick={save(prefs.read().copy(model="",tapMotion="",waveMotion="",expression="",walkMotion=""))}) { Text("Model awal",fontSize=12.sp) }
       }
      }
      Section("Tampilan & gerak") {
@@ -176,6 +176,8 @@ class MainActivity : ComponentActivity() {
       SettingSlider("Keaktifan",c.activity,when { c.activity<0.33f -> "Tenang"; c.activity<0.7f -> "Seimbang"; else -> "Ceria" },0f..1f) { save(prefs.read().copy(activity=it)) }
       Toggle("Berkeliaran otomatis","Jelajah layar dengan arah dan jeda acak",c.roam) { save(prefs.read().copy(roam=it)) }
       Toggle("Lompatan kecil","Sesekali melompat dengan gerak lembut",c.jump) { save(prefs.read().copy(jump=it)) }
+      Toggle("Komentar karakter","Reaksi lokal dari interaksi, tanpa membaca layar",c.comments) { save(prefs.read().copy(comments=it)) }
+      Toggle("Langkah kaki","Gerak chibi untuk mesh kaki yang dikenali",c.legMotion) { save(prefs.read().copy(legMotion=it)) }
       Toggle("Reaksi & ekspresi","Bereaksi saat disentuh dan sesekali menyapa",c.reactions) { save(prefs.read().copy(reactions=it)) }
       Toggle("Animasi 60 fps","30 fps lebih hemat · mode hemat baterai 15 fps",c.fps==60) { save(prefs.read().copy(fps=if(it) 60 else 30)) }
       TextButton(onClick={ save(prefs.read().copy(x=0.5f,y=0.8f)); if(status.running) PetService.command(this@MainActivity,PetService.HOME) },Modifier.align(Alignment.End)) { Text("Atur ulang posisi") }
