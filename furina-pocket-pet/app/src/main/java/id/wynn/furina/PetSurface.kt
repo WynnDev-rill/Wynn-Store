@@ -17,9 +17,14 @@ import javax.microedition.khronos.opengles.GL10
 class PetSurface(context: Context, private val file: File, private val failed: (String)->Unit) : GLSurfaceView(context) {
  @Volatile var frame = PetFrame()
  @Volatile var config = PetConfig()
+ @Volatile var lipLevel=0f
+ @Volatile var speaking=false
+ @Volatile internal var requestPropProbe=false
+ @Volatile internal var propPixelsChanged=-1
  @Volatile var renderedFrames = 0L; private set
  @Volatile var ready = false; private set
  private var model: LivePetModel?=null
+ private var props: ActivityProps?=null
  private var w=1; private var h=1
  private var last=0L
  private var fingerprint: Double?=null
@@ -36,7 +41,7 @@ class PetSurface(context: Context, private val file: File, private val failed: (
    override fun onSurfaceCreated(gl: GL10?,egl: EGLConfig?) {
     ready=false
     // A context may be lost after screen-off or GPU pressure. CPU model resources must also be freed.
-    model?.close(); model=null
+    model?.close(); model=null;props?.close();props=null
     try {
      if(!CubismFramework.isStarted()) {
       val appAssets=context.applicationContext.assets
@@ -55,7 +60,7 @@ class PetSurface(context: Context, private val file: File, private val failed: (
    override fun onSurfaceChanged(gl: GL10?,width: Int,height: Int) {
     w=width; h=height; glViewport(0,0,w,h)
     try {
-     if(model==null) model=LivePetModel(ModelStore(context).inspect(file),w,h)
+     if(model==null) {model=LivePetModel(ModelStore(context).inspect(file),w,h);props=ActivityProps(context)}
      else Unit
      ready=true
      PetRuntime.update { it.copy(renderer="Cubism Java R5 · OpenGL ES 2",parameters=model?.parameterCount ?: 0,error="") }
@@ -66,7 +71,25 @@ class PetSurface(context: Context, private val file: File, private val failed: (
     val now=System.nanoTime(); val dt=if(last==0L) 1f/30 else ((now-last)/1e9).toFloat().coerceIn(0f,0.1f)
     last=now
     try {
-     model?.draw(dt,frame,config,w,h); renderedFrames++
+     model?.draw(dt,frame,config,w,h,lipLevel,speaking)
+     if(BuildConfig.DEBUG && requestPropProbe) {
+      // Compare the same framebuffer immediately before/after props. White clothing is not
+      // a reliable background reference for an open-book texture with white pages.
+      val before=java.nio.ByteBuffer.allocateDirect(w*h*4)
+      glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,before)
+      props?.draw(frame)
+      val after=java.nio.ByteBuffer.allocateDirect(w*h*4)
+      glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,after)
+      var changed=0
+      for(i in 0 until w*h*4 step 4) {
+       var delta=0
+       repeat(4) {j -> delta+=kotlin.math.abs((before.get(i+j).toInt() and 255)-(after.get(i+j).toInt() and 255))}
+       if(delta>35) changed++
+      }
+      propPixelsChanged=changed;requestPropProbe=false
+      android.util.Log.i("FurinaPropProbe","${frame.mood}, effect=${frame.effect}, changed=$changed, glError=${glGetError()}")
+     } else props?.draw(frame)
+     renderedFrames++
      // A one-time startup probe confirms actual GPU pixels, including transparent background.
      if(renderedFrames==8L && model!=null) {
       val data=java.nio.ByteBuffer.allocateDirect(w*h*4)
@@ -99,7 +122,7 @@ class PetSurface(context: Context, private val file: File, private val failed: (
   // Finish native/GL cleanup on its owning GL thread before removing the Surface.
   val done=CountDownLatch(1)
   onResume()
-  queueEvent { try { model?.close(); model=null; ready=false } finally { done.countDown() } }
+  queueEvent { try { props?.close();props=null;model?.close(); model=null; ready=false } finally { done.countDown() } }
   requestRender(); done.await(400,TimeUnit.MILLISECONDS)
   onPause()
  }

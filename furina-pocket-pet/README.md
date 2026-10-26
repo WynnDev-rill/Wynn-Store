@@ -53,3 +53,11 @@ The BOOTH model also restricts permitted uses and prohibits redistribution. Obta
 ## Continuing development
 
 See [continuation instructions](AGENTS.md), [five-project experience benchmark](docs/PRODUCT_BENCHMARK.md), [asset decisions](docs/ASSET_AUDIT.md), and [verification evidence/limits](docs/TEST_REPORT.md). Keep private owner assets/signing out of public source and CI.
+
+## Companion life 1.3.0
+
+Quiet autonomous read/cake activities now last long enough to feel intentional. Existing facial rig controls animate focus, chewing and touch expressions; native GPU props add page turns and cake bites. Stroke the head, poke the body, double-tap to hop or hold for settings. Edge mode eases to a side and peeks; Ghost Mode fades the pet and passes taps through, with a notification action to restore interaction. No automatic typing detection is claimed.
+
+The supplied Furina does not have authored sitting or swinging motions. Those controls remain disabled until the selected model provides matching motions or an explicit mapping. Read/eat are native prop-and-face vignettes, not new full-body animation files. The renderer never substitutes another model's curves.
+
+Personal builds include six short original Japanese clips and playback-position RMS mouth animation. Sound follows silent/DND mode, media volume, cooldown and foreground lifecycle; the app never records audio. Standard public-source builds contain no private voices and show that the voice pack is absent. Twemoji book/cake graphics are credited under CC BY 4.0 in the app and notices.

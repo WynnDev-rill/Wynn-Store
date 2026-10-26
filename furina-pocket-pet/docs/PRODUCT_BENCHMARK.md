@@ -22,3 +22,19 @@ Reviewed 26 October 2026. This is a source/architecture comparison, not a measur
 ## Remaining gap to a full desktop-pet animation library
 
 The supplied VTuber model has original waving/expressions and separate leg meshes, but no authored side-view walk/run/sit cycle. The optional frontal foot adapter makes a limited chibi gait possible; it does not manufacture missing viewpoints, clothing folds or a complete sitting pose. Higher fidelity requires compatible authored assets or further carefully reviewed model-specific rig work. AI screen understanding remains explicitly deferred by the owner.
+
+## 1.3.0 companion life research
+
+Rechecked five primary-source references on 26 October 2026:
+
+| Product | Strength | Constraint / weakness for this update | Applied standard |
+|---|---|---|---|
+| [VPet](https://github.com/LorisYounger/VPet/blob/main/README_en.md) and its secondary-development documentation | Sustained activity states, start/loop/end phases, touch, mod organization | Windows/WPF and sprite assets cannot animate this Furina MOC3; artwork terms are separate from Apache code. The reported 200+ animations were not treated as 200 usable compatible Furina motions. | Activity entrance/hold/exit; touch preempts activity. Native implementation uses the current engine. |
+| [Shimeji-ee](https://github.com/TigerHix/shimeji-ee/blob/master/conf/actions.xml) | Separate sprite poses for sit/walk/climb; weighted action sequences | Poses require character-specific frames; desktop window climbing is not Android overlay awareness | Screen-edge destination and bounded peek, plus explicit model pose capability checks. |
+| [Shijima](https://getshijima.app/) | Android imports and physical-feeling interaction, straightforward control | Sprite runtime; exact behavior depends on each imported mascot. Website performance claims were not independently benchmarked. | Distinguish stroke/poke/drag/cancel; verify actual touch passthrough rather than flags alone. No source/art copied. |
+| [WhaleGirl Pet](https://github.com/7l-ui/whalegirl-pet) | Android floating Live2D and licensed native testing asset already integrated here | Small pose vocabulary; full stack is not this app's native renderer | Retain the existing MIT model as a public CI fixture and keep original private Furina assets separate. |
+| [Daidai](https://github.com/Rosa134/daidai-live2d-pet) | Audio RMS mouth opening, model-owned actions, transparent desktop UI | Electron/WebAudio backend and Cubism2-centric stable import path do not fit the existing Java renderer | Precompute short local PCM envelopes; sample against Android MediaPlayer playback position, then drive actual rig mouth IDs. No Electron dependency. |
+
+Official [Cubism lip-sync guidance](https://docs.live2d.com/en/cubism-sdk-manual/lipsync/) supports volume-to-parameter control and reading the model's LipSync group. [DenchiSoft's MIT frequency example](https://github.com/DenchiSoft/Live2DFrequencyLipSync) requires additional mouth shapes and per-character tuning; a simple RMS path suits the supplied single mouth-opening rig and short clips better.
+
+Acceptance additions: Ghost Mode must pass a real tap to an underlying debug-only activity and restore normal character input. Activity props must produce GPU pixels and disappear after interruption/disable. The real Android audio player must produce nonzero envelope samples, complete, cancel pending preparation and recover from a corrupt file. No automatic keyboard visibility or screen-content understanding is claimed.

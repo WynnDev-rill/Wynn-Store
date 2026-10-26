@@ -33,3 +33,9 @@ AndroidX and Kotlin are distributed under Apache License 2.0. Gradle and its wra
 ## Furina / Genshin Impact
 
 No Furina model or artwork is bundled. Character rights remain with their respective owners; BOOTH model rights and terms remain with the creator and relevant rightsholders. This app is an independent fan development project, with no claim of official endorsement.
+
+## Twemoji activity graphics
+
+Open book U+1F4D6 and shortcake U+1F370 from Twemoji v14.0.2, © Twitter, Inc. and contributors. Graphics licensed under Creative Commons Attribution 4.0 International: https://creativecommons.org/licenses/by/4.0/. Source: https://github.com/twitter/twemoji/tree/v14.0.2/assets. Unmodified PNG images are scaled/animated as GL textures. See `docs/licenses/TWEMOJI-CC-BY-4.0.txt`.
+
+Owner-only Furina audio is separate from the MIT application source and Twemoji. It is not committed or distributed through public CI; game/performance rights remain with their owners. See `docs/ASSET_AUDIT.md`.

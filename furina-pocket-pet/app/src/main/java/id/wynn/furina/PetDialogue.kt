@@ -3,7 +3,7 @@ package id.wynn.furina
 import kotlin.random.Random
 import kotlin.math.*
 
-enum class PetCue { HELLO, TAP, DRAG, DIZZY, HOP, ROAM, RUN, NAP, STRETCH, IDLE, BATTERY, WAKE }
+enum class PetCue { HELLO, TAP, DRAG, DIZZY, HOP, ROAM, RUN, NAP, STRETCH, IDLE, BATTERY, WAKE, PET, POKE, READ, CAKE, EDGE }
 
 /** Local reactive dialogue, not AI, OCR, screen recording, or app surveillance. */
 class PetDialogue(private val random: Random=Random.Default) {
@@ -16,6 +16,11 @@ class PetDialogue(private val random: Random=Random.Default) {
   val choices=when(cue) {
    PetCue.HELLO -> listOf("Panggung kecilku sudah siap!","Aku ikut menemanimu, ya.","Furina hadir. Mulai pertunjukannya!")
    PetCue.TAP -> listOf("Hm? Memanggilku?","Aku di sini, kok.","Hehe, ketahuan sedang melamun.")
+   PetCue.PET -> listOf("Hehe… jangan merusak topiku, ya.","Baiklah, satu usapan lagi.","Hm… lumayan nyaman.")
+   PetCue.POKE -> listOf("Hei! Aku bisa kaget, tahu.","Hm? Ada apa?","Pelan-pelan, aku di sini.")
+   PetCue.READ -> listOf("Sebentar… bagian ini menarik.","Aku ingin menyelesaikan satu bab.","Hmm… jadi begitu maksudnya.")
+   PetCue.CAKE -> listOf("Waktunya sepotong kue!","Sedikit pencuci mulut, boleh kan?","Bagian stroberinya untukku.")
+   PetCue.EDGE -> listOf("Aku di pinggir dulu, ya.","Dari sini aku masih bisa menemanimu.","Mengintip sedikit saja…")
    PetCue.DRAG -> listOf("Mau pindah ke mana?","Pelan-pelan, topiku bisa jatuh!","Baiklah, aku ikut.")
    PetCue.DIZZY -> listOf("🌀 Tunggu... lantainya berputar!","🌀 Pelan-pelan! Aku pusing...","🌀 Beri aku waktu menyeimbangkan diri.")
    PetCue.HOP -> listOf("Hop! Pendaratan yang anggun.","Lihat, masih lincah!","Satu lompatan kecil!")
