@@ -1,3 +1,12 @@
+# Companion life 1.3.0 — verification in progress (26 October 2026)
+
+- Native unit suite: 27 tests, zero failures/errors (19 retained regressions + 8 companion tests). Covers sustained activity interruption/disable, bounded edge movement, no unsupported sitting, head/body/hold/stroke/drag/cancel classification, PCM silence/peaks and voice cooldown, plus previous importer/renderer-independent behavior/update regressions.
+- Local `testDebugUnitTest`, `lintRelease`, `assembleDebug`, `assembleDebugAndroidTest` completed. Lint reports zero errors and 12 non-blocking warnings. Native Android runtime checks are being run separately; these build results are not a device-test claim.
+- Added Android tests for actual underlying clicks in Ghost Mode and restoration of interaction, visible book pixels and stroke interruption, real MediaPlayer envelope samples/completion, pending-playback cancellation and corrupt/missing audio. Existing real renderer, import, across-app and screen-off regressions are retained.
+- Owner-specific private model/audio packaging, original release signer/alignment and Android instrumentation outcomes will be recorded after their checks complete. No physical Poco F6/HyperOS measurements are claimed. Authored sitting/swing motions remain unavailable for the supplied model; no keyboard detection was added.
+
+---
+
 # Owner model / reactive pet — 1.2.0 (26 October 2026)
 
 - Owner-only APK: `Furina-Pocket-Pet-1.2.0-Personal.apk`, 27,289,128 bytes, package `id.wynn.furina`, versionCode 4. SHA-256 `a74bc03ffd2479ded6124f866ff655fe7886ac21260e0e9657d2dc0b0a9f2560`. Original signer `eba3ffafb7169cd8687b46a28a2a27b34ee7fb146a7eb2ac2a710da0ed180a3b` verified; APK identity and 16 KiB ZIP alignment passed. Source builds have a separate opt-in private-model asset source set; standard CI contains only licensed test assets.

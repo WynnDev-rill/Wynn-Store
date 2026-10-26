@@ -109,7 +109,7 @@ class MainActivity : ComponentActivity() {
     importing=true
     // Keep the current pet/model until a complete import validates successfully.
     val result=withContext(Dispatchers.IO) { runCatching { ModelStore(this@MainActivity).importZip(uri) } }
-    result.onSuccess { m -> save(prefs.read().copy(model=m.file.path,tapMotion="",waveMotion="",expression="",walkMotion="")); message="${m.name} berhasil diimpor." }
+    result.onSuccess { m -> save(prefs.read().copy(model=m.file.path,tapMotion="",waveMotion="",expression="",walkMotion="",sitMotion="",swingMotion="")); message="${m.name} berhasil diimpor." }
      .onFailure { message=it.message ?: "Impor gagal" }
     refreshModel(); importing=false
    }
@@ -161,13 +161,13 @@ class MainActivity : ComponentActivity() {
        Column(Modifier.weight(1f)) { Text(info?.name ?: "Memuat model…",fontWeight=FontWeight.SemiBold); Text("${info?.motions?.size ?: 0} gerakan · ${info?.expressions?.size ?: 0} ekspresi",fontSize=12.sp,color=Muted) }
        TextButton(onClick={ modelMenu=true }) { Text("Ganti") }
        DropdownMenu(expanded=modelMenu,onDismissRequest={modelMenu=false}) {
-        available.forEach { f -> DropdownMenuItem(text={ Text(f.name.removeSuffix(".model3.json")) },onClick={ modelMenu=false; save(prefs.read().copy(model=f.path,tapMotion="",waveMotion="",expression="",walkMotion="")) }) }
+        available.forEach { f -> DropdownMenuItem(text={ Text(f.name.removeSuffix(".model3.json")) },onClick={ modelMenu=false; save(prefs.read().copy(model=f.path,tapMotion="",waveMotion="",expression="",walkMotion="",sitMotion="",swingMotion="")) }) }
        }
       }
       OutlinedButton(onClick={consent=true},Modifier.fillMaxWidth(),shape=RoundedCornerShape(14.dp),enabled=!importing) { Text("Impor ZIP Live2D") }
       Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
        TextButton(onClick={open("https://booth.pm/en/items/5876181")}) { Text("Model Furina",fontSize=12.sp) }
-       TextButton(onClick={save(prefs.read().copy(model="",tapMotion="",waveMotion="",expression="",walkMotion=""))}) { Text("Model awal",fontSize=12.sp) }
+       TextButton(onClick={save(prefs.read().copy(model="",tapMotion="",waveMotion="",expression="",walkMotion="",sitMotion="",swingMotion=""))}) { Text("Model awal",fontSize=12.sp) }
       }
      }
      Section("Tampilan & gerak") {
@@ -182,11 +182,39 @@ class MainActivity : ComponentActivity() {
       Toggle("Animasi 60 fps","30 fps lebih hemat · mode hemat baterai 15 fps",c.fps==60) { save(prefs.read().copy(fps=if(it) 60 else 30)) }
       TextButton(onClick={ save(prefs.read().copy(x=0.5f,y=0.8f)); if(status.running) PetService.command(this@MainActivity,PetService.HOME) },Modifier.align(Alignment.End)) { Text("Atur ulang posisi") }
      }
+     Section("Kehidupan & interaksi") {
+      Toggle("Aktivitas mandiri","Membaca, menikmati kue, dan beristirahat",c.activities) { save(prefs.read().copy(activities=it)) }
+      Toggle("Teman di tepi layar","Mendekat ke pinggir dan sesekali mengintip",c.edges) { save(prefs.read().copy(edges=it)) }
+      Toggle("Ghost Mode","Sentuhan menembus karakter · pulihkan dari notifikasi",c.ghost) { save(prefs.read().copy(ghost=it)) }
+      Text("Usap kepala perlahan, ketuk badan, atau ketuk dua kali untuk melompat.",fontSize=12.sp,color=Muted,lineHeight=19.sp)
+      val active=status.running && !c.paused && !c.hidden && c.activities
+      Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+       OutlinedButton(onClick={PetService.command(this@MainActivity,PetService.READ)},Modifier.weight(1f),enabled=active) {Text("Baca buku")}
+       OutlinedButton(onClick={PetService.command(this@MainActivity,PetService.CAKE)},Modifier.weight(1f),enabled=active) {Text("Makan kue")}
+      }
+      val named=info?.motions?.map {"${it.first} ${it.second.name}" to it.second} ?: emptyList()
+      val canSit=ActivityCatalog.motion(named,PetMood.SIT)!=null || info?.motions?.any {c.sitMotion.isNotEmpty() && it.first==c.sitMotion}==true
+      val canSwing=ActivityCatalog.motion(named,PetMood.SWING)!=null || info?.motions?.any {c.swingMotion.isNotEmpty() && it.first==c.swingMotion}==true
+      Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+       OutlinedButton(onClick={PetService.command(this@MainActivity,PetService.SIT)},Modifier.weight(1f),enabled=active && canSit) {Text("Duduk")}
+       OutlinedButton(onClick={PetService.command(this@MainActivity,PetService.SWING)},Modifier.weight(1f),enabled=active && canSwing) {Text("Ayunan")}
+      }
+      if(!canSit || !canSwing) Text("Duduk dan ayunan memerlukan gerakan khusus dari model.",fontSize=12.sp,color=Muted,lineHeight=19.sp)
+      TextButton(onClick={PetService.command(this@MainActivity,PetService.EDGE)},enabled=status.running && !c.paused && !c.hidden && c.edges) {Text("Ke tepi layar")}
+     }
+     Section("Suara & gerak mulut") {
+      val hasVoice=remember {runCatching {assets.list("personal/voice")?.contains("manifest.json")==true}.getOrDefault(false)}
+      Toggle("Respons suara","Klip Jepang pendek saat berinteraksi",c.voice) { save(prefs.read().copy(voice=it)) }
+      SettingSlider("Volume",c.voiceVolume,"${(c.voiceVolume*100).toInt()}%",0f..1f) {save(prefs.read().copy(voiceVolume=it))}
+      Text(if(hasVoice) "Mengikuti mode senyap dan Jangan ganggu. Mulut mengikuti audio." else "Paket suara belum terpasang pada build ini.",fontSize=12.sp,color=Muted,lineHeight=19.sp)
+     }
      Section("Aksi model") {
       Row {
        TextButton(onClick={PetService.command(this@MainActivity,PetService.GREET)},enabled=status.running && c.reactions && !c.paused && !c.hidden) { Text("Sapa") }
        TextButton(onClick={PetService.command(this@MainActivity,PetService.HOP)},enabled=status.running && c.jump && !c.paused && !c.hidden) { Text("Lompat") }
       }
+      Choice("Gerakan duduk",c.sitMotion,info?.motions?.map { it.first } ?: emptyList()) { save(prefs.read().copy(sitMotion=it)) }
+      Choice("Gerakan ayunan",c.swingMotion,info?.motions?.map { it.first } ?: emptyList()) { save(prefs.read().copy(swingMotion=it)) }
       Choice("Saat bergerak",c.walkMotion,info?.motions?.map { it.first } ?: emptyList()) { save(prefs.read().copy(walkMotion=it)) }
       Choice("Saat disentuh",c.tapMotion,info?.motions?.map { it.first } ?: emptyList()) { save(prefs.read().copy(tapMotion=it)) }
       Choice("Gerakan menyapa",c.waveMotion,info?.motions?.map { it.first } ?: emptyList()) { save(prefs.read().copy(waveMotion=it)) }
@@ -204,7 +232,7 @@ class MainActivity : ComponentActivity() {
       Text("Versi ${BuildConfig.VERSION_NAME}",fontSize=11.sp,color=Muted)
      }
      Section("Tentang") {
-      Text("Model uji WhaleGirl © 7l-ui, MIT. This application contains Live2D Cubism SDK developed by Live2D Inc. Live2D dan karakter Furina dimiliki pemegang hak masing-masing.",fontSize=12.sp,color=Muted,lineHeight=18.sp)
+      Text("Model uji WhaleGirl © 7l-ui, MIT. Grafis buku/kue Twemoji © Twitter dan kontributor, CC BY 4.0. This application contains Live2D Cubism SDK developed by Live2D Inc. Live2D dan karakter Furina dimiliki pemegang hak masing-masing.",fontSize=12.sp,color=Muted,lineHeight=18.sp)
       TextButton(onClick={open("https://github.com/WynnDev-rill/Wynn-Store/tree/main/furina-pocket-pet")}) { Text("Kode sumber & lisensi") }
      }
      Text("made by wynn",Modifier.align(Alignment.CenterHorizontally),fontSize=11.sp,color=Muted)

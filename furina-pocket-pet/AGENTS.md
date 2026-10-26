@@ -31,3 +31,12 @@ Read `README.md`, `docs/TEST_REPORT.md`, `docs/PRODUCT_BENCHMARK.md`, and `docs/
 ## Build
 
 JDK 17 (full compiler), Android SDK platform 36, build tools 36/AGP-required tools, Gradle wrapper 8.13. Follow README for pinned development dependency setup and existing key restoration. Standard: unit/lint/debug/androidTest targets; signed owner: `python3 scripts/build-personal.py /absolute/model.zip`. Keep credentials in ignored `signing/` or FP_* environment variables. The public publish gate must not be enabled merely to make the update checker show a newer APK.
+
+## Companion life (1.3.0)
+
+- `ActivityCatalog.kt` capability-matches model-owned seat/swing motions; never enable an unsupported full-body pose by merely adding a prop. `ActivityProps.kt` reuses credited Twemoji textures for native read/cake vignettes in the same GL surface. Keep GL resource release/context recreation intact.
+- `PetTouch.kt` consumes **dp** and actual MotionEvent eventTime. A small head stroke must not reposition the window; a normal drag must still work. ACTION_CANCEL never triggers an action or sound.
+- Ghost Mode uses FLAG_NOT_TOUCHABLE with window alpha 0.55 and suppresses the bubble to avoid stacked obscuring windows. Restore interaction through notification/settings. Never use a full-screen touch catcher. Keyboard visibility is not inferred from unrelated heuristics or screen surveillance.
+- `PetVoice.kt` owns one short local Android player and audio-focus lease. `LipEnvelope.kt` samples precomputed PCM energy using playback time; model LipSync group IDs take priority, existing ParamMouthOpenY is the fallback. Silent/DND/zero volume, pause/hide/screen-off/stop, focus loss and stale prepared callbacks must stop audio/mouth activity. No runtime voice fetches or microphone permission.
+- Private audio/envelopes are under `.deps/personal-assets/personal/voice`, alongside the original unchanged model ZIP. Public CI uses generated PCM audio and the MIT model. No private audio or model bytes enter git/workflow artifacts. Preserve original credentials.
+- `CompanionDeviceTest` adds real Android audio, activity pixels/interruption and Ghost passthrough/restoration tests. `OverlayProbeActivity` is debug-only. Do not ship it in release.

@@ -30,6 +30,9 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
  private var idleAt=0f
  private var locomotion=0f
  private var wasRoaming=false
+ private val lipIds=mutableListOf<Int>()
+ private var mouthLevel=0f
+ private var previousMood=PetMood.REST
  private var bounds=floatArrayOf(-1f,1f,-1f,1f)
  val parameterCount: Int get() = model.parameterCount
  init {
@@ -39,6 +42,8 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
    loadModel(File(dir,setting.modelFileName).readBytes(),true)
    require(model != null) { "MOC3 gagal dimuat oleh Cubism Core" }
    repeat(model.parameterCount) { params[model.getParameterId(it).string]=it }
+   repeat(setting.lipSyncParameterCount) {i -> params[setting.getLipSyncParameterId(i).string]?.let {lipIds+=it}}
+   if(lipIds.isEmpty()) params["ParamMouthOpenY"]?.let {lipIds+=it}
    setting.physicsFileName.takeIf { it.isNotEmpty() }?.let { loadPhysics(File(dir,it).readBytes()) }
    setting.poseFileName.takeIf { it.isNotEmpty() }?.let { loadPose(File(dir,it).readBytes()) }
    model.saveParameters(); model.update()
@@ -92,6 +97,12 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
  private fun event(frame: PetFrame,c: PetConfig) {
   if(frame.event==lastEvent) return
   lastEvent=frame.event
+  if(previousMood in ActivityCatalog.sustained || frame.mood in ActivityCatalog.sustained || frame.mood in setOf(PetMood.PETTED,PetMood.POKE)) motionManager.stopAllMotions()
+  previousMood=frame.mood
+  val selected=when(frame.mood) {PetMood.SIT -> c.sitMotion;PetMood.SWING -> c.swingMotion;else -> ""}
+  val activity=info.motions.firstOrNull {selected.isNotEmpty() && it.first==selected} ?:
+   ActivityCatalog.motion(info.motions.map {"${it.first} ${it.second.name}" to it.second},frame.mood)
+  activity?.let {motion(it.second)}
   if(!c.reactions) return
   val wave=info.motions.firstOrNull { it.first==c.waveMotion } ?: info.motions.firstOrNull {
    listOf("wave","手を振","挥手","揮手").any { word -> it.first.contains(word,true) || it.second.name.contains(word,true) }
@@ -106,10 +117,14 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
    }
    PetMood.EXPRESSION -> if(Random.nextBoolean() && wave!=null) motion(wave.second)
     else info.expressions.randomOrNull()?.let { expression(it.second) }
+   PetMood.PETTED,PetMood.POKE -> {
+    val words=if(frame.mood==PetMood.PETTED) listOf("heart","blush","爱心","脸红","照れ") else listOf("angry","生气","怒")
+    info.expressions.firstOrNull {entry -> words.any {entry.first.contains(it,true)}}?.let {expression(it.second)}
+   }
    else -> Unit
   }
  }
- fun draw(dt: Float,frame: PetFrame,c: PetConfig,width: Int,height: Int) {
+ fun draw(dt: Float,frame: PetFrame,c: PetConfig,width: Int,height: Int,voiceLevel: Float=0f,speaking: Boolean=false) {
   elapsed+=dt
   if(wasRoaming != (frame.mood==PetMood.ROAM)) motionManager.stopAllMotions()
   wasRoaming=frame.mood==PetMood.ROAM
@@ -118,7 +133,11 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   val walk=MotionCatalog.walk(info.motions,c.walkMotion)
   if(frame.mood==PetMood.ROAM && walk!=null) {
    if(motionManager.isFinished) motion(walk.second)
-  } else if(motionManager.isFinished && elapsed>=idleAt) {
+  } else if(frame.mood in ActivityCatalog.sustained && motionManager.isFinished) {
+   val selected=when(frame.mood) {PetMood.SIT -> c.sitMotion;PetMood.SWING -> c.swingMotion;else -> ""}
+   (info.motions.firstOrNull {selected.isNotEmpty() && it.first==selected} ?:
+    ActivityCatalog.motion(info.motions.map {"${it.first} ${it.second.name}" to it.second},frame.mood))?.let {motion(it.second)}
+  } else if(frame.mood !in ActivityCatalog.sustained && motionManager.isFinished && elapsed>=idleAt) {
    info.motions.filter { it.first.contains("idle",true) }.randomOrNull()?.let { motion(it.second) }
    idleAt=elapsed+3f+Random.nextFloat()*4f
   }
@@ -139,6 +158,22 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
    add("ParamAngleZ",frame.effect*9f)
   }
   if(frame.mood==PetMood.STRETCH) {add("ParamBodyAngleY",frame.effect*4f);add("ParamAngleY",frame.effect*12f)}
+  if(frame.mood==PetMood.READ) {
+   add("ParamBrowLY",-.25f*frame.effect);add("ParamBrowRY",-.25f*frame.effect)
+   add("ParamBrowLForm",-.35f*frame.effect);add("ParamBrowRForm",-.35f*frame.effect)
+   add("ParamAngleZ",sin(elapsed*.55f)*4f*frame.effect)
+  }
+  if(frame.mood==PetMood.CAKE) {
+   add("ParamMouthOpenY",(.12f+max(0f,sin(frame.progress*44f))*.3f)*frame.effect)
+   add("ParamMouthForm",.6f*frame.effect);add("ParamEyeLSmile",.4f*frame.effect);add("ParamEyeRSmile",.4f*frame.effect)
+  }
+  if(frame.mood==PetMood.PETTED) {
+   add("ParamMouthForm",.75f*frame.effect);add("ParamEyeLSmile",.6f*frame.effect);add("ParamEyeRSmile",.6f*frame.effect)
+   multiply("ParamEyeLOpen",1f-.25f*frame.effect);multiply("ParamEyeROpen",1f-.25f*frame.effect)
+   add("ParamAngleZ",sin(elapsed*2f)*5f*frame.effect)
+  }
+  if(frame.mood==PetMood.POKE) {add("ParamBrowLForm",-.6f*frame.effect);add("ParamBrowRForm",-.6f*frame.effect);add("ParamMouthForm",-.6f*frame.effect);add("ParamAngleZ",-8f*frame.effect)}
+  if(frame.mood==PetMood.EDGE) add("ParamAngleZ",-sign(frame.x-.5f)*8f*frame.effect)
   add("ParamBodyAngleY",-frame.crouch*5f)
   // Only existing rig parameters are touched; no generated fake limbs or image-based blinking.
   add("ParamAngleX",frame.gazeX*22f)
@@ -156,13 +191,16 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
    if(blinkAge>=0.24f) blinkAge=-1f
   }
   physics?.evaluate(model,dt); pose?.updateParameters(model,dt)
+  val wasSpeaking=mouthLevel>.001f
+  mouthLevel+=((if(speaking) voiceLevel.coerceIn(0f,1f) else 0f)-mouthLevel)*(1f-exp(-dt*22f))
+  if(speaking || wasSpeaking) lipIds.forEach {id -> model.setParameterValue(id,mouthLevel)}
   model.update()
   val aspect=width.toFloat()/height.coerceAtLeast(1)
   val s=min(1.8f/(bounds[1]-bounds[0]),1.8f/((bounds[3]-bounds[2])*aspect))
   val matrix=CubismMatrix44.create()
   val bob=if(frame.mood==PetMood.ROAM && walk==null) abs(frame.stride)*0.025f else 0f
   matrix.scale(s,s*aspect)
-  matrix.translate(-(bounds[0]+bounds[1])*0.5f*s,-(bounds[2]+bounds[3])*0.5f*s*aspect+bob-frame.crouch*0.025f)
+  matrix.translate(-(bounds[0]+bounds[1])*0.5f*s+frame.peek,-(bounds[2]+bounds[3])*0.5f*s*aspect+bob-frame.crouch*0.025f)
   meshRenderer?.gaitFrame=frame
   meshRenderer?.gaitEnabled=c.legMotion && walk==null
   meshRenderer?.draw(matrix.array,width,height)
