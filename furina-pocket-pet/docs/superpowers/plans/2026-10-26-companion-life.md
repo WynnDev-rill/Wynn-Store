@@ -26,5 +26,5 @@ Android 8+/target 36; no WebView, surveillance, microphone permission, replaceme
 - [x] Add pure activity/touch/audio-envelope tests, then implement life states, model capability matching, head strokes and body poke.
 - [x] Integrate activity visuals and rig feedback, edge/peek and recoverable Ghost Mode. Add focused settings and explicit activity controls.
 - [x] Integrate bounded local voice playback with playback-position envelope, focus/silent/cooldown handling and lifecycle cleanup; private owner clips only.
-- [ ] Add Android behavior/failure/regression tests. Run unit/lint/build and actual Android instrumentation, fix failures, verify original signer and alignment.
-- [ ] Update AGENTS/readme/test evidence, commit source to GitHub, and deliver the signed owner APK. Clearly report unsupported sitting/swing and physical-phone checks if still unavailable.
+- [x] Add Android behavior/failure/regression tests. Run unit/lint/build and actual Android instrumentation, fix failures, verify original signer and alignment.
+- [x] Update AGENTS/readme/test evidence, commit source to GitHub, and deliver the signed owner APK. Clearly report unsupported sitting/swing and physical-phone checks if still unavailable.
