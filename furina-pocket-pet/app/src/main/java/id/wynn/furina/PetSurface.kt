@@ -42,7 +42,7 @@ class PetSurface(context: Context, private val file: File, private val failed: (
       val appAssets=context.applicationContext.assets
       val option=CubismFramework.Option().apply {
        loadFileFunction=com.live2d.sdk.cubism.framework.ICubismLoadFileFunction { path -> appAssets.open(path).use { it.readBytes() } }
-       logFunction=com.live2d.sdk.cubism.framework.ICubismLogger { message -> android.util.Log.d("Cubism",message) }
+       logFunction=com.live2d.sdk.cubism.core.ICubismLogger { message -> android.util.Log.d("Cubism",message) }
       }
       CubismFramework.startUp(option)
      }
