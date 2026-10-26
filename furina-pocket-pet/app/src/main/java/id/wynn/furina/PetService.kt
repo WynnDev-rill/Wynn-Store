@@ -106,6 +106,7 @@ class PetService : Service() {
     engine.place(config.x,config.y)
     params.x=(left+config.x*(right-left)).roundToInt(); params.y=(top+config.y*(bottom-top)).roundToInt()
     view!!.setOnTouchListener { _,event -> touch(event) }
+    view!!.setOnClickListener { if(config.reactions) { engine.react(); view?.frame=engine.frame; view?.requestRender() } }
     wm.addView(view,params)
     visible=true
    } else {
@@ -143,7 +144,7 @@ class PetService : Service() {
     if(e.actionMasked==MotionEvent.ACTION_UP && !moved) {
      if(SystemClock.elapsedRealtime()-downAt>650) {
       startActivity(Intent(this,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-     } else if(config.reactions) engine.react()
+     } else view?.performClick()
     }
     view?.frame=engine.frame; view?.requestRender()
    }

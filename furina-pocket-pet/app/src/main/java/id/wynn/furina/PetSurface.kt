@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
+@android.annotation.SuppressLint("ViewConstructor") // Created programmatically with an explicit private model path.
 class PetSurface(context: Context, private val file: File, private val failed: (String)->Unit) : GLSurfaceView(context) {
  @Volatile var frame = PetFrame()
  @Volatile var config = PetConfig()
@@ -28,6 +29,8 @@ class PetSurface(context: Context, private val file: File, private val failed: (
   setEGLConfigChooser(8,8,8,8,16,0)
   holder.setFormat(PixelFormat.TRANSLUCENT)
   setZOrderOnTop(true)
+  contentDescription="Peliharaan Live2D"
+  isClickable=true
   preserveEGLContextOnPause=true
   setRenderer(object: Renderer {
    override fun onSurfaceCreated(gl: GL10?,egl: EGLConfig?) {
@@ -88,4 +91,5 @@ class PetSurface(context: Context, private val file: File, private val failed: (
   requestRender(); done.await(400,TimeUnit.MILLISECONDS)
   onPause()
  }
+ override fun performClick(): Boolean { super.performClick(); return true }
 }
