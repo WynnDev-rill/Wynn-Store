@@ -156,7 +156,7 @@ class MainActivity : ComponentActivity() {
        TextButton(onClick={open("https://booth.pm/en/items/5876181")}) { Text("Model Furina",fontSize=12.sp) }
        TextButton(onClick={save(prefs.read().copy(model="",tapMotion="",waveMotion="",expression=""))}) { Text("Pakai model uji",fontSize=12.sp) }
       }
-      Text("Mendukung .model3.json, .moc3, tekstur, motion dan ekspresi dalam satu ZIP. Model disimpan lokal.",fontSize=12.sp,color=Muted,lineHeight=18.sp)
+      Text("Mendukung .model3.json, .moc3, tekstur, motion dan ekspresi dalam satu ZIP hingga 500 MB. Model disimpan lokal.",fontSize=12.sp,color=Muted,lineHeight=18.sp)
      }
      Section("Tampilan & gerak") {
       SettingSlider("Ukuran",c.size,"${c.size.toInt()} dp",100f..280f) { save(prefs.read().copy(size=it)) }

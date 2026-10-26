@@ -35,7 +35,7 @@ class ModelStore(private val context: Context) {
   try {
    context.contentResolver.openInputStream(uri)!!.use { src -> archive.outputStream().use { out ->
     val buffer=ByteArray(65536); var total=0L
-    while(true) { val n=src.read(buffer); if(n<0) break; total+=n; require(total<=300L*1024*1024) { "ZIP maksimal 300 MB" }; out.write(buffer,0,n) }
+    while(true) { val n=src.read(buffer); if(n<0) break; total+=n; require(total<=SafeArchive.MAX_ZIP) { "ZIP melebihi batas 500 MB" }; out.write(buffer,0,n) }
    } }
    try { archive.inputStream().use { SafeArchive.extract(it,stage) } }
    catch (e: IllegalArgumentException) {

@@ -1,3 +1,15 @@
+# Import-size fix — 1.0.1 (26 October 2026)
+
+- Raised ZIP input and individual extracted-file limits to 500 MiB; aggregate extraction limit to 2 GiB. Previous 160 MiB per-file check produced the reported "File model terlalu besar" even with a ZIP below the old 300 MiB input limit.
+- Extraction remains streamed with a 64 KiB buffer; traversal, duplicate paths, entry count, model references and runtime memory validation remain enforced. Existing imported models and preferences are retained on update.
+- Added a streamed 255 MiB synthetic-entry extraction regression and oversized stored-entry rejection test. Nine JVM tests passed, zero failures/errors. The fixture is synthetic data, not an actual Furina texture or a full Furina import test.
+- `testDebugUnitTest`, `lintRelease`, `assembleRelease` passed. Lint: 0 errors, 10 non-blocking warnings.
+- Signed release 1.0.1 / versionCode 2 verified with the same original certificate recorded below; APK identity and 16 KiB ZIP alignment passed.
+- APK SHA-256: `3e9ab80219bcf194ef8dfd19a658373a6337fa32b15f58b2e9de67c8cdfa13dd`.
+- Android instrumentation was not rerun for this bounded importer change; prior renderer/device results below apply to 1.0.0. Actual BOOTH ZIP and physical Poco F6 import remain owner tests.
+
+---
+
 # Verification report — 26 October 2026
 
 Owner development build: Furina Pocket Pet 1.0.0, package `id.wynn.furina`, versionCode 1, minSdk 26, target/compileSdk 36. ARM64-v8a + x86_64. Release APK: 5,353,189 bytes (5.11 MiB).

@@ -7,8 +7,9 @@ import java.util.zip.ZipInputStream
 
 /** Untrusted archives never get a path outside their new, app-private staging directory. */
 object SafeArchive {
- const val MAX_TOTAL = 512L * 1024 * 1024
- const val MAX_FILE = 160L * 1024 * 1024
+ const val MAX_ZIP = 500L * 1024 * 1024
+ const val MAX_TOTAL = 2L * 1024 * 1024 * 1024
+ const val MAX_FILE = 500L * 1024 * 1024
  fun safeChild(root: File, name: String): File {
   require(name.isNotBlank() && !name.contains('\\') && !name.startsWith('/') && !name.contains(':')) { "Path model tidak aman" }
   val target = File(root, name).canonicalFile
@@ -25,7 +26,7 @@ object SafeArchive {
     val out = safeChild(root, e.name)
     if (e.isDirectory) { require(!out.isFile); out.mkdirs(); continue }
     require(!out.exists()) { "ZIP berisi path duplikat" }
-    require(e.size <= MAX_FILE) { "File model terlalu besar" }
+    require(e.size <= MAX_FILE) { "File ${e.name} melebihi batas 500 MB setelah diekstrak" }
     out.parentFile!!.mkdirs()
     var bytes = 0L
     out.outputStream().buffered().use { stream ->
@@ -33,7 +34,8 @@ object SafeArchive {
      while (true) {
       val n = zip.read(buffer); if (n == -1) break
       bytes += n; total += n
-      require(bytes <= MAX_FILE && total <= MAX_TOTAL) { "Ukuran hasil ekstraksi melebihi batas 512 MB" }
+      require(bytes <= MAX_FILE) { "File ${e.name} melebihi batas 500 MB setelah diekstrak" }
+      require(total <= MAX_TOTAL) { "Total hasil ekstraksi melebihi batas 2 GB" }
       stream.write(buffer, 0, n)
      }
     }

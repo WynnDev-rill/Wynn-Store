@@ -62,6 +62,43 @@ class CoreTest {
    assertThrows(IllegalArgumentException::class.java) { SafeArchive.extract(ByteArrayInputStream(zip("../escape")),root) }
   } finally { root.deleteRecursively() }
  }
+ @Test fun largeTextureAboveOldLimitExtractsWithoutLoadingWholeFile() {
+  val root=Files.createTempDirectory("large-model").toFile()
+  try {
+   val archive=root.resolve("input.zip")
+   val size=255L*1024*1024
+   ZipOutputStream(archive.outputStream().buffered()).use { zip ->
+    zip.putNextEntry(ZipEntry("芙宁娜/textures/texture_00.png"))
+    val block=ByteArray(65536); var remaining=size
+    while(remaining>0) {
+     val n=minOf(remaining,block.size.toLong()).toInt()
+     zip.write(block,0,n); remaining-=n
+    }
+    zip.closeEntry()
+   }
+   archive.inputStream().use { SafeArchive.extract(it,root.resolve("output")) }
+   assertEquals(size,root.resolve("output/芙宁娜/textures/texture_00.png").length())
+  } finally { root.deleteRecursively() }
+ }
+ @Test fun oversizedArchiveEntryIsRejectedWithSpecificMessage() {
+  val root=Files.createTempDirectory("oversized-model").toFile()
+  try {
+   // A stored entry exposes its size before data is read: no 501 MB allocation needed.
+   val header=ByteArrayOutputStream().apply {
+    fun le(value: Long, count: Int) { repeat(count) { write((value shr (it*8)).toInt() and 255) } }
+    val name="large.png".toByteArray()
+    le(0x04034b50,4); le(20,2); le(0,2); le(0,2); le(0,2); le(0,2)
+    le(0,4); le(SafeArchive.MAX_FILE+1,4); le(SafeArchive.MAX_FILE+1,4)
+    le(name.size.toLong(),2); le(0,2); write(name)
+   }.toByteArray()
+   val error=assertThrows(IllegalArgumentException::class.java) {
+    SafeArchive.extract(ByteArrayInputStream(header),root)
+   }
+   assertTrue(error.message!!.contains("500 MB"))
+   assertTrue(error.message!!.contains("large.png"))
+   assertFalse(root.resolve("large.png").exists())
+  } finally { root.deleteRecursively() }
+ }
  @Test fun versionComparisonIsNumericAndChannelSpecific() {
   assertTrue(UpdateChecker.newer("furina-v1.10.0","1.9.9"))
   assertFalse(UpdateChecker.newer("furina-v1.0.0","1.0.0"))

@@ -12,7 +12,7 @@ The app starts with the **WhaleGirl MIT test model**, not Furina. It imports a u
 - Standard ArtMesh clipping, inverted masks, premultiplied alpha, normal/additive/multiplicative blending. Advanced Cubism 5.3 offscreen blend modes are explicitly unsupported.
 - Size, speed, activity, roaming, hops, reactions, 30/60 fps, favorite actions, pause/hide/stop, and reset position. An ongoing quiet notification exposes controls.
 - Screen-off/locked/hidden/paused stops the animation loop and pauses GL. Battery saver caps animation at 15 fps. Textures are decoded at at most 2048 pixels per side, then CPU bitmaps are recycled; motion caching is limited.
-- ZIP extraction enforces app-private paths, 300 MB input / 512 MB extracted / 160 MB per file / 4096 entries, plus reference, texture, JSON and motion validation. Import is transactional; a failed ZIP does not replace the current model.
+- ZIP extraction enforces app-private paths, 500 MiB input / 2 GiB extracted / 500 MiB per file / 4096 entries, plus reference, texture, JSON and motion validation. Import is transactional; a failed ZIP does not replace the current model.
 - Optional GitHub Releases update check on app open. It only recognizes `furina-vX.Y.Z` releases with matching APK names. Download/install is handed to the release page and Android installer. No silent installation.
 
 ## Build
