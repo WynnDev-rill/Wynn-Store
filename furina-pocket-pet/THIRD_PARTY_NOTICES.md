@@ -18,6 +18,8 @@ Source: https://github.com/7l-ui/whalegirl-pet. Exact original notice is also bu
 
 Copyright(c) Live2D Inc. All rights reserved.
 
+The native mesh adapter follows the SDK shader UV, premultiplied color and clipping conventions. Standard meshes are supported; advanced 5.3 offscreen blending is not.
+
 Core is proprietary; Framework/Sample are governed by the Live2D Open Software License, **not MIT**. Official SDK dependencies are retrieved for development and kept outside git. Their notices and RedistributableFiles list are retained in generated assets. Publication permission is separate from SDK download/development permission.
 
 https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html

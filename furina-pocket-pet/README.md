@@ -1,6 +1,6 @@
 # Furina Pocket Pet
 
-Native Kotlin + Jetpack Compose Android pet with the official **Cubism SDK Java R5 / OpenGL ES 2** renderer. Android 8+, target Android 16, ARM64 for Poco F6 and x86_64 for testing. No WebView, account, AI chat, backend, accessibility service, camera, microphone or broad storage access.
+Native Kotlin + Jetpack Compose Android pet with **Cubism SDK Java R5** for rig/motion/physics and a bounded native **OpenGL ES 2** mesh renderer. Android 8+, target Android 16, ARM64 for Poco F6 and x86_64 for testing. No WebView, account, AI chat, backend, accessibility service, camera, microphone or broad storage access.
 
 The app starts with the **WhaleGirl MIT test model**, not Furina. It imports a user's licensed VTube Studio/Cubism ZIP locally through Android's document picker. No Furina model is present in this repository or APK. BOOTH availability is not permission to redistribute or embed the model.
 
@@ -9,6 +9,7 @@ The app starts with the **WhaleGirl MIT test model**, not Furina. It imports a u
 - A foreground service keeps one small, transparent overlay above other apps. Drag to reposition; tap for reactions; long-press to open settings. Touches outside the overlay window continue to other apps.
 - Smooth time-based roaming, stops, looking around, small hops, blinking and breathing through actual rig parameters, physics, model motions and expressions. Random timing, weighted choices and eased transitions reduce repetition.
 - Natural walking is deliberately not synthesized: the default model floats. Waves use an existing compatible motion or expression. Rig support determines what a model can do. VTS hotkeys are not executed; unlisted `.motion3.json` and `.exp3.json` are discovered for manual mapping.
+- Standard ArtMesh clipping, inverted masks, premultiplied alpha, normal/additive/multiplicative blending. Advanced Cubism 5.3 offscreen blend modes are explicitly unsupported.
 - Size, speed, activity, roaming, hops, reactions, 30/60 fps, favorite actions, pause/hide/stop, and reset position. An ongoing quiet notification exposes controls.
 - Screen-off/locked/hidden/paused stops the animation loop and pauses GL. Battery saver caps animation at 15 fps. Textures are decoded at at most 2048 pixels per side, then CPU bitmaps are recycled; motion caching is limited.
 - ZIP extraction enforces app-private paths, 300 MB input / 512 MB extracted / 160 MB per file / 4096 entries, plus reference, texture, JSON and motion validation. Import is transactional; a failed ZIP does not replace the current model.
@@ -30,7 +31,7 @@ For release builds, restore the **original private signing backup** in `signing/
 
 ## Device tests
 
-With a running Android 16 emulator and built debug/test APKs, run `bash qa/run-device.sh`. Native instrumentation exercises real mesh deformation and transparent GPU pixels, overlay persistence over Home/Settings, pause, hide, screen-off/resume, stop, valid nested Unicode ZIP import and unsafe ZIP rejection. It stores test output and logs in ignored `qa/output`. Pure unit tests cover long behavior simulations, bounds, continuity, disabled behaviors, archive paths and numeric update versions.
+With a running Android 16 emulator and built debug/test APKs, run `bash qa/run-device.sh`. Native instrumentation (three tests, including a debug-only official SDK sample) exercises real mesh deformation and transparent GPU pixels, overlay persistence over Home/Settings, pause, hide, screen-off/resume, stop, valid nested Unicode ZIP import and unsafe ZIP rejection. It stores test output and logs in ignored `qa/output`. Pure unit tests cover long behavior simulations, bounds, continuity, disabled behaviors, archive paths and numeric update versions.
 
 Actual verification results are recorded in [TEST_REPORT.md](docs/TEST_REPORT.md); test code alone is not evidence that tests passed. Poco F6/HyperOS hardware and the BOOTH Furina model require owner testing.
 
