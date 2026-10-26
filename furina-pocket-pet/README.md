@@ -48,3 +48,8 @@ The touchable area is the character's **small rectangular window**, including tr
 This is an owner development/testing build. A general local-model importer fits Live2D's published **Expandable Application** definition; public publication requires Live2D approval, including for individuals. No public APK Release is automatically created. The workflow runs build/device checks; its separate publication job requires `FURINA_PUBLICATION_APPROVED=true`, stable signing secrets and an explicit publish dispatch. Do not enable that gate until licensing is resolved. The update checker is ready for an approved release channel.
 
 The BOOTH model also restricts permitted uses and prohibits redistribution. Obtain the creator's permission for use as an Android pet; local import does not itself grant rights. Do not upload its ZIP, textures or runtime files to this repository.
+
+
+## Continuing development
+
+See [continuation instructions](AGENTS.md), [five-project experience benchmark](docs/PRODUCT_BENCHMARK.md), [asset decisions](docs/ASSET_AUDIT.md), and [verification evidence/limits](docs/TEST_REPORT.md). Keep private owner assets/signing out of public source and CI.

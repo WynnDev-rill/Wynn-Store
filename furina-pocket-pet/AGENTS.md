@@ -1,0 +1,33 @@
+# Furina Pocket Pet — continuation guide
+
+Read `README.md`, `docs/TEST_REPORT.md`, `docs/PRODUCT_BENCHMARK.md`, and `docs/ASSET_AUDIT.md` before changing behavior. Do not restart completed work or replace the native stack without evidence.
+
+## Product contract
+
+- Native Kotlin/Compose + Cubism Java R5 rig/motions/physics + ES2 ArtMesh renderer. No WebView, account, AI server or screen surveillance. The user deferred AI; current bubbles are local event-driven dialogue.
+- Prioritize the felt experience: cue-driven reactions, bounded smooth movement, recognizable model identity, occasional dialogue and phone navigation that remains usable.
+- Asset-first: inspect 3–5 relevant primary-source products and existing compatible model files before custom implementation. Record what is actually reused, license, compatibility and why rejected alternatives do not fit. Do not equate research snippets with usable code/assets.
+- The owner supplied a private Furina ZIP. `FP_PERSONAL_MODEL=true` adds ignored `.deps/personal-assets/personal/model.zip`; `scripts/build-personal.py` prepares an owner build. Never commit/upload this ZIP, textures, MOC3, screenshots derived from it or private signing material to a public repository/workflow. Normal CI uses the MIT test assets.
+- Preserve user model selections and settings on upgrade. Default (empty model setting) uses the private model if packaged, otherwise the MIT fixture. “Model awal” resets an explicit selection to that default. Save position with `savePosition`, not a stale full settings snapshot.
+
+## Source map
+
+- `BehaviorEngine.kt`: pure time-based states, touch gaze, drag lean, hop phasing, dizzy/nap/stretch and locomotion frame.
+- `PetDialogue.kt`: localized causal dialogue/cooldowns and density/time-based fast-drag detector. Does not read apps/screen contents.
+- `LegGait.kt`, `NativeMeshRenderer.kt`: optional bounded frontal chibi steps on CDI-labelled leg meshes, cached hip-to-foot weights. Never modify Core's vertex arrays. Apply identical render offsets to mask and visible meshes; prefer original locomotion motion when present.
+- `LivePetModel.kt`: official rig/motion/expression/physics flow, standard parameters, native renderer; `PetSurface.kt` owns the GL thread/lifecycle and GPU diagnostics.
+- `PetService.kt`, `SpeechBubble.kt`: small overlay, drag/tap, foreground lifecycle, screen-off suspension, separate bounded non-touchable text window. `ModelStore.kt` validates and transactionally installs/imports assets.
+- `MainActivity.kt`: settings/import/update feedback. `UpdateChecker.kt`: bounded GitHub release lookup; no public channel is fabricated. Publication workflow stays gated pending SDK/model publication permission.
+
+## Verification-first definition of done
+
+1. Run checks appropriate to the change; record real outcomes in TEST_REPORT, not intended outcomes. Unit suite covers behavior continuity/bounds, bad archives, model motion matching, release parsing, dialogue cooldowns, fast drag and gait anchors.
+2. Android 16 instrumentation covers actual GPU pixels/transparency/mesh changes, SDK fixture, Unicode model import/traversal rejection, lifecycle across apps, screen-off/pause/hide/stop/restart, model-selection preservation and time-controlled MotionEvent drag through the real overlay plus bubble window flags/removal. Device tests run in `.github/workflows/furina-pocket-pet.yml` using KVM.
+3. Do not lower/delete a test to hide a product failure. UIAutomator gesture injection timing is not a calibrated velocity measurement; the fast-drag regression replays explicit timestamps through the real view. Preserve a physical-phone sensitivity test as unverified until actually performed.
+4. Build release with the ORIGINAL private signing backup/environment variables. Never regenerate a key to get a build through. Increment versionCode/versionName for a user update. Verify signer matches `docs/signing-sha256.txt`, package/version, `zipalign -c -P 16 4`, expected owner ZIP bytes and absence of secrets.
+5. Distinguish standard CI/debug-model tests, private host-side model/geometry inspection, signed personal-APK testing and actual Poco F6/HyperOS checks. Do not claim natural full-body walking/sitting, live screen understanding, physical battery/FPS/RAM or a production auto-update installation without evidence.
+6. Once relevant checks pass, deliver the real signed APK and update docs; do not repeat broad testing for docs-only edits. Preserve unrelated repository work and use safe ref leases when committing through an API.
+
+## Build
+
+JDK 17 (full compiler), Android SDK platform 36, build tools 36/AGP-required tools, Gradle wrapper 8.13. Follow README for pinned development dependency setup and existing key restoration. Standard: unit/lint/debug/androidTest targets; signed owner: `python3 scripts/build-personal.py /absolute/model.zip`. Keep credentials in ignored `signing/` or FP_* environment variables. The public publish gate must not be enabled merely to make the update checker show a newer APK.
