@@ -37,9 +37,18 @@ class PetSurface(context: Context, private val file: File, private val failed: (
     ready=false
     // A context may be lost after screen-off or GPU pressure. CPU model resources must also be freed.
     model?.close(); model=null
-    com.live2d.sdk.cubism.framework.rendering.android.CubismShaderAndroid.getInstance().releaseInvalidShaderProgram()
-    if(!CubismFramework.isStarted()) CubismFramework.startUp(null)
-    if(!CubismFramework.isInitialized()) CubismFramework.initialize()
+    try {
+     if(!CubismFramework.isStarted()) {
+      val appAssets=context.applicationContext.assets
+      val option=CubismFramework.Option().apply {
+       loadFileFunction=com.live2d.sdk.cubism.framework.ICubismLoadFileFunction { path -> appAssets.open(path).use { it.readBytes() } }
+       logFunction=com.live2d.sdk.cubism.framework.ICubismLogger { message -> android.util.Log.d("Cubism",message) }
+      }
+      CubismFramework.startUp(option)
+     }
+     if(!CubismFramework.isInitialized()) CubismFramework.initialize()
+     com.live2d.sdk.cubism.framework.rendering.android.CubismShaderAndroid.getInstance().releaseInvalidShaderProgram()
+    } catch(e: Exception) { report(e) }
     last=0
    }
    override fun onSurfaceChanged(gl: GL10?,width: Int,height: Int) {

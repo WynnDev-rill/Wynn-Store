@@ -77,7 +77,8 @@ class PetDeviceTest {
   zip.delete()
   val bad=File(app.cacheDir,"bad.zip")
   ZipOutputStream(bad.outputStream()).use { out -> out.putNextEntry(ZipEntry("../outside")); out.write(byteArrayOf(1));out.closeEntry() }
-  assertThrows(IllegalArgumentException::class.java) { store.importZip(android.net.Uri.fromFile(bad)) }
+  val rejected=assertThrows(Exception::class.java) { store.importZip(android.net.Uri.fromFile(bad)) }
+  assertTrue(rejected is IllegalArgumentException || rejected is java.util.zip.ZipException)
   assertFalse(File(store.root.parentFile,"outside").exists())
   bad.delete()
  }

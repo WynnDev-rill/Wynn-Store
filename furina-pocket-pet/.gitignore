@@ -7,3 +7,4 @@ qa/output/
 *.apk
 *.jks
 *.keystore
+.kotlin/

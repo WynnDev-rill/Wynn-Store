@@ -53,6 +53,7 @@ jobs:
             furina-pocket-pet/app/build/reports/tests/
             furina-pocket-pet/app/build/reports/lint-results-release*
             furina-pocket-pet/qa/output/*.txt
+            furina-pocket-pet/qa/output/*.png
       # SDK + importable model renderer is an Expandable Application. No public APK upload by default.
   publish:
     needs: verify
