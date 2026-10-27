@@ -288,6 +288,7 @@ export function initPeatScene(container: HTMLElement) {
   let stateStarted = 0, stateAnimating = false, lastTime = 0;
   let width = Math.max(1, container.clientWidth), height = Math.max(1, container.clientHeight);
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let motionEnabled=document.body.dataset.cinematicMotion!=='paused';
   const lerp = THREE.MathUtils.lerp, smooth = (value: number) => value * value * (3 - 2 * value);
 
   function draw() {
@@ -318,6 +319,7 @@ export function initPeatScene(container: HTMLElement) {
   }
   function tick(now: number) {
     frame = 0; if (disposed || !visible || contextLost) return;
+    if(!motionEnabled){draw();return;}
     const delta = Math.min(50, lastTime ? now - lastTime : 16.7); lastTime = now;
     if (stateAnimating) {
       const fraction = reduced.matches ? 1 : Math.min(1, (now - stateStarted) / 700), t = smooth(fraction);
@@ -339,7 +341,7 @@ export function initPeatScene(container: HTMLElement) {
     const next = THREE.MathUtils.clamp(Math.round(stage), 0, 3);
     if (next === targetStage) return;
     targetStage = next; from = current; destination = stateFor(next); stateStarted = performance.now(); stateAnimating = true;
-    if (reduced.matches || !visible) { current = destination; stateAnimating = false; } invalidate();
+    if (reduced.matches || !visible || !motionEnabled) { current = destination; stateAnimating = false; } invalidate();
   }
   function setProgress(progress: number) {
     if (!Number.isFinite(progress) || disposed) return;
@@ -348,7 +350,7 @@ export function initPeatScene(container: HTMLElement) {
     targetProgress = next;
     if (reduced.matches || !visible) currentProgress = targetProgress;
     // Reduced motion keeps a single explanatory viewpoint; scroll need not redraw it.
-    if (!reduced.matches) invalidate();
+    if (!reduced.matches&&motionEnabled) invalidate();
   }
   function resize() {
     width = Math.max(1, container.clientWidth); height = Math.max(1, container.clientHeight);
@@ -363,6 +365,8 @@ export function initPeatScene(container: HTMLElement) {
   const onStage = (event: Event) => setStage((event as CustomEvent<{ stage: number }>).detail?.stage);
   const onProgress = (event: Event) => setProgress((event as CustomEvent<{ progress: number }>).detail?.progress);
   const onReduced = () => { if (reduced.matches) { current = destination; stateAnimating = false; currentProgress = targetProgress; } invalidate(); };
+  const onGlobalMotion=(event:Event)=>{motionEnabled=(event as CustomEvent<{enabled:boolean}>).detail.enabled;cancelAnimationFrame(frame);frame=0;lastTime=0;if(motionEnabled){from=current;stateStarted=performance.now();invalidate();}};
+  document.addEventListener('documentary-motion',onGlobalMotion);
   const onContextLost = (event: Event) => { event.preventDefault(); contextLost = true; container.dataset.ready = 'false'; cancelAnimationFrame(frame); frame = 0; };
   const onContextRestored = () => { contextLost = false; invalidate(); };
   container.addEventListener('peat-stage', onStage); container.addEventListener('peat-progress', onProgress); reduced.addEventListener('change', onReduced);
@@ -371,7 +375,7 @@ export function initPeatScene(container: HTMLElement) {
   return {
     setStage, setProgress,
     dispose() {
-      disposed = true; cancelAnimationFrame(frame); observer.disconnect(); intersection.disconnect();
+      disposed = true; document.removeEventListener('documentary-motion',onGlobalMotion);cancelAnimationFrame(frame); observer.disconnect(); intersection.disconnect();
       container.removeEventListener('peat-stage', onStage); container.removeEventListener('peat-progress', onProgress); reduced.removeEventListener('change', onReduced);
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost); renderer.domElement.removeEventListener('webglcontextrestored', onContextRestored);
       geometries.forEach((geometry) => geometry.dispose()); materials.forEach((material) => material.dispose()); textures.forEach((texture) => texture.dispose());

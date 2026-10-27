@@ -33,7 +33,7 @@ Git integration mengerjakan build/deploy otomatis. Proyek Pages baru terpisah; k
 
 ## Struktur & keputusan
 
-Astro static HTML + TypeScript; CSS orisinal; SVG choropleth geometri nyata; satu Three.js cutaway yang dimuat lazy dan dirender hanya ketika perlu. Tidak ada scroll hijacking, preloader wajib, audio/video autoplay, akun, cookies atau analitik pengunjung. Aset dan font dilayani lokal.
+Astro static HTML + TypeScript; CSS orisinal; SVG choropleth geometri nyata; pembuka Three.js progresif serta hutan dan penampang gambut yang dimuat dekat babnya. Renderer dihentikan saat tidak terlihat dan mendukung komposisi statis. Tidak ada scroll hijacking, preloader wajib, audio/video autoplay, akun, cookies atau analitik pengunjung. Aset dan font dilayani lokal.
 
 `src/data/burned-area.json` adalah transkripsi satu edisi KLHK. `public/data/` menyertakan CSV dan geometri untuk pemeriksaan. Jangan campur angka dari edisi lain tanpa memperbarui metodologi serta tes.
 
@@ -62,6 +62,27 @@ Bab Ruang menambahkan hutan Three.js dengan tiga keadaan, drag/panah/orientasi o
 
 Peningkatan lima adegan spasial: [docs/SPATIAL-REVIEW.md](docs/SPATIAL-REVIEW.md). Uji tambahan: npm run test:spatial.
 
-## Edisi aktif: cuaca dan suasana
+## Riwayat edisi: cuaca dan suasana
 
 Lima panggung3D tambahan digantikan atmosfer viewport bersama: siang putih,malam biru gelap dan hujan. Hutan,gambut dan Wynn dipertahankan. [Audit edisi cuaca](docs/WEATHER-REVIEW.md). Jalankan npm run test:weather; suite spatial lama hanya arsip; gunakan test:weather dan test:accessibility.
+
+## Edisi sinematik (aktif, 27 Oktober 2026)
+
+Pembuka kini menampilkan pahatan bentang Kalimantan dari turunan geometri wilayah lokal, dilanjutkan hutan dengan vegetasi berlapis, tekstur fotografis CC0, cahaya atmosferik dan kamera spline. Semua bentuk, tinggi pohon dan pencahayaan bersifat ilustratif; bukan elevasi terukur, tutupan hutan atau titik api aktual. Mode otomatis memakai suasana malam yang konsisten; pemulihan memakai hujan. Pilihan siang/malam/hujan manual tetap tersedia.
+
+Tombol **Jeda gerak** mengendalikan kamera pembuka, hutan, gambut, efek cuaca dan gerak dekoratif halaman. Preferensi reduced motion menyediakan komposisi statis. Suara tetap mati sampai diaktifkan pembaca. Kegagalan tekstur mempertahankan material dasar; WebGL tidak tersedia/kehilangan konteks menampilkan fallback SVG. Konten dapat dibaca tanpa JavaScript.
+
+- [Panduan AI dan kontributor](AGENTS.md)
+- [Arah visual dan matriks adegan](docs/CINEMATIC-DESIGN.md)
+- [Riset empat pembanding dan pilihan aset](docs/CINEMATIC-REFERENCE-RESEARCH.md)
+- [Asal dan lisensi tekstur](docs/licenses/cinematic-textures.md)
+- [Geometri turunan dan reproduksi](docs/licenses/cinematic-geography.md)
+- [Hasil verifikasi edisi aktif](docs/CINEMATIC-QA.md)
+
+```sh
+npm run test:cinematic
+npm run test:weather
+npm run test:accessibility
+```
+
+Suite browser menjalankan Chromium; atur `BROWSER_EXECUTABLE_PATH` bila memakai browser sistem. `test:cinematic` memeriksa kamera gulir maju/mundur, pause, kontrol hutan, reduced motion, fallback WebGL, kehilangan/pemulihan konteks, tekstur gagal, tanpa-JS, direct entry dan layout desktop/HP. Hasil di `test-results/`. Pengujian viewport adalah emulasi, bukan pengujian HP fisik. Dokumen edisi sebelumnya dipertahankan sebagai riwayat keputusan.

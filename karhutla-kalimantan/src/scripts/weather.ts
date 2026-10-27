@@ -2,14 +2,14 @@ export {};
 type Weather='day'|'night'|'rain';
 const canvas=document.querySelector<HTMLCanvasElement>('[data-weather-canvas]')!;
 const ctx=canvas.getContext('2d');const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-let mode='auto',weather:Weather='day',motion=!reduced.matches,frame=0,last=0,width=innerWidth,height=innerHeight,elapsed=0,wet=0,dark=0,pointer={x:-999,y:-999};
+let mode='auto',weather:Weather='night',motion=!reduced.matches,frame=0,last=0,width=innerWidth,height=innerHeight,elapsed=0,wet=0,dark=0,pointer={x:-999,y:-999};
 const choice=document.querySelectorAll<HTMLButtonElement>('[data-weather-choice]'),label=document.querySelector('[data-weather-label]'),motionInput=document.querySelector<HTMLInputElement>('[data-weather-motion]')!;
 motionInput.checked=motion;
 const sections=Array.from(document.querySelectorAll<HTMLElement>('main>section[id],main>.hero'));
-const sceneWeather:Record<string,Weather>={ruang:'night',musim:'day',cerita:'day',riwayat:'day',gambut:'night',peta:'day',dampak:'night',pulih:'rain',wynn:'day'};
-let autoWeather:Weather='day';
+const sceneWeather:Record<string,Weather>={ruang:'night',musim:'night',cerita:'night',riwayat:'night',gambut:'night',peta:'night',dampak:'night',pulih:'rain',wynn:'night'};
+let autoWeather:Weather='night';
 function apply(next:Weather){if(next===weather&&document.body.dataset.weather)return;weather=next;document.body.dataset.weather=weather;document.body.dataset.weatherMode=mode;label!.textContent='Suasana · '+({day:'siang',night:'malam',rain:'hujan'}[weather]);document.dispatchEvent(new CustomEvent('documentary-weather',{detail:{weather}}));canvas.dataset.weather=weather;start();}
-function follow(){let section=sections[0];for(const s of sections)if(s.getBoundingClientRect().top<innerHeight*.4)section=s;autoWeather=sceneWeather[section?.id||'']||'day';if(section?.id==='gambut'){const stage=document.querySelector('#peat-canvas')?.getAttribute('data-stage');autoWeather=stage==='3'?'rain':stage==='2'?'night':'day';}if(mode==='auto')apply(autoWeather);}
+function follow(){let section=sections[0];for(const s of sections)if(s.getBoundingClientRect().top<innerHeight*.4)section=s;autoWeather=sceneWeather[section?.id||'']||'night';if(section?.id==='gambut'){const stage=document.querySelector('#peat-canvas')?.getAttribute('data-stage');autoWeather=stage==='3'?'rain':'night';}if(mode==='auto')apply(autoWeather);}
 let scheduled=false;addEventListener('scroll',()=>{if(!scheduled){scheduled=true;requestAnimationFrame(()=>{scheduled=false;follow();});}},{passive:true});
 choice.forEach(button=>button.addEventListener('click',()=>{mode=button.dataset.weatherChoice!;choice.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));document.body.dataset.weatherMode=mode;apply(mode==='auto'?autoWeather:mode as Weather);}));
 document.querySelectorAll('[data-peat-button]').forEach(b=>b.addEventListener('click',()=>requestAnimationFrame(follow)));
@@ -23,4 +23,4 @@ if(dark>.01&&i<45){x=(p.x*width+Math.sin(elapsed*.0005+p.phase)*22);y=height-((p
 canvas.dataset.motion=String(motion&&!reduced.matches);}
 function tick(t:number){frame=0;if(document.hidden||!motion||reduced.matches)return;const dt=Math.min(50,t-last);if(t-last>1000/30){last=t;paint(dt);if(weather==='day'&&wet<.01&&dark<.01){ctx?.clearRect(0,0,width,height);return;}}frame=requestAnimationFrame(tick);}
 function start(){cancelAnimationFrame(frame);frame=0;if(!motion||reduced.matches){wet=Number(weather==='rain');dark=Number(weather==='night');paint(0);return;}last=performance.now();frame=requestAnimationFrame(tick);}
-motionInput.addEventListener('change',()=>{motion=motionInput.checked;start();});reduced.addEventListener('change',()=>{motion=!reduced.matches;motionInput.checked=motion;start();});document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0}else start();});addEventListener('pointermove',e=>{pointer={x:e.clientX,y:e.clientY};},{passive:true});addEventListener('resize',size,{passive:true});size();follow();apply(autoWeather);start();
+motionInput.addEventListener('change',()=>{motion=motionInput.checked;start();});document.addEventListener('documentary-motion',event=>{motion=(event as CustomEvent<{enabled:boolean}>).detail.enabled;motionInput.checked=motion;start();});reduced.addEventListener('change',()=>{motion=!reduced.matches&&document.body.dataset.cinematicMotion!=='paused';motionInput.checked=motion;start();});document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0}else start();});addEventListener('pointermove',e=>{pointer={x:e.clientX,y:e.clientY};},{passive:true});addEventListener('resize',size,{passive:true});size();follow();apply(autoWeather);start();

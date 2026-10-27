@@ -1,0 +1,17 @@
+---
+import outlines from '../data/terrain-outlines.json';
+const paths=outlines.flatMap(province=>province.rings.map(ring=>'M'+ring.map(([x,y])=>`${(x*65+500).toFixed(1)},${(310-y*48).toFixed(1)}`).join('L')+'Z'));
+---
+<div class="landscape-stage" data-cinematic-landscape aria-hidden="true">
+  <svg class="landscape-fallback" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet"><defs><radialGradient id="terrain-glow"><stop stop-color="#b7814a" stop-opacity=".32"/><stop offset="1" stop-color="#b7814a" stop-opacity="0"/></radialGradient><linearGradient id="terrain-top" x2=".8" y2="1"><stop stop-color="#6c7963"/><stop offset=".5" stop-color="#283d34"/><stop offset="1" stop-color="#0c201a"/></linearGradient></defs><ellipse cx="500" cy="400" rx="440" ry="260" fill="url(#terrain-glow)"/><g transform="translate(0 70)"><ellipse cx="500" cy="310" rx="370" ry="180" fill="none" stroke="#c7955a" stroke-opacity=".18"/><ellipse cx="500" cy="310" rx="430" ry="220" fill="none" stroke="#c7955a" stroke-opacity=".08"/>{paths.map(d=><path d={d} transform="translate(0 16)" fill="#463427" stroke="#ac7844" stroke-width=".8"/>)}{paths.map(d=><path d={d} fill="url(#terrain-top)" stroke="#c69b65" stroke-width="1"/>)}</g></svg>
+</div>
+<script>
+const container=document.querySelector<HTMLElement>('[data-cinematic-landscape]');
+if(container){
+  const load=new IntersectionObserver(async entries=>{
+    if(!entries.some(e=>e.isIntersecting))return;load.disconnect();
+    try{const {initLandscape}=await import('../scripts/cinematic-landscape');initLandscape(container);}
+    catch{container.dataset.ready='false';}
+  },{rootMargin:'100px'});load.observe(container);
+}
+</script>
