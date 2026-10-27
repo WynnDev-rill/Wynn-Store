@@ -184,6 +184,7 @@ class MainActivity : ComponentActivity() {
      }
      Section("Kehidupan & interaksi") {
       Toggle("Aktivitas mandiri","Membaca, menikmati kue, dan beristirahat",c.activities) { save(prefs.read().copy(activities=it)) }
+      Toggle("Gerak tubuh aktivitas","Pose duduk, tangan membaca/makan, dan ayunan pada rig yang sesuai",c.bodyMotion) { save(prefs.read().copy(bodyMotion=it)) }
       Toggle("Teman di tepi layar","Mendekat ke pinggir dan sesekali mengintip",c.edges) { save(prefs.read().copy(edges=it)) }
       Toggle("Ghost Mode","Sentuhan menembus karakter · pulihkan dari notifikasi",c.ghost) { save(prefs.read().copy(ghost=it)) }
       Text("Usap kepala perlahan, ketuk badan, atau ketuk dua kali untuk melompat.",fontSize=12.sp,color=Muted,lineHeight=19.sp)
@@ -193,13 +194,13 @@ class MainActivity : ComponentActivity() {
        OutlinedButton(onClick={PetService.command(this@MainActivity,PetService.CAKE)},Modifier.weight(1f),enabled=active) {Text("Makan kue")}
       }
       val named=info?.motions?.map {"${it.first} ${it.second.name}" to it.second} ?: emptyList()
-      val canSit=ActivityCatalog.motion(named,PetMood.SIT)!=null || info?.motions?.any {c.sitMotion.isNotEmpty() && it.first==c.sitMotion}==true
-      val canSwing=ActivityCatalog.motion(named,PetMood.SWING)!=null || info?.motions?.any {c.swingMotion.isNotEmpty() && it.first==c.swingMotion}==true
+      val canSit=(info?.bodyRig==true && c.bodyMotion) || ActivityCatalog.motion(named,PetMood.SIT)!=null || info?.motions?.any {c.sitMotion.isNotEmpty() && it.first==c.sitMotion}==true
+      val canSwing=(info?.bodyRig==true && c.bodyMotion) || ActivityCatalog.motion(named,PetMood.SWING)!=null || info?.motions?.any {c.swingMotion.isNotEmpty() && it.first==c.swingMotion}==true
       Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
        OutlinedButton(onClick={PetService.command(this@MainActivity,PetService.SIT)},Modifier.weight(1f),enabled=active && canSit) {Text("Duduk")}
        OutlinedButton(onClick={PetService.command(this@MainActivity,PetService.SWING)},Modifier.weight(1f),enabled=active && canSwing) {Text("Ayunan")}
       }
-      if(!canSit || !canSwing) Text("Duduk dan ayunan memerlukan gerakan khusus dari model.",fontSize=12.sp,color=Muted,lineHeight=19.sp)
+      if(!canSit || !canSwing) Text("Aktifkan gerak tubuh pada Furina yang didukung, atau pilih gerakan duduk/ayunan milik model.",fontSize=12.sp,color=Muted,lineHeight=19.sp)
       TextButton(onClick={PetService.command(this@MainActivity,PetService.EDGE)},enabled=status.running && !c.paused && !c.hidden && c.edges) {Text("Ke tepi layar")}
      }
      Section("Suara & gerak mulut") {

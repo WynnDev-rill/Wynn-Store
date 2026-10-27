@@ -38,3 +38,8 @@ Rechecked five primary-source references on 26 October 2026:
 Official [Cubism lip-sync guidance](https://docs.live2d.com/en/cubism-sdk-manual/lipsync/) supports volume-to-parameter control and reading the model's LipSync group. [DenchiSoft's MIT frequency example](https://github.com/DenchiSoft/Live2DFrequencyLipSync) requires additional mouth shapes and per-character tuning; a simple RMS path suits the supplied single mouth-opening rig and short clips better.
 
 Acceptance additions: Ghost Mode must pass a real tap to an underlying debug-only activity and restore normal character input. Activity props must produce GPU pixels and disappear after interruption/disable. The real Android audio player must produce nonzero envelope samples, complete, cancel pending preparation and recover from a corrupt file. No automatic keyboard visibility or screen-content understanding is claimed.
+
+
+## 1.4.0 quality follow-through — 27 October 2026
+
+The five-product comparison above was rechecked before implementation. A second asset search found Furina sprite packs, but no authored curves for this exact MOC3. The new model-specific frontal adapter reuses the original independent arms/legs rather than replacing character artwork or runtime. It now meets the seated-body and held-object part of the experience: hinged dangling boots, bent arms, shared swing pivot, foreground hands and quiet sustained scenes. New side-view art and a large authored animation library remain outside that frontal adapter. Direct activity switches fade the old scene before swapping furniture; fork placement includes the final bone blend. See ASSET_AUDIT and TEST_REPORT for sources and actual owner/runtime evidence.

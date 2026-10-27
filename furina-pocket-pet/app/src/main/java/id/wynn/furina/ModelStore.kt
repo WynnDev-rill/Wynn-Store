@@ -7,7 +7,7 @@ import org.json.JSONObject
 import java.io.File
 import java.util.UUID
 
-data class ModelInfo(val file: File, val name: String, val motions: List<Pair<String,File>>, val expressions: List<Pair<String,File>>)
+data class ModelInfo(val file: File, val name: String, val motions: List<Pair<String,File>>, val expressions: List<Pair<String,File>>, val bodyRig: Boolean=false)
 
 class ModelStore(private val context: Context) {
  val root = File(context.filesDir,"models").apply { mkdirs() }
@@ -108,6 +108,9 @@ class ModelStore(private val context: Context) {
   }
   require(motions.size <= 128 && expressions.size <= 128) { "Terlalu banyak animasi" }
   (motions+expressions).forEach { require(it.second.length()<=8*1024*1024) { "Animasi terlalu besar" } }
-  return ModelInfo(file,file.name.removeSuffix(".model3.json"),motions,expressions)
+  val digest=java.security.MessageDigest.getInstance("SHA-256")
+  moc.inputStream().use {input -> val buffer=ByteArray(32768);var n=input.read(buffer);while(n>=0) {if(n>0) digest.update(buffer,0,n);n=input.read(buffer)}}
+  val sha=digest.digest().joinToString("") {"%02x".format(it)}
+  return ModelInfo(file,file.name.removeSuffix(".model3.json"),motions,expressions,BodyPose.supports(sha))
  }
 }

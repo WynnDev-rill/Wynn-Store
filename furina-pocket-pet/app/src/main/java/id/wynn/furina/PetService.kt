@@ -144,8 +144,8 @@ class PetService : Service() {
    val named=info.motions.map {"${it.first} ${it.second.name}" to it.second}
    engine.supportedActivities=buildSet {
     add(PetMood.READ);add(PetMood.CAKE)
-    if(info.motions.any {config.sitMotion.isNotEmpty() && it.first==config.sitMotion} || ActivityCatalog.motion(named,PetMood.SIT)!=null) add(PetMood.SIT)
-    if(info.motions.any {config.swingMotion.isNotEmpty() && it.first==config.swingMotion} || ActivityCatalog.motion(named,PetMood.SWING)!=null) add(PetMood.SWING)
+    if((info.bodyRig && config.bodyMotion) || info.motions.any {config.sitMotion.isNotEmpty() && it.first==config.sitMotion} || ActivityCatalog.motion(named,PetMood.SIT)!=null) add(PetMood.SIT)
+    if((info.bodyRig && config.bodyMotion) || info.motions.any {config.swingMotion.isNotEmpty() && it.first==config.swingMotion} || ActivityCatalog.motion(named,PetMood.SWING)!=null) add(PetMood.SWING)
    }
    if(view==null || view?.tag!=selected.path) {
     removePet()

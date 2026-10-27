@@ -71,13 +71,13 @@ class PetSurface(context: Context, private val file: File, private val failed: (
     val now=System.nanoTime(); val dt=if(last==0L) 1f/30 else ((now-last)/1e9).toFloat().coerceIn(0f,0.1f)
     last=now
     try {
-     model?.draw(dt,frame,config,w,h,lipLevel,speaking)
+     model?.draw(dt,frame,config,w,h,lipLevel,speaking) {scene,matrix -> props?.drawBack(scene,matrix)}
      if(BuildConfig.DEBUG && requestPropProbe) {
       // Compare the same framebuffer immediately before/after props. White clothing is not
       // a reliable background reference for an open-book texture with white pages.
       val before=java.nio.ByteBuffer.allocateDirect(w*h*4)
       glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,before)
-      props?.draw(frame)
+      props?.draw(frame,model?.stageScene,model?.stageMatrix)
       val after=java.nio.ByteBuffer.allocateDirect(w*h*4)
       glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,after)
       var changed=0
@@ -88,7 +88,8 @@ class PetSurface(context: Context, private val file: File, private val failed: (
       }
       propPixelsChanged=changed;requestPropProbe=false
       android.util.Log.i("FurinaPropProbe","${frame.mood}, effect=${frame.effect}, changed=$changed, glError=${glGetError()}")
-     } else props?.draw(frame)
+     } else props?.draw(frame,model?.stageScene,model?.stageMatrix)
+     model?.drawForeground(w,h)
      renderedFrames++
      // A one-time startup probe confirms actual GPU pixels, including transparent background.
      if(renderedFrames==8L && model!=null) {

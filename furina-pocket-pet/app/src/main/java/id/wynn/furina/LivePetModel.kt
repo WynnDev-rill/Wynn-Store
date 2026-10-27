@@ -34,6 +34,9 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
  private var mouthLevel=0f
  private var previousMood=PetMood.REST
  private var activityFile: File?=null
+ private val bodyPresentation=BodyPresentation()
+ var stageScene=PoseScene();private set
+ var stageMatrix=FloatArray(16);private set
  private var bounds=floatArrayOf(-1f,1f,-1f,1f)
  val parameterCount: Int get() = model.parameterCount
  init {
@@ -82,7 +85,7 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
      if(label=="腿" || label=="足" || label=="legs" || label=="leg" || label=="left leg" || label=="right leg") legParts+=item.getString("Id")
     }
    }
-   meshRenderer=NativeMeshRenderer(model,textures,legParts)
+   meshRenderer=NativeMeshRenderer(model,textures,legParts,info.bodyRig)
   } catch(e: Exception) { close(); throw e }
  }
  private fun add(name: String, value: Float) { params[name]?.let { model.addParameterValue(it,value) } }
@@ -126,11 +129,12 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
    else -> Unit
   }
  }
- fun draw(dt: Float,frame: PetFrame,c: PetConfig,width: Int,height: Int,voiceLevel: Float=0f,speaking: Boolean=false) {
+ fun draw(dt: Float,frame: PetFrame,c: PetConfig,width: Int,height: Int,voiceLevel: Float=0f,speaking: Boolean=false,beforeBody: ((PoseScene,FloatArray)->Unit)?=null) {
   elapsed+=dt
   if(wasRoaming != (frame.mood==PetMood.ROAM)) motionManager.stopAllMotions()
   wasRoaming=frame.mood==PetMood.ROAM
   event(frame,c)
+  stageScene=bodyPresentation.step(dt,frame,info.bodyRig && c.bodyMotion && c.activities && activityFile==null)
   model.loadParameters()
   val walk=MotionCatalog.walk(info.motions,c.walkMotion)
   if(frame.mood==PetMood.ROAM && walk!=null) {
@@ -146,7 +150,7 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   if(c.reactions && expressionUntil>elapsed) expressionManager.updateMotion(model,dt)
   else expressionManager.stopAllMotions()
   locomotion+=(frame.movement-locomotion)*(1f-exp(-dt*7f))
-  add("ParamBodyAngleZ",frame.stride*1.5f+frame.dragLean*7f)
+  add("ParamBodyAngleZ",(frame.stride*1.5f+frame.dragLean*7f)*(1f-stageScene.amount))
   if(frame.mood==PetMood.DIZZY) {
    add("ParamAngleZ",sin(elapsed*9f)*9f*frame.effect)
    add("ParamEyeBallX",sin(elapsed*12f)*0.7f*frame.effect)
@@ -179,7 +183,7 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   add("ParamAngleX",frame.gazeX*22f)
   add("ParamAngleY",frame.gazeY*15f+sin(elapsed*0.65f)*2f)
   add("ParamAngleZ",sin(elapsed*0.9f)*1.5f-frame.lean*3f)
-  add("ParamBodyAngleX",frame.gazeX*3.5f)
+  add("ParamBodyAngleX",frame.gazeX*3.5f*(1f-stageScene.amount))
   add("ParamEyeBallX",frame.gazeX*0.65f); add("ParamEyeBallY",frame.gazeY*0.6f)
   add("ParamBreath",sin(elapsed*1.6f)*0.25f)
   if(frame.mood==PetMood.REACT) { add("ParamMouthForm",0.5f); add("ParamEyeLSmile",0.35f); add("ParamEyeRSmile",0.35f) }
@@ -196,14 +200,20 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   if(speaking || wasSpeaking) lipIds.forEach {id -> model.setParameterValue(id,mouthLevel)}
   model.update()
   val aspect=width.toFloat()/height.coerceAtLeast(1)
-  val s=min(1.8f/(bounds[1]-bounds[0]),1.8f/((bounds[3]-bounds[2])*aspect))
+  val s=BodyPose.scale(stageScene)*min(1.8f/(bounds[1]-bounds[0]),1.8f/((bounds[3]-bounds[2])*aspect))
   val matrix=CubismMatrix44.create()
   val bob=if(frame.mood==PetMood.ROAM && walk==null) abs(frame.stride)*0.025f else 0f
   matrix.scale(s,s*aspect)
   matrix.translate(-(bounds[0]+bounds[1])*0.5f*s+frame.peek,-(bounds[2]+bounds[3])*0.5f*s*aspect+bob-frame.crouch*0.025f)
   meshRenderer?.gaitFrame=frame
   meshRenderer?.gaitEnabled=c.legMotion && walk==null
-  meshRenderer?.draw(matrix.array,width,height)
+  stageMatrix=BodyPose.projection(matrix.array,PosePoint(-.015f,.94f),stageScene.swing)
+  meshRenderer?.present(stageScene)
+  beforeBody?.invoke(stageScene,stageMatrix)
+  meshRenderer?.draw(stageMatrix,width,height)
+ }
+ fun drawForeground(width: Int,height: Int) {
+  meshRenderer?.draw(stageMatrix,width,height,true)
  }
  fun close() {
   meshRenderer?.close();meshRenderer=null

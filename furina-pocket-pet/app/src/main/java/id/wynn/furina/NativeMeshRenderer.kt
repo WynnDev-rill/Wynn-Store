@@ -13,13 +13,39 @@ import java.nio.ShortBuffer
  * https://github.com/Live2D/CubismJavaFramework/tree/develop/framework/src/main/assets
  * Advanced Cubism 5.3 offscreen blend modes are rejected explicitly instead of being misrendered.
  */
-class NativeMeshRenderer(private val model: CubismModel,private val textureIds: List<Int>,legParts: Set<String> = emptySet()) {
+class NativeMeshRenderer(private val model: CubismModel,private val textureIds: List<Int>,legParts: Set<String> = emptySet(),verifiedBody: Boolean=false) {
  private data class Mesh(val vertices: FloatBuffer,val uv: FloatBuffer,val indices: ShortBuffer,val count: Int)
  private val meshes=Array(model.drawableCount) { i ->
   val p=model.getDrawableVertexPositions(i); val uv=model.getDrawableVertexUvs(i); val indices=model.getDrawableVertexIndices(i)
   Mesh(floats(p),floats(uv),ByteBuffer.allocateDirect(indices.size*2).order(ByteOrder.nativeOrder()).asShortBuffer().apply { put(indices);position(0) },indices.size)
  }
  private val legWeights=mutableMapOf<Int,Pair<Float,FloatArray>>()
+ private data class BodyMesh(val side: Int,val arm: Boolean,val weights: FloatArray)
+ private val bodyMeshes=mutableMapOf<Int,BodyMesh>()
+ private var bodyScene=PoseScene()
+ private var leftArm: BonePose?=null;private var rightArm: BonePose?=null
+ private var leftLeg: BonePose?=null;private var rightLeg: BonePose?=null
+ fun present(scene: PoseScene) {
+  bodyScene=scene
+  if(scene.amount>0f && bodyMeshes.isNotEmpty()) {
+   leftArm=BodyPose.arm(-1,scene.left);rightArm=BodyPose.arm(1,scene.right)
+   leftLeg=BodyPose.leg(-1,scene.progress);rightLeg=BodyPose.leg(1,scene.progress)
+  }
+ }
+ init { if(verifiedBody) repeat(model.drawableCount) {i ->
+  val id=model.getDrawableId(i).string
+  val arm=id in BodyPose.leftArms || id in BodyPose.rightArms
+  val leg=id in BodyPose.leftLegs || id in BodyPose.rightLegs
+  if(arm || leg) {
+   val side=if(id in BodyPose.leftArms || id in BodyPose.leftLegs) -1 else 1
+   val p=model.getDrawableVertexPositions(i)
+   val weights=FloatArray(p.size/2) {j ->
+    val t=if(arm) ((-.12f-p[j*2+1])/.12f).coerceIn(0f,1f) else ((-.53f-p[j*2+1])/.08f).coerceIn(0f,1f)
+    t*t*(3f-2f*t)
+   }
+   bodyMeshes[i]=BodyMesh(side,arm,weights)
+  }
+ }}
  private var legLength=0f
  var gaitFrame=PetFrame()
  var gaitEnabled=false
@@ -94,7 +120,9 @@ class NativeMeshRenderer(private val model: CubismModel,private val textureIds: 
   require(glCheckFramebufferStatus(GL_FRAMEBUFFER)==GL_FRAMEBUFFER_COMPLETE) { "GPU tidak mendukung clipping mask" }
   glBindFramebuffer(GL_FRAMEBUFFER,0);maskWidth=w;maskHeight=h
  }
- fun draw(mvp: FloatArray,w: Int,h: Int) {
+ fun draw(mvp: FloatArray,w: Int,h: Int,foreground: Boolean=false) {
+  val posed=bodyScene.amount>0f && bodyMeshes.isNotEmpty()
+  if(foreground && !posed) return
   ensureMask(w,h)
   glBindFramebuffer(GL_FRAMEBUFFER,0);glViewport(0,0,w,h)
   glDisable(GL_DEPTH_TEST);glDisable(GL_STENCIL_TEST);glDisable(GL_SCISSOR_TEST);glDisable(GL_CULL_FACE)
@@ -106,6 +134,8 @@ class NativeMeshRenderer(private val model: CubismModel,private val textureIds: 
   var previousMask=""
   val orders=model.renderOrders
   for(i in (0 until model.drawableCount).sortedBy { orders[it] }) {
+   val deferred=posed && bodyMeshes[i]?.arm==true
+   if(deferred!=foreground) continue
    if(!model.getDrawableDynamicFlagIsVisible(i) || model.getDrawableOpacity(i)<=0f) continue
    val clipping=if(counts[i]>0) masks[i].take(counts[i]) else emptyList()
    if(clipping.isNotEmpty()) {
@@ -137,7 +167,11 @@ class NativeMeshRenderer(private val model: CubismModel,private val textureIds: 
   part.vertices.clear()
   val points=model.getDrawableVertexPositions(i)
   val leg=if(gaitEnabled) legWeights[i] else null
-  if(leg!=null && gaitFrame.movement>0f) {
+  val body=if(bodyScene.amount>0f) bodyMeshes[i] else null
+  if(body!=null) {
+   val bone=if(body.arm) {if(body.side<0) leftArm else rightArm} else {if(body.side<0) leftLeg else rightLeg}
+   for(j in points.indices step 2) bone!!.write(part.vertices,points[j],points[j+1],body.weights[j/2],bodyScene.amount)
+  } else if(leg!=null && gaitFrame.movement>0f) {
    val cycle=kotlin.math.sin(gaitFrame.phase+if(leg.first<0) 0f else kotlin.math.PI.toFloat())
    val dx=cycle*legLength*(if(gaitFrame.running) 0.16f else 0.09f)*gaitFrame.movement
    val dy=kotlin.math.max(0f,cycle)*legLength*(if(gaitFrame.running) 0.13f else 0.07f)*gaitFrame.movement

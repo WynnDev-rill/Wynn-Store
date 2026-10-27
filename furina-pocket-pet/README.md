@@ -33,7 +33,7 @@ For release builds, restore the **original private signing backup** in `signing/
 
 ## Device tests
 
-With a running Android 16 emulator and built debug/test APKs, run `bash qa/run-device.sh`. Native instrumentation (three tests, including a debug-only official SDK sample) exercises real mesh deformation and transparent GPU pixels, overlay persistence over Home/Settings, pause, hide, screen-off/resume, stop, valid nested Unicode ZIP import and unsafe ZIP rejection. It stores test output and logs in ignored `qa/output`. Pure unit tests cover long behavior simulations, bounds, continuity, disabled behaviors, archive paths and numeric update versions.
+With a running Android 16 emulator and built debug/test APKs, run `bash qa/run-device.sh`. Native instrumentation (eight tests, including a debug-only official SDK sample and ES2 activity-scene checks) exercises real mesh deformation and transparent GPU pixels, overlay persistence over Home/Settings, pause, hide, screen-off/resume, stop, valid nested Unicode ZIP import and unsafe ZIP rejection. It stores test output and logs in ignored `qa/output`. Pure unit tests cover long behavior simulations, bounds, continuity, disabled behaviors, archive paths and numeric update versions.
 
 Actual verification results are recorded in [TEST_REPORT.md](docs/TEST_REPORT.md); test code alone is not evidence that tests passed. Poco F6/HyperOS hardware and the BOOTH Furina model require owner testing.
 
@@ -54,10 +54,17 @@ The BOOTH model also restricts permitted uses and prohibits redistribution. Obta
 
 See [continuation instructions](AGENTS.md), [five-project experience benchmark](docs/PRODUCT_BENCHMARK.md), [asset decisions](docs/ASSET_AUDIT.md), and [verification evidence/limits](docs/TEST_REPORT.md). Keep private owner assets/signing out of public source and CI.
 
-## Companion life 1.3.0
+## Companion life 1.3.0 (previous release)
 
 Quiet autonomous read/cake activities now last long enough to feel intentional. Existing facial rig controls animate focus, chewing and touch expressions; native GPU props add page turns and cake bites. Stroke the head, poke the body, double-tap to hop or hold for settings. Edge mode eases to a side and peeks; Ghost Mode fades the pet and passes taps through, with a notification action to restore interaction. No automatic typing detection is claimed.
 
 The supplied Furina does not have authored sitting or swinging motions. Those controls remain disabled until the selected model provides matching motions or an explicit mapping. Read/eat are native prop-and-face vignettes, not new full-body animation files. The renderer never substitutes another model's curves.
 
 Personal builds include six short original Japanese clips and playback-position RMS mouth animation. Sound follows silent/DND mode, media volume, cooldown and foreground lifecycle; the app never records audio. Standard public-source builds contain no private voices and show that the voice pack is absent. Twemoji book/cake graphics are credited under CC BY 4.0 in the app and notices.
+
+
+## Body activities 1.4.0
+
+The original owner Furina now has a model-specific frontal puppet adapter: she sits on a blue/gold chair with raised knees and dangling boots, holds her book with bent arms, brings a fork to her mouth, and holds a suspended swing's ropes. Body, furniture and held props share a model-space projection; hands draw in front of the props. These are native procedural 2D poses using the original ArtMeshes, not new author-supplied motion files or side-view artwork. Original face/physics/voice behavior remains active.
+
+“Gerak tubuh aktivitas” controls the adapter. It is enabled only for the exact inspected MOC3 hash; arbitrary imported models retain their own motion mappings and the previous read/cake prop fallback. Matching authored model motions take priority. Disable the adapter to return to the original rig presentation. Read/cake/sit/swing can run autonomously or from their settings buttons; touch preempts the activity and the pose fades out.
