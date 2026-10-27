@@ -34,7 +34,7 @@ class PetSettings(context: Context) {
 data class PetStatus(val running: Boolean = false, val renderer: String = "Belum dimulai", val error: String = "",
  val frames: Long = 0, val mode: String = "", val parameters: Int = 0, val suspended: Boolean = false,
  val visiblePixels: Int = 0, val transparentPixels: Int = 0, val meshChanges: Int = 0,
- val voicePlaying: Boolean=false,val lipLevel: Float=0f,val ghost: Boolean=false)
+ val voicePlaying: Boolean=false,val lipLevel: Float=0f,val ghost: Boolean=false,val voiceMessage: String="")
 object PetRuntime {
  private val value = MutableStateFlow(PetStatus())
  val status = value.asStateFlow()

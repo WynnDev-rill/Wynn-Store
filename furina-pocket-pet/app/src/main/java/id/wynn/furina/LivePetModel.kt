@@ -168,7 +168,7 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
    add("ParamAngleZ",sin(elapsed*.55f)*4f*frame.effect)
   }
   if(frame.mood==PetMood.CAKE) {
-   add("ParamMouthOpenY",(.12f+max(0f,sin(frame.progress*44f))*.3f)*frame.effect)
+   add("ParamMouthOpenY",(.08f+BodyPose.bite(frame.progress)*.32f)*frame.effect)
    add("ParamMouthForm",.6f*frame.effect);add("ParamEyeLSmile",.4f*frame.effect);add("ParamEyeRSmile",.4f*frame.effect)
   }
   if(frame.mood==PetMood.PETTED) {

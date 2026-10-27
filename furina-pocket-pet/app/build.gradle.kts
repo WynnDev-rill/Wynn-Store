@@ -10,8 +10,8 @@ android {
   applicationId = "id.wynn.furina"
   minSdk = 26
   targetSdk = 36
-  versionCode = 6
-  versionName = "1.4.0"
+  versionCode = 8
+  versionName = "1.4.2"
   testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
  }
