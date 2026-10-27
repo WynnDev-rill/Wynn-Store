@@ -11,20 +11,20 @@ import kotlin.math.*
 /** Tiny GPU props composed with the existing model, in the same transparent surface/window. */
 class ActivityProps(context: Context) {
  private val program: Int
- private val textures=IntArray(5)
+ private val textures=IntArray(7)
  private val vertices=ByteBuffer.allocateDirect(16*4).order(ByteOrder.nativeOrder()).asFloatBuffer()
- private val position: Int;private val uv: Int;private val opacity: Int
+ private val position: Int;private val uv: Int;private val opacity: Int;private val matrix: Int
  init {
   fun shader(type: Int,source: String)=glCreateShader(type).also {s ->
    glShaderSource(s,source);glCompileShader(s);val status=IntArray(1);glGetShaderiv(s,GL_COMPILE_STATUS,status,0)
    require(status[0]==GL_TRUE) {glGetShaderInfoLog(s)}
   }
-  val vs=shader(GL_VERTEX_SHADER,"attribute vec2 a_position;attribute vec2 a_uv;varying vec2 v_uv;void main(){gl_Position=vec4(a_position,0.,1.);v_uv=a_uv;}")
+  val vs=shader(GL_VERTEX_SHADER,"attribute vec2 a_position;attribute vec2 a_uv;varying vec2 v_uv;uniform mat4 u_matrix;void main(){gl_Position=u_matrix*vec4(a_position,0.,1.);v_uv=a_uv;}")
   val fs=shader(GL_FRAGMENT_SHADER,"precision mediump float;varying vec2 v_uv;uniform sampler2D u_texture;uniform float u_alpha;void main(){gl_FragColor=texture2D(u_texture,v_uv)*u_alpha;}")
   program=glCreateProgram();glAttachShader(program,vs);glAttachShader(program,fs);glLinkProgram(program)
   glDeleteShader(vs);glDeleteShader(fs)
   val status=IntArray(1);glGetProgramiv(program,GL_LINK_STATUS,status,0);require(status[0]==GL_TRUE)
-  position=glGetAttribLocation(program,"a_position");uv=glGetAttribLocation(program,"a_uv");opacity=glGetUniformLocation(program,"u_alpha")
+  position=glGetAttribLocation(program,"a_position");uv=glGetAttribLocation(program,"a_uv");opacity=glGetUniformLocation(program,"u_alpha");matrix=glGetUniformLocation(program,"u_matrix")
   glGenTextures(textures.size,textures,0)
   val book=BitmapFactory.decodeResource(context.resources,R.drawable.activity_book)
   val cake=BitmapFactory.decodeResource(context.resources,R.drawable.activity_cake)
@@ -43,7 +43,7 @@ class ActivityProps(context: Context) {
    val path=Path().apply {moveTo(32f,2f);lineTo(40f,24f);lineTo(62f,32f);lineTo(40f,40f);lineTo(32f,62f);lineTo(24f,40f);lineTo(2f,32f);lineTo(24f,24f);close()}
    Canvas(b).drawPath(path,p)
   }
-  listOf(book,cake,page,fork,sparkle).forEachIndexed {i,b ->
+  listOf(book,cake,page,fork,sparkle,StageFurniture.chair(),StageFurniture.swing()).forEachIndexed {i,b ->
    try {
     glActiveTexture(GL_TEXTURE0);glBindTexture(GL_TEXTURE_2D,textures[i])
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR)
@@ -63,14 +63,47 @@ class ActivityProps(context: Context) {
   vertices.position(2);glVertexAttribPointer(uv,2,GL_FLOAT,false,16,vertices)
   glBindTexture(GL_TEXTURE_2D,textures[texture]);glUniform1f(opacity,alpha);glDrawArrays(GL_TRIANGLE_STRIP,0,4)
  }
- fun draw(frame: PetFrame) {
-  if(frame.effect<=0f) return
-  if(frame.mood!=PetMood.READ && frame.mood!=PetMood.CAKE && frame.mood!=PetMood.PETTED) return
+ private val identity=floatArrayOf(1f,0f,0f,0f,0f,1f,0f,0f,0f,0f,1f,0f,0f,0f,0f,1f)
+ private fun begin(projection: FloatArray=identity) {
   glBindFramebuffer(GL_FRAMEBUFFER,0);glDisable(GL_DEPTH_TEST);glDisable(GL_CULL_FACE);glDisable(GL_SCISSOR_TEST)
   glBindBuffer(GL_ARRAY_BUFFER,0);glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0)
   glEnable(GL_BLEND);glBlendFuncSeparate(GL_ONE,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE_MINUS_SRC_ALPHA)
   glUseProgram(program);glActiveTexture(GL_TEXTURE0);glUniform1i(glGetUniformLocation(program,"u_texture"),0)
+  glUniformMatrix4fv(matrix,1,false,projection,0)
   glEnableVertexAttribArray(position);glEnableVertexAttribArray(uv)
+ }
+ private fun end() {glDisableVertexAttribArray(position);glDisableVertexAttribArray(uv);glUseProgram(0)}
+ fun drawBack(scene: PoseScene,projection: FloatArray) {
+  if(scene.amount<=0f) return
+  begin(projection)
+  if(scene.mood==PetMood.SWING) sprite(6,-.015f,.18f,.9f,1.64f,0f,scene.amount)
+  else sprite(5,-.015f,-.38f,.78f,.98f,0f,scene.amount)
+  end()
+ }
+ private fun drawHeld(scene: PoseScene,projection: FloatArray) {
+  begin(projection)
+  val a=scene.amount
+  when(scene.mood) {
+   PetMood.READ -> {
+    sprite(0,-.015f,-.29f,.51f,.32f,0f,a)
+    val turn=scene.progress*5f%1f
+    if(turn>.78f) {val t=(turn-.78f)/.22f*PI.toFloat();sprite(2,-.015f+sin(t)*.05f,-.26f,max(.006f,abs(cos(t))*.20f),.20f,.02f,a)}
+   }
+   PetMood.CAKE -> {
+    val remaining=(1f-(scene.progress*4).toInt()*.16f).coerceAtLeast(.35f)
+    sprite(1,-.14f,-.28f,.29f*remaining,.25f,0f,a,remaining)
+    // Fork handle at the same smoothed wrist used by the IK bones.
+    sprite(3,scene.right.x,scene.right.y+.045f,.035f,.14f,-.18f,a)
+   }
+   else -> Unit
+  }
+  end()
+ }
+ fun draw(frame: PetFrame,scene: PoseScene?=null,projection: FloatArray?=null) {
+  if(scene!=null && scene.amount>0f && projection!=null) {drawHeld(scene,projection);return}
+  if(frame.effect<=0f) return
+  if(frame.mood!=PetMood.READ && frame.mood!=PetMood.CAKE && frame.mood!=PetMood.PETTED) return
+  begin()
   val a=frame.effect
   when(frame.mood) {
    PetMood.READ -> {
@@ -87,7 +120,7 @@ class ActivityProps(context: Context) {
    PetMood.PETTED -> repeat(3) {i -> sprite(4,-.52f+i*.5f,.42f+sin(frame.progress*9f+i)*.1f,.13f,.16f,frame.progress*.4f,a*.8f)}
    else -> Unit
   }
-  glDisableVertexAttribArray(position);glDisableVertexAttribArray(uv);glUseProgram(0)
+  end()
  }
  fun close() {glDeleteTextures(textures.size,textures,0);glDeleteProgram(program)}
 }
