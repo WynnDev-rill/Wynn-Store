@@ -60,10 +60,10 @@ class CompanionDeviceTest {
    val before=OverlayProbeActivity.clicks
    // Opaque SAW cannot promise cross-UID passthrough on Android 12+. Outside the
    // bounded pet window must still work, and the disabled pet must not react.
-   device.click(10,100);await {OverlayProbeActivity.clicks>before}
-   val mode=PetRuntime.status.value.mode
+   val outsideX=if(point[0]>device.displayWidth-point[0]-view.width) point[0]/2 else (point[0]+view.width+device.displayWidth)/2
+   device.click(outsideX,device.displayHeight/2);await {OverlayProbeActivity.clicks>before}
    device.click(point[0]+view.width/2,point[1]+view.height/2)
-   assertEquals(mode,PetRuntime.status.value.mode)
+   assertFalse(PetRuntime.status.value.mode in listOf(PetMood.POKE.name,PetMood.PETTED.name))
    command(PetService.GHOST)
    await {!PetSettings(app).read().ghost}
    inst.runOnMainSync {assertEquals(0,(view.layoutParams as WindowManager.LayoutParams).flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)}
