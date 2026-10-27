@@ -33,7 +33,7 @@ For release builds, restore the **original private signing backup** in `signing/
 
 ## Device tests
 
-With a running Android 16 emulator and built debug/test APKs, run `bash qa/run-device.sh`. Native instrumentation (three tests, including a debug-only official SDK sample) exercises real mesh deformation and transparent GPU pixels, overlay persistence over Home/Settings, pause, hide, screen-off/resume, stop, valid nested Unicode ZIP import and unsafe ZIP rejection. It stores test output and logs in ignored `qa/output`. Pure unit tests cover long behavior simulations, bounds, continuity, disabled behaviors, archive paths and numeric update versions.
+With a running Android 16 emulator and built debug/test APKs, run `bash qa/run-device.sh`. Native instrumentation (eight tests, including a debug-only official SDK sample and ES2 activity-scene checks) exercises real mesh deformation and transparent GPU pixels, overlay persistence over Home/Settings, pause, hide, screen-off/resume, stop, valid nested Unicode ZIP import and unsafe ZIP rejection. It stores test output and logs in ignored `qa/output`. Pure unit tests cover long behavior simulations, bounds, continuity, disabled behaviors, archive paths and numeric update versions.
 
 Actual verification results are recorded in [TEST_REPORT.md](docs/TEST_REPORT.md); test code alone is not evidence that tests passed. Poco F6/HyperOS hardware and the BOOTH Furina model require owner testing.
 

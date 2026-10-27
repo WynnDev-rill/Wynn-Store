@@ -8,3 +8,5 @@ qa/output/
 *.jks
 *.keystore
 .kotlin/
+
+.superpowers/
