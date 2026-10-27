@@ -1,3 +1,15 @@
+# Voice / gestures / opaque Ghost 1.4.2 — 27 October 2026
+
+- 40 JVM tests passed (including hand/page synchronization, safe eating path and bite hold), local lint 0 errors / 14 warnings, debug/test and original-key signed release builds passed.
+- Android 16 [CI 40443851994](https://github.com/WynnDev-rill/Wynn-Store/actions/runs/40443851994) passed: `OK (9 tests)`; the private Japanese-pack case is intentionally skipped in public CI, leaving eight executed public fixture regressions. Opaque Ghost asserts alpha 1, no pet reaction, outside-window input and restoration. The initial probe clicked a screen edge and timed out; the passing test derives a safe outside-window point from actual pet bounds, retaining input assertions.
+- All six original Japanese clips decoded with FFmpeg; PCM RMS 0.132–0.216, durations 0.214–4.312 s. Voice now uses media volume independently of telephone ringer mode; preview bypasses cooldown and reports blocked/error/completion state. Startup and Greet invoke actual local PET voice. DND, zero media volume, audio focus and lifecycle controls remain enforced.
+- Private original-model geometry previews were viewed at book-hold/page-cross and fork-down/mouth-hold phases. Page and hand share a turn phase; eating wrist stays to the right of the face and fork handle uses its final blended position. These remain procedural frontal poses, not new authored character art. Host previews do not replace physical-phone visual evaluation.
+- Actual packaged original Japanese OGG/envelope test passed on local Android 11 software emulation: `OK (1 test)`, 12.447 s, including nonzero playback-position mouth levels and the completion callback. An initial failure exposed the old 6.5-second combined preparation/playback watchdog cutting off a slowly prepared clip. Version 1.4.2 gives preparation its own 10-second guard and starts a separate duration-plus-5-second guard after playback starts; the callback-aware regression then passed. This tests the owner debug variant, not physical Poco speakers.
+- Signed owner APK 1.4.2 / versionCode 8 retains original signer `eba3ffafb7169cd8687b46a28a2a27b34ee7fb146a7eb2ac2a710da0ed180a3b`. Signature and 16 KiB ZIP alignment passed; all 14 private asset entries match 1.4.0 byte-for-byte. SHA-256 `4e25b19658caee292579527c8eb7a6b4a2f172317e7e8549e0822ee58233f9db`. No private bytes/screenshots/signing are in public CI/git.
+- Opaque Ghost disables pet input. Android 12+ may block cross-UID taps beneath its rectangle; the app discloses this restriction. Physical Poco F6 speaker/Bluetooth routing, OEM behavior and animation appearance remain owner-device checks.
+
+---
+
 # Body activities 1.4.0 — verification results (27 October 2026)
 
 - Final source commit `c1d05e39f000c496bd67ca756869067a939d9e47`: **38 JVM tests, zero failures/errors**. Includes all prior 27 regressions plus 11 body tests: reachable wrists, continuous elbows, exact neutral recovery, fixed hips/raised knees and boots, bounded swing, exact profile rejection, hand-speed/interrupt continuity, shared pivot projection, activity-switch furniture/scale continuity and fork attachment at partial pose amounts.
