@@ -159,7 +159,7 @@ class CompanionDeviceTest {
    var peak=0f
    repeat(20) {inst.runOnMainSync {peak=maxOf(peak,voice!!.level())};SystemClock.sleep(50)}
    assertTrue("Original clip must have audible PCM energy",peak>.2f)
-   await {!voice!!.pending && !voice!!.playing}
+   await {!voice!!.pending && !voice!!.playing && PetRuntime.status.value.voiceMessage=="Suara selesai diputar"}
    assertEquals("Suara selesai diputar",PetRuntime.status.value.voiceMessage)
   } finally {inst.runOnMainSync {voice?.stop()}}
  }

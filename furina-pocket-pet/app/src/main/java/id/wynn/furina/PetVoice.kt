@@ -35,7 +35,7 @@ class PetVoice(private val context: Context) {
  val available: Boolean get()=manifest.isNotEmpty()
  val playing: Boolean get()=runCatching {player?.isPlaying==true}.getOrDefault(false)
  val pending: Boolean get()=preparing
- private val timeout=Runnable {stop()}
+ private val timeout=Runnable {stop();message("Pemutar audio melewati batas waktu; coba lagi")}
  private fun message(value: String) {PetRuntime.update {it.copy(voiceMessage=value)}}
  private fun audible(): Boolean = audio.getStreamVolume(AudioManager.STREAM_MUSIC)>0 &&
   context.getSystemService(NotificationManager::class.java).currentInterruptionFilter==NotificationManager.INTERRUPTION_FILTER_ALL
@@ -73,12 +73,17 @@ class PetVoice(private val context: Context) {
     if(token!=generation || player!==p) return@setOnPreparedListener
     if(!audible()) {stop();return@setOnPreparedListener}
     preparing=false
-    message("Memutar suara Jepang")
-    runCatching {p.start();gate.started(SystemClock.elapsedRealtime());PetRuntime.update {it.copy(voicePlaying=true)}}.onFailure {stop()}
+    handler.removeCallbacks(timeout)
+    runCatching {
+     p.start();gate.started(SystemClock.elapsedRealtime())
+     PetRuntime.update {it.copy(voicePlaying=true,voiceMessage="Memutar suara Jepang")}
+     // Preparation has its own budget; never charge it against the clip duration.
+     handler.postDelayed(timeout,p.duration.coerceIn(50,6000).toLong()+5000L)
+    }.onFailure {error -> stop();message("Audio gagal dimulai: ${error.message ?: "coba lagi"}")}
    }
    next.setOnCompletionListener {if(token==generation) {stop();message("Suara selesai diputar")}}
    next.setOnErrorListener {_,what,extra -> if(token==generation) {stop();message("Pemutar audio gagal ($what/$extra)")};true}
-   handler.postDelayed(timeout,6500);next.prepareAsync();true
+   handler.postDelayed(timeout,10000);next.prepareAsync();true
   } catch(_: Exception) {stop();false}
  }
  fun level(): Float {
