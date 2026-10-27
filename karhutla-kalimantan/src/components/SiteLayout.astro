@@ -5,6 +5,7 @@ import '../styles/season-experience.css';
 import '../styles/portrait.css';
 import '../styles/immersive.css';
 import '../styles/weather-edition.css';
+import '../styles/cinematic-edition.css';
 import Icon from './Icon.astro';
 import manropeFont from '@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2?url';
 import newsreaderFont from '@fontsource-variable/newsreader/files/newsreader-latin-wght-normal.woff2?url';
@@ -21,7 +22,6 @@ const chapters=[['ruang','Masuk ke ruang hutan'],['cerita','Bentang yang berubah
 <meta property="og:title" content={title}/><meta property="og:description" content={description}/><meta property="og:type" content="website"/><meta property="og:locale" content="id_ID"/><meta property="og:image" content={new URL('/media/social.jpg',Astro.site)}/><meta name="twitter:card" content="summary_large_image"/>
 <link rel="preload" href={manropeFont} as="font" type="font/woff2" crossorigin="anonymous"/><link rel="preload" href={newsreaderFont} as="font" type="font/woff2" crossorigin="anonymous"/>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
-{home && <link rel="preload" as="image" href="/media/borneo-smoke-2023.webp" imagesrcset="/media/borneo-smoke-2023-mobile.webp 900w, /media/borneo-smoke-2023.webp 1920w" imagesizes="100vw"/>}
 </head>
 <body class:list={{'is-home':home}}>
 <a class="skip-link" href="#main">Langsung ke isi</a>

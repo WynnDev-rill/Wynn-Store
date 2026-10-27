@@ -1,0 +1,5 @@
+# Opening sculpture geography
+
+`src/data/terrain-outlines.json` is a simplified, projected derivative of this project's existing `public/data/kalimantan-boundaries.geojson`. Upstream provenance and dates are in `docs/boundary-metadata.json` and `/sumber/`: geoBoundaries CC BY 4.0; source geometry OpenStreetMap/Wambacher ODbL 1.0. The geometry derivative is shared under ODbL 1.0. Attribution: © OpenStreetMap contributors, geoBoundaries.
+
+Reproduce using `node scripts/generate-terrain.mjs` from project root. The script retains polygon exteriors above a small-area threshold, samples vertices by projected distance and rounds coordinates. The opening's extrusion, tree heights, strata, lighting and orbit rings are conceptual illustration. They are not measured elevation, actual forest cover, territorial boundary adjudication or hotspot observations. The existing documentary data map and original source file are unchanged. Do not add decorative fire points to this sculpture and describe them as observations.

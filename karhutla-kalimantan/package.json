@@ -15,7 +15,8 @@
     "test:browser": "node scripts/browser-qa.cjs",
     "test:experience": "node scripts/weather-qa.cjs",
     "test:weather": "node scripts/weather-qa.cjs",
-    "test:accessibility": "node scripts/weather-audit.cjs"
+    "test:accessibility": "node scripts/weather-audit.cjs",
+    "test:cinematic": "node scripts/cinematic-qa.cjs"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.3.0",
