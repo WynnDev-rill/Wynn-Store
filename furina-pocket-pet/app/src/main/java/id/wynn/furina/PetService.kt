@@ -180,7 +180,7 @@ class PetService : Service() {
     updateWindow()
    }
    if(intent?.action==HOP && config.jump) engine.action(PetMood.HOP)
-   if(intent?.action==GREET && config.reactions) engine.react()
+   if(intent?.action==GREET && config.reactions) {engine.react();vocal("PET")}
    if(!config.paused && !config.hidden) when(intent?.action) {
     READ -> if(config.activities) engine.action(PetMood.READ)
     CAKE -> if(config.activities) {engine.action(PetMood.CAKE);vocal("CAKE")}
@@ -191,7 +191,11 @@ class PetService : Service() {
    view?.config=config
    PetRuntime.update { it.copy(running=true,error="") }
    schedule()
-   if(intent?.action==START) speak(PetCue.HELLO)
+   if(intent?.action==START) {speak(PetCue.HELLO);vocal("PET")}
+   if(intent?.action==TEST_VOICE && !config.paused && !config.hidden) {
+    if(config.voice) voice.play("PET",config.voiceVolume,true)
+    else PetRuntime.update {it.copy(voiceMessage="Aktifkan Respons suara terlebih dahulu")}
+   }
   } catch(e: Exception) { fail(e.message ?: "Overlay tidak dapat dimulai") }
   return START_NOT_STICKY // Never silently restart a user-stopped pet or start a restricted FGS in background.
  }
@@ -255,8 +259,8 @@ class PetService : Service() {
  private fun dp(value: Float)= (value*density).roundToInt()
  private fun applyGhost() {
   params.flags=if(config.ghost) params.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE else params.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
-  // A single non-touchable SAW below Android's maximum obscuring opacity passes underlying taps.
-  params.alpha=if(config.ghost) .55f else 1f
+  // Opaque Ghost disables pet input. Android 12+ may block underlying taps inside this window.
+  params.alpha=1f
   if(config.ghost) bubble?.hide()
  }
  private fun bounds() {
@@ -299,7 +303,7 @@ class PetService : Service() {
   val open=PendingIntent.getActivity(this,0,Intent(this,MainActivity::class.java),PendingIntent.FLAG_IMMUTABLE)
   return NotificationCompat.Builder(this,CHANNEL).setSmallIcon(R.drawable.ic_pet)
    .setContentTitle("Furina Pocket Pet")
-   .setContentText(when { config.hidden -> "Karakter disembunyikan"; config.paused -> "Animasi dijeda"; config.ghost -> "Ghost Mode · sentuhan menembus karakter"; else -> "Usap kepala · ketuk badan · tahan untuk pengaturan" })
+   .setContentText(when { config.hidden -> "Karakter disembunyikan"; config.paused -> "Animasi dijeda"; config.ghost -> "Ghost Mode · sentuhan karakter nonaktif"; else -> "Usap kepala · ketuk badan · tahan untuk pengaturan" })
    .setContentIntent(open).setOngoing(true).setSilent(true).setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
    .addAction(0,if(config.paused) "Lanjutkan" else "Jeda",pending(PAUSE))
    .addAction(0,if(config.ghost) "Sentuh lagi" else "Ghost",pending(GHOST))
@@ -326,7 +330,7 @@ class PetService : Service() {
   private const val CHANNEL="pet-active"
   private const val NOTIFICATION=41
   const val HOP="hop"; const val GREET="greet"
-  const val READ="read";const val CAKE="cake";const val SIT="sit";const val SWING="swing";const val EDGE="edge";const val GHOST="ghost"
+  const val TEST_VOICE="test_voice";const val READ="read";const val CAKE="cake";const val SIT="sit";const val SWING="swing";const val EDGE="edge";const val GHOST="ghost"
   const val START="start"; const val STOP="stop"; const val PAUSE="pause"; const val HIDE="hide"; const val HOME="home"; const val REFRESH="refresh"
   fun command(context: Context,action: String=START) {
    val intent=Intent(context,PetService::class.java).setAction(action)

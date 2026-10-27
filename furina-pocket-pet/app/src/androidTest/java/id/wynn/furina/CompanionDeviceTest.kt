@@ -48,17 +48,22 @@ class CompanionDeviceTest {
  }
  private fun stop() {inst.runOnMainSync {PetService.command(app,PetService.STOP)};await {!PetRuntime.status.value.running};PetSettings(app).save(PetConfig())}
  private fun command(action: String) {inst.runOnMainSync {PetService.command(app,action)}}
- @Test fun ghostReallyPassesTapsAndRestoresInteraction() {
+ @Test fun opaqueGhostDisablesPetInputAndRestoresInteraction() {
   start(true)
   try {
    val view=pet();val point=IntArray(2)
    inst.runOnMainSync {
     val p=view.layoutParams as WindowManager.LayoutParams
-    assertTrue(p.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE != 0);assertTrue(p.alpha<=.8f)
+    assertTrue(p.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE != 0);assertEquals(1f,p.alpha,0f)
     view.getLocationOnScreen(point)
    }
    val before=OverlayProbeActivity.clicks
-   device.click(point[0]+view.width/2,point[1]+view.height/2);await {OverlayProbeActivity.clicks>before}
+   // Opaque SAW cannot promise cross-UID passthrough on Android 12+. Outside the
+   // bounded pet window must still work, and the disabled pet must not react.
+   device.click(10,100);await {OverlayProbeActivity.clicks>before}
+   val mode=PetRuntime.status.value.mode
+   device.click(point[0]+view.width/2,point[1]+view.height/2)
+   assertEquals(mode,PetRuntime.status.value.mode)
    command(PetService.GHOST)
    await {!PetSettings(app).read().ghost}
    inst.runOnMainSync {assertEquals(0,(view.layoutParams as WindowManager.LayoutParams).flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)}
@@ -138,5 +143,24 @@ class CompanionDeviceTest {
    inst.runOnMainSync {voice!!.playLocal(bad,LipEnvelope(emptyList()),.4f)}
    await {!voice!!.playing && !voice!!.pending};assertEquals(0f,voice!!.level(),0f);bad.delete()
   } finally {inst.runOnMainSync {voice?.stop()};file.delete()}
+ }
+ @Test fun bundledJapaneseVoiceReallyStartsDrivesMouthAndCompletes() {
+  org.junit.Assume.assumeTrue(app.assets.list("personal/voice")?.contains("manifest.json")==true)
+  app.startActivity(Intent(app,OverlayProbeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));device.waitForIdle()
+  var voice: PetVoice?=null
+  try {
+   inst.runOnMainSync {
+    voice=PetVoice(app);assertTrue("Bundled manifest must parse",voice!!.available)
+    assertFalse(voice!!.play("PET",0f,true))
+    assertTrue(PetRuntime.status.value.voiceMessage.contains("volume"))
+    assertTrue("Original Japanese OGG must enter player",voice!!.play("PET",1f,true))
+   }
+   await {voice!!.playing}
+   var peak=0f
+   repeat(20) {inst.runOnMainSync {peak=maxOf(peak,voice!!.level())};SystemClock.sleep(50)}
+   assertTrue("Original clip must have audible PCM energy",peak>.2f)
+   await {!voice!!.pending && !voice!!.playing}
+   assertEquals("Suara selesai diputar",PetRuntime.status.value.voiceMessage)
+  } finally {inst.runOnMainSync {voice?.stop()}}
  }
 }

@@ -86,15 +86,17 @@ class ActivityProps(context: Context) {
   when(scene.mood) {
    PetMood.READ -> {
     sprite(0,-.015f,-.29f,.51f,.32f,0f,a)
-    val turn=scene.progress*5f%1f
-    if(turn>.78f) {val t=(turn-.78f)/.22f*PI.toFloat();sprite(2,-.015f+sin(t)*.05f,-.26f,max(.006f,abs(cos(t))*.20f),.20f,.02f,a)}
+    val turn=BodyPose.pageTurn(scene.progress)
+    if(turn>0f) sprite(2,.09f-.20f*turn,-.26f,max(.008f,abs(cos(turn*PI.toFloat()))*.20f),.20f,0f,a)
    }
    PetMood.CAKE -> {
     val remaining=(1f-(scene.progress*4).toInt()*.16f).coerceAtLeast(.35f)
     sprite(1,-.14f,-.28f,.29f*remaining,.25f,0f,a,remaining)
     // Fork handle at the same smoothed wrist used by the IK bones.
     val wrist=BodyPose.wrist(scene,1)
-    sprite(3,wrist.x,wrist.y+.045f,.035f,.14f,-.18f,a)
+    val angle=.15f+BodyPose.bite(scene.progress)*.55f
+    // Lower end is the handle attachment; tip approaches the mouth from the right.
+    sprite(3,wrist.x-sin(angle)*.055f,wrist.y+cos(angle)*.055f,.028f,.13f,angle,a)
    }
    else -> Unit
   }

@@ -186,7 +186,8 @@ class MainActivity : ComponentActivity() {
       Toggle("Aktivitas mandiri","Membaca, menikmati kue, dan beristirahat",c.activities) { save(prefs.read().copy(activities=it)) }
       Toggle("Gerak tubuh aktivitas","Pose duduk, tangan membaca/makan, dan ayunan pada rig yang sesuai",c.bodyMotion) { save(prefs.read().copy(bodyMotion=it)) }
       Toggle("Teman di tepi layar","Mendekat ke pinggir dan sesekali mengintip",c.edges) { save(prefs.read().copy(edges=it)) }
-      Toggle("Ghost Mode","Sentuhan menembus karakter · pulihkan dari notifikasi",c.ghost) { save(prefs.read().copy(ghost=it)) }
+      Toggle("Ghost Mode","Karakter tetap penuh · sentuhan karakter nonaktif",c.ghost) { save(prefs.read().copy(ghost=it)) }
+      Text("Pada Android 12+, area karakter dapat menahan ketukan ke aplikasi di belakangnya saat Ghost aktif.",fontSize=12.sp,color=Muted,lineHeight=19.sp)
       Text("Usap kepala perlahan, ketuk badan, atau ketuk dua kali untuk melompat.",fontSize=12.sp,color=Muted,lineHeight=19.sp)
       val active=status.running && !c.paused && !c.hidden && c.activities
       Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
@@ -206,8 +207,10 @@ class MainActivity : ComponentActivity() {
      Section("Suara & gerak mulut") {
       val hasVoice=remember {runCatching {assets.list("personal/voice")?.contains("manifest.json")==true}.getOrDefault(false)}
       Toggle("Respons suara","Klip Jepang pendek saat berinteraksi",c.voice) { save(prefs.read().copy(voice=it)) }
+      OutlinedButton(onClick={PetService.command(this@MainActivity,PetService.TEST_VOICE)},enabled=status.running && !c.paused && !c.hidden) {Text("Coba suara Jepang")}
+      if(status.voiceMessage.isNotEmpty()) Text(status.voiceMessage,fontSize=12.sp,color=Muted)
       SettingSlider("Volume",c.voiceVolume,"${(c.voiceVolume*100).toInt()}%",0f..1f) {save(prefs.read().copy(voiceVolume=it))}
-      Text(if(hasVoice) "Mengikuti mode senyap dan Jangan ganggu. Mulut mengikuti audio." else "Paket suara belum terpasang pada build ini.",fontSize=12.sp,color=Muted,lineHeight=19.sp)
+      Text(if(hasVoice) "Menggunakan volume media. Mulut mengikuti audio." else "Paket suara belum terpasang pada build ini.",fontSize=12.sp,color=Muted,lineHeight=19.sp)
      }
      Section("Aksi model") {
       Row {

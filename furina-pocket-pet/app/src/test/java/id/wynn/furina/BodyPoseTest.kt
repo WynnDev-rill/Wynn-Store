@@ -100,4 +100,14 @@ class BodyPoseTest {
    assertEquals(-.33f+(.075f+.33f)*amount,point.y,.0001f)
   }
  }
+ @Test fun pageTurnMovesTheRightHandAcrossTheBookWhileLeftSupportsIt() {
+  val a=BodyPose.target(1,PetMood.READ,.144f);val b=BodyPose.target(1,PetMood.READ,.182f)
+  assertTrue(a.x-b.x>.15f)
+  assertEquals(BodyPose.target(-1,PetMood.READ,.144f),BodyPose.target(-1,PetMood.READ,.182f))
+ }
+ @Test fun eatingHandDoesNotCrossTheFaceAndHasAStableMouthHold() {
+  for(i in 0..1000) {val p=BodyPose.target(1,PetMood.CAKE,i/1000f);assertTrue(p.x>=.069f);assertTrue(p.y<=.001f)}
+  assertEquals(1f,BodyPose.bite(.14f),.001f)
+  assertEquals(1f,BodyPose.bite(.16f),.001f)
+ }
 }

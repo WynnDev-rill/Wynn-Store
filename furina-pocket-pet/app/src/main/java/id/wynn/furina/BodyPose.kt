@@ -30,13 +30,26 @@ object BodyPose {
  val leftLegs=setOf("ArtMesh108","ArtMesh110")
  val rightLegs=setOf("ArtMesh109","ArtMesh111")
  fun target(side: Int,mood: PetMood,progress: Float): PosePoint = when(mood) {
-  PetMood.READ -> PosePoint(side*.20f-.015f,-.27f)
+  PetMood.READ -> if(side<0) PosePoint(-.215f,-.30f) else {
+   val turn=pageTurn(progress)
+   PosePoint(.185f-.28f*turn,-.30f+.10f*sin(turn*PI.toFloat()))
+  }
   PetMood.SWING -> PosePoint(side*.29f-.015f,-.13f)
   PetMood.CAKE -> if(side<0) PosePoint(-.17f,-.31f) else {
-   val t=max(0f,sin((progress*5f%1f)*PI.toFloat())).let {it*it*(3-2*it)}
-   PosePoint(.19f+(-.015f-.19f)*t,-.29f+(.075f+.29f)*t)
+   val t=bite(progress)
+   PosePoint(.18f-.11f*t,-.31f+.31f*t)
   }
   else -> PosePoint(side*.36f,-.33f)
+ }
+ fun pageTurn(progress: Float): Float {
+  val phase=progress*5f%1f
+  val t=((phase-.72f)/.28f).coerceIn(0f,1f)
+  return (if(t<.68f) (t/.68f) else (1f-t)/.32f).coerceIn(0f,1f).let {it*it*(3f-2f*it)}
+ }
+ fun bite(progress: Float): Float {
+  val t=progress*4f%1f
+  val lift=when {t<.2f -> 0f;t<.5f -> (t-.2f)/.3f;t<.68f -> 1f;else -> (1f-t)/.32f}
+  return lift.coerceIn(0f,1f).let {it*it*(3f-2f*it)}
  }
  private fun affine(sx: Float,sy: Float,tx: Float,ty: Float,angle: Float,scaleX: Float=1f,scaleY: Float=1f): FloatArray {
   val c=cos(angle);val s=sin(angle)

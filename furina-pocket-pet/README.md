@@ -68,3 +68,8 @@ Personal builds include six short original Japanese clips and playback-position 
 The original owner Furina now has a model-specific frontal puppet adapter: she sits on a blue/gold chair with raised knees and dangling boots, holds her book with bent arms, brings a fork to her mouth, and holds a suspended swing's ropes. Body, furniture and held props share a model-space projection; hands draw in front of the props. These are native procedural 2D poses using the original ArtMeshes, not new author-supplied motion files or side-view artwork. Original face/physics/voice behavior remains active.
 
 “Gerak tubuh aktivitas” controls the adapter. It is enabled only for the exact inspected MOC3 hash; arbitrary imported models retain their own motion mappings and the previous read/cake prop fallback. Matching authored model motions take priority. Disable the adapter to return to the original rig presentation. Read/cake/sit/swing can run autonomously or from their settings buttons; touch preempts the activity and the pose fades out.
+
+
+## 1.4.1 corrections
+
+Voice uses media volume even when the ringer is silent. Start/Greet now speaks; “Coba suara Jepang” plays the actual local clip and shows playback/blocking/error status. DND and zero media volume still apply. Right-hand page turning and a staged cake lift/hold/return replace the previous independent page/fork loop. Ghost retains full opacity and disables character input; on Android 12+ an opaque overlay can block taps to apps underneath its small window. Restore from notification/settings or hide/reposition the pet.
