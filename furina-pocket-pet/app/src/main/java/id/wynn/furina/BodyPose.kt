@@ -63,6 +63,11 @@ object BodyPose {
   return BonePose(affine(x,hip,x,hip,upperAngle,1f,hypot(nx-x,ny-hip)/(hip-ky)),
    affine(x,ky,nx,ny,lowerAngle))
  }
+ fun scale(scene: PoseScene)=1f-if(scene.mood==PetMood.SWING) scene.amount*.09f else 0f
+ fun wrist(scene: PoseScene,side: Int): PosePoint {
+  val target=if(side<0) scene.left else scene.right
+  return arm(side,target).point(side*.36f,-.33f,1f,scene.amount)
+ }
  fun projection(base: FloatArray,pivot: PosePoint,angle: Float): FloatArray {
   val c=cos(angle);val s=sin(angle)
   val tx=pivot.x-c*pivot.x+s*pivot.y;val ty=pivot.y-s*pivot.x-c*pivot.y
@@ -79,10 +84,15 @@ class BodyPresentation {
  fun step(dt: Float,frame: PetFrame,enabled: Boolean): PoseScene {
   if(!enabled) {scene=PoseScene();return scene}
   val active=frame.mood in ActivityCatalog.sustained
-  val mood=if(active) frame.mood else scene.mood
-  val progress=if(active) frame.progress else scene.progress
+  // Preserve outgoing furniture/phase until it has faded; a new request may replace
+  // another pending request, but never replaces an opaque scene in one frame.
+  val switching=active && scene.amount>0f && scene.mood!=PetMood.REST && scene.mood!=frame.mood
+  val entering=active && !switching
+  val mood=if(entering) frame.mood else scene.mood
+  val progress=if(entering) frame.progress else scene.progress
   val k=1f-exp(-dt.coerceIn(0f,.1f)*10f)
-  val amount=(scene.amount+((if(active) frame.effect else 0f)-scene.amount)*k).let {if(!active && it<.001f) 0f else it}
+  val targetAmount=if(entering) frame.effect else 0f
+  val amount=(scene.amount+(targetAmount-scene.amount)*k).let {if(targetAmount==0f && it<.001f) 0f else it}
   fun smooth(a: PosePoint,b: PosePoint): PosePoint {
    val dx=(b.x-a.x)*k;val dy=(b.y-a.y)*k;val distance=hypot(dx,dy)
    val limit=dt.coerceIn(0f,.1f)*2.4f

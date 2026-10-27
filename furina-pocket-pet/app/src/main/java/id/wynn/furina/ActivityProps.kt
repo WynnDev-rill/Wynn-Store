@@ -93,7 +93,8 @@ class ActivityProps(context: Context) {
     val remaining=(1f-(scene.progress*4).toInt()*.16f).coerceAtLeast(.35f)
     sprite(1,-.14f,-.28f,.29f*remaining,.25f,0f,a,remaining)
     // Fork handle at the same smoothed wrist used by the IK bones.
-    sprite(3,scene.right.x,scene.right.y+.045f,.035f,.14f,-.18f,a)
+    val wrist=BodyPose.wrist(scene,1)
+    sprite(3,wrist.x,wrist.y+.045f,.035f,.14f,-.18f,a)
    }
    else -> Unit
   }

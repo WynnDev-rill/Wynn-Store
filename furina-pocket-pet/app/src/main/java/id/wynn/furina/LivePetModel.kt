@@ -200,7 +200,7 @@ class LivePetModel(private val info: ModelInfo, width: Int, height: Int) : Cubis
   if(speaking || wasSpeaking) lipIds.forEach {id -> model.setParameterValue(id,mouthLevel)}
   model.update()
   val aspect=width.toFloat()/height.coerceAtLeast(1)
-  val s=(1f-if(stageScene.mood==PetMood.SWING) stageScene.amount*.09f else 0f)*min(1.8f/(bounds[1]-bounds[0]),1.8f/((bounds[3]-bounds[2])*aspect))
+  val s=BodyPose.scale(stageScene)*min(1.8f/(bounds[1]-bounds[0]),1.8f/((bounds[3]-bounds[2])*aspect))
   val matrix=CubismMatrix44.create()
   val bob=if(frame.mood==PetMood.ROAM && walk==null) abs(frame.stride)*0.025f else 0f
   matrix.scale(s,s*aspect)

@@ -72,4 +72,32 @@ class BodyPoseTest {
   assertTrue(project(left,PosePoint(0f,-.7f)).x<project(right,PosePoint(0f,-.7f)).x)
   assertArrayEquals(copy,base,0f)
  }
+ @Test fun activitySwitchFadesOldFurnitureAndScaleBeforeReplacingIt() {
+  for((old,next) in listOf(PetMood.SWING to PetMood.READ,PetMood.SWING to PetMood.SIT,PetMood.READ to PetMood.SWING)) {
+   val p=BodyPresentation();repeat(100) {p.step(1f/60,PetFrame(mood=old,effect=1f,progress=.16f),true)}
+   val before=p.scene
+   p.step(1f/60,PetFrame(mood=next,effect=1f,progress=.1f),true)
+   assertEquals("Outgoing furniture must remain while fading",old,p.scene.mood)
+   assertTrue(p.scene.amount<before.amount)
+   assertTrue("First transition frame remains smooth",abs(BodyPose.scale(p.scene)-BodyPose.scale(before))<.02f)
+   var previous=p.scene;var changed=false
+   repeat(140) {
+    val scene=p.step(1f/60,PetFrame(mood=next,effect=1f,progress=.1f),true)
+    assertTrue("No one-frame scale jump",abs(BodyPose.scale(scene)-BodyPose.scale(previous))<.02f)
+    if(scene.mood!=previous.mood) assertTrue("Swap only when old furniture is invisible",previous.amount<.002f)
+    if(scene.mood==next && scene.amount>.9f) changed=true
+    previous=scene
+   }
+   assertTrue("Requested activity must eventually enter",changed)
+  }
+ }
+ @Test fun forkRemainsAtTheRenderedWristDuringPartialAndInterruptedBites() {
+  val target=PosePoint(-.015f,.075f)
+  for(amount in listOf(0f,.25f,.5f,.9f,1f)) {
+   val scene=PoseScene(PetMood.CAKE,.1f,amount,right=target)
+   val point=BodyPose.wrist(scene,1)
+   assertEquals(.36f+(-.015f-.36f)*amount,point.x,.0001f)
+   assertEquals(-.33f+(.075f+.33f)*amount,point.y,.0001f)
+  }
+ }
 }
