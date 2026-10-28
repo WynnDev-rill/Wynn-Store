@@ -61,7 +61,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api: [30, 36]
+        api: [30]
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:

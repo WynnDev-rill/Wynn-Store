@@ -188,11 +188,7 @@ class WatchService : AccessibilityService() {
   if(event.eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
    val pkg=event.packageName?.toString()
    val cls=event.className?.toString().orEmpty()
-   // An Activity can have any class name and need not have a launcher entry.
-   // Keep IME window events out of the hint too: rootless reconciliation cannot
-   // subsequently distinguish a keyboard from an app using window metadata.
-   val inputWindow=cls.endsWith("SoftInputWindow") || cls.endsWith("InputMethodService")
-   if(pkg!=null && (pkg!=packageName || cls.endsWith("Activity")) && !cls.contains("Dialog") && !cls.contains("Popup") && !inputWindow) {
+   if(pkg!=null && (pkg!=packageName || cls.endsWith("Activity")) && !cls.contains("Dialog") && !cls.contains("Popup") && (pkg in excluded || cls.endsWith("Activity") || cls.endsWith("Launcher") || packageManager.getLaunchIntentForPackage(pkg)!=null)) {
     activityHint=pkg.takeUnless { it in excluded };hasActivityHint=true;hintUntil=SystemClock.uptimeMillis()+250;directTransition=true
    }
   }
