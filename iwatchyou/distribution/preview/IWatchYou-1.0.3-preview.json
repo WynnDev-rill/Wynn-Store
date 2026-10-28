@@ -1,0 +1,12 @@
+{
+  "versionName": "1.0.3-preview",
+  "versionCode": 4,
+  "packageName": "id.wynn.iwatchyou.preview",
+  "sourceCommit": "e9600d664ff295bfb06c90cf64901274f927123b",
+  "sourceDigest": "4f617b5ef0658987f3e3d6434c5952c83adebfa53d0b7b547197df3ce4fd48f3",
+  "workflowRunId": 40651502744,
+  "sha256": "8d2e4962ffcdcae3f8ab83e0d0a9f479916fa2adfa8298124a80fb0100e411fe",
+  "sizeBytes": 2002912,
+  "signerSha256": "02b7b2356a5ea30bc00edeeaea83ecb56864359b5e542275429dc307324cbbde",
+  "signing": "debug; isolated preview package; manual updates"
+}
