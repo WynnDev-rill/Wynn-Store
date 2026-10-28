@@ -4,9 +4,10 @@ set -euo pipefail
 out=iwatchyou/qa/output/release
 mkdir -p "$out"
 adb shell "settings put secure enabled_accessibility_services ''"
-adb install -r iwatchyou/app/build/outputs/apk/app-release-qa.apk
+adb install --no-incremental -r iwatchyou/app/build/outputs/apk/app-release-qa.apk
+adb shell am force-stop id.wynn.iwatchyou
 adb logcat -c
-adb shell am start -W -n id.wynn.iwatchyou/.MainActivity > "$out/launch.txt"
+adb shell am start -W -f 0x10008000 -n id.wynn.iwatchyou/.MainActivity > "$out/launch.txt"
 adb shell uiautomator dump /sdcard/iw-release-home.xml >/dev/null
 adb pull /sdcard/iw-release-home.xml "$out/home.xml" >/dev/null
 grep -q 'text="IWatchYou"' "$out/home.xml"

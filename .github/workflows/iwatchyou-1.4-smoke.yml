@@ -1,0 +1,53 @@
+name: IWatchYou 1.4 optimized APK verification
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/iwatchyou-1.4]
+    paths:
+      - '.github/workflows/iwatchyou-1.4-smoke.yml'
+      - 'iwatchyou/qa/run-release-smoke.sh'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  release-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [30, 36]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Match the already-built native source
+        run: |
+          test "$(python3 iwatchyou/scripts/source_digest.py)" = a929d24552218563310e80fd2ca9c91f2553b15533e2592f2b84440544e3c88a
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/download-artifact@v4
+        with:
+          name: IWatchYou-build
+          run-id: 40740062106
+          github-token: ${{ github.token }}
+          path: iwatchyou/app/build
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install and launch the optimized release
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: false
+          script: bash iwatchyou/qa/run-release-smoke.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IWatchYou-1.4-release-api-${{ matrix.api }}
+          path: iwatchyou/qa/output/release/

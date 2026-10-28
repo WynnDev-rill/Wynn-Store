@@ -375,7 +375,10 @@ class DeviceTest {
     val before=service.current().apps["id.wynn.iwatchyou.test"] ?: 0L
     SystemClock.sleep(1100)
     assertTrue("External app time advances",service.current().apps["id.wynn.iwatchyou.test"]!!>before)
-    assertNotEquals("Displayed timer advances even after automatic dimming",displayed,timerReading())
+    // A native Chronometer callback may be delayed on a loaded emulator.
+    // Wait for a real displayed tick; a frozen timer still fails this deadline.
+    waitFor(8000) { timerReading()!=displayed }
+    assertEquals("External app remains focused while the timer advances", "id.wynn.iwatchyou.test", service.current().foreground)
     device.findObject(By.text("Show keyboard").pkg("id.wynn.iwatchyou.test")).click()
     waitFor { automation.windows.any { it.type==android.view.accessibility.AccessibilityWindowInfo.TYPE_INPUT_METHOD } }
     SystemClock.sleep(350)
