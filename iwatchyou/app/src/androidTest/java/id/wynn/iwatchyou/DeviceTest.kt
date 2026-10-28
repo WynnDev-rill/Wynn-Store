@@ -183,6 +183,37 @@ class DeviceTest {
   device.findObject(By.text("Lanjutkan")).click()
   waitFor { focusedApplication()=="com.android.settings" }
  }
+ @Test fun legacyMigrationCannotReplaceANewerConcurrentSnapshot() {
+  device.pressHome()
+  val day="2000-12-30"
+  val legacy=context.getSharedPreferences("times",Context.MODE_PRIVATE)
+  legacy.edit().putString("day",day).putLong("screen",100).putString("apps","{\"legacy.app\":50}").commit()
+  val executor=java.util.concurrent.Executors.newSingleThreadExecutor()
+  try {
+   HistoryStore(context).use { current ->
+    val db=current.writableDatabase
+    db.execSQL("DELETE FROM days WHERE day=?",arrayOf(day))
+    db.beginTransaction()
+    val entered=java.util.concurrent.CountDownLatch(1)
+    val migration=executor.submit {
+     entered.countDown()
+     HistoryStore(context).use { it.migrateLegacy(context) }
+    }
+    try {
+     assertTrue(entered.await(3,java.util.concurrent.TimeUnit.SECONDS))
+     SystemClock.sleep(200) // Migration waits behind the active SQLite writer.
+     current.write(TimeLedger.Snapshot(day,9000,mapOf("new.app" to 8000L),null,List(24){if(it==4)9000L else 0L}))
+     db.setTransactionSuccessful()
+    } finally { db.endTransaction() }
+    migration.get(10,java.util.concurrent.TimeUnit.SECONDS)
+    val saved=current.read(day)!!
+    assertEquals(9000L,saved.screenMs)
+    assertEquals(mapOf("new.app" to 8000L),saved.apps)
+    assertEquals(9000L,saved.hours[4])
+    assertNull(legacy.getString("day",null))
+   }
+  } finally { executor.shutdownNow() }
+ }
  @Test fun historyIsAtomicAndSurvivesReopen() {
   val day="2001-01-01"
   HistoryStore(context).use { it.write(TimeLedger.Snapshot(day,12345,mapOf("test.app" to 9999L),null,List(24){if(it==5)12345L else 0L})) }

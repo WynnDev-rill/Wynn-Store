@@ -115,7 +115,9 @@ jobs:
         if: always()
         with:
           name: IWatchYou-device-api-${{ matrix.api }}
-          path: iwatchyou/qa/output/
+          path: |
+            iwatchyou/qa/output/
+            iwatchyou/qa/upgrade-output/
   production:
     needs: [build, device]
     if: github.ref == 'refs/heads/main' && needs.build.outputs.staged == 'true'
