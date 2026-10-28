@@ -3,7 +3,7 @@
 set -euo pipefail
 out=iwatchyou/qa/output/release
 mkdir -p "$out"
-adb shell settings put secure enabled_accessibility_services ''
+adb shell "settings put secure enabled_accessibility_services ''"
 adb install -r iwatchyou/app/build/outputs/apk/app-release-qa.apk
 adb logcat -c
 adb shell am start -W -n id.wynn.iwatchyou/.MainActivity > "$out/launch.txt"
