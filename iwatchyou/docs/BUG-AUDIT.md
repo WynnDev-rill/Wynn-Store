@@ -130,6 +130,14 @@ does not define that option. Cleanup now uses explicit NEW_TASK/CLEAR_TASK flags
 and verifies the PiP window disappears instead of discarding an unsuccessful
 command and contaminating the following test.
 
+The [isolated-task run](https://github.com/WynnDev-rill/Wynn-Store/actions/runs/40625108713)
+passed all six native tests on API 30. API 36 failed two readiness checks: the old
+rootless test launched Settings before Home's transition finished, and the new
+fixture's title was drawn underneath the status bar due to edge-to-edge layout.
+The test now waits for actual focused Home and Settings windows while preserving
+the strict time-growth assertion. The native fixture applies system-bar/cutout
+insets so its controls and title are visible on API 36 as well as API 30.
+
 The patched local build passed all 24 JVM tests, release lint and release/debug/
 test APK compilation. Lint reports zero errors and 17 warnings (dependency
 versions, backup rules, SDK/KTX, touch accessibility and RTL), which are recorded

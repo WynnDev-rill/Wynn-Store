@@ -28,6 +28,14 @@ class DeviceTest {
  private val device get()=UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
  private fun shell(command: String) { automation.executeShellCommand(command).use { android.os.ParcelFileDescriptor.AutoCloseInputStream(it).readBytes() } }
  private fun waitFor(timeout: Long=8000,condition:()->Boolean) { val until=SystemClock.uptimeMillis()+timeout; while(!condition() && SystemClock.uptimeMillis()<until)SystemClock.sleep(50);assertTrue("Timed out waiting for condition",condition()) }
+ private fun focusedApplication(): String? {
+  val focused=automation.windows.firstOrNull {
+   it.type==android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION && it.isFocused && !it.isInPictureInPictureMode
+  }
+  val root=focused?.root
+  return try { root?.packageName?.toString() }
+  finally { @Suppress("DEPRECATION") root?.recycle() }
+ }
  @Test fun historyIsAtomicAndSurvivesReopen() {
   val day="2001-01-01"
   HistoryStore(context).use { it.write(TimeLedger.Snapshot(day,12345,mapOf("test.app" to 9999L),null,List(24){if(it==5)12345L else 0L})) }
@@ -130,14 +138,14 @@ class DeviceTest {
   try {
    repeat(3) {
     device.pressHome()
-    SystemClock.sleep(150)
-    shell("am start -a android.settings.SETTINGS")
-    waitFor(20_000) { service.current().foreground=="com.android.settings" }
+    waitFor(20_000) { focusedApplication()==device.launcherPackageName && service.current().foreground==null }
+    shell("am start -W -a android.settings.SETTINGS")
+    waitFor(20_000) { focusedApplication()=="com.android.settings" && service.current().foreground=="com.android.settings" }
     val start=service.current().apps["com.android.settings"] ?: 0L
     SystemClock.sleep(250)
     assertTrue(service.current().apps["com.android.settings"]!!>start)
     device.pressHome()
-    waitFor { service.current().foreground==null }
+    waitFor(20_000) { focusedApplication()==device.launcherPackageName && service.current().foreground==null }
    }
   } finally {
    InstrumentationRegistry.getInstrumentation().runOnMainSync { info.flags=oldFlags; service.serviceInfo=info }
@@ -173,18 +181,12 @@ class DeviceTest {
    shell("settings put secure show_ime_with_hard_keyboard 1")
    repeat(3) {
     device.pressHome()
+    waitFor(20_000) { focusedApplication()==device.launcherPackageName && service.current().foreground==null }
     shell("am start -W -a android.settings.SETTINGS")
     waitFor(20_000) { service.current().foreground=="com.android.settings" }
     shell("am start -W -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
     assertTrue("External app is visible",device.wait(Until.hasObject(By.text("External focus fixture").pkg("id.wynn.iwatchyou.test")),8000))
-    waitFor {
-     val focused=automation.windows.firstOrNull {
-      it.type==android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION && it.isFocused && !it.isInPictureInPictureMode
-     }
-     val root=focused?.root
-     try { root?.packageName?.toString()=="id.wynn.iwatchyou.test" }
-     finally { @Suppress("DEPRECATION") root?.recycle() }
-    }
+    waitFor { focusedApplication()=="id.wynn.iwatchyou.test" }
     waitFor(20_000) { service.current().foreground=="id.wynn.iwatchyou.test" }
     assertTrue("Bubble appears over an external app",device.wait(Until.hasObject(By.clazz("android.widget.Chronometer")),8000))
     val displayed=device.findObject(By.clazz("android.widget.Chronometer")).text
@@ -209,7 +211,7 @@ class DeviceTest {
     SystemClock.sleep(350)
     assertEquals("Keyboard must not steal the rootless app hint","id.wynn.iwatchyou.test",service.current().foreground)
     device.pressHome()
-    waitFor { service.current().foreground==null }
+    waitFor(20_000) { focusedApplication()==device.launcherPackageName && service.current().foreground==null }
     assertTrue("Bubble disappears at Home",device.wait(Until.gone(By.clazz("android.widget.Chronometer")),8000))
     val paused=service.current().apps["id.wynn.iwatchyou.test"]!!
     SystemClock.sleep(200)
@@ -219,7 +221,7 @@ class DeviceTest {
     waitFor(20_000) { service.current().foreground=="id.wynn.iwatchyou.test" }
     assertTrue("Bubble reappears after launching from Home",device.wait(Until.hasObject(By.clazz("android.widget.Chronometer")),8000))
     device.pressHome()
-    waitFor { service.current().foreground==null }
+    waitFor(20_000) { focusedApplication()==device.launcherPackageName && service.current().foreground==null }
    }
   } finally {
    InstrumentationRegistry.getInstrumentation().runOnMainSync { info.flags=oldFlags; service.serviceInfo=info }

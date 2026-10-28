@@ -3,6 +3,7 @@ package id.wynn.iwatchyou
 import android.app.Activity
 import android.os.Bundle
 import android.view.WindowManager
+import android.view.WindowInsets
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
@@ -16,6 +17,11 @@ class FocusProbe : Activity() {
   window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
   setContentView(LinearLayout(this).apply {
    orientation=LinearLayout.VERTICAL
+   setOnApplyWindowInsetsListener { view,insets ->
+    val bars=insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+    view.setPadding(bars.left,bars.top,bars.right,bars.bottom)
+    insets
+   }
    addView(TextView(this@FocusProbe).apply { text="External focus fixture" })
    val editor=EditText(this@FocusProbe).apply { hint="Keyboard fixture" }
    addView(editor)
