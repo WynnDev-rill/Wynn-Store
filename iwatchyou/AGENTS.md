@@ -55,7 +55,8 @@ emulator pass as proof that every phone works.
 
 ## Build and test
 
-Run from the repository root with a configured Android SDK and Java 17+:
+Run from the repository root with a configured Android SDK and a full JDK 17+
+(including `javac`, not just a JRE):
 
 ```sh
 ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:assembleDebug :app:assembleDebugAndroidTest

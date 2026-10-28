@@ -116,6 +116,15 @@ fresh Home → Settings transition, waits for actual Activity display, opens the
 IME explicitly, and checks its real window metadata. Teardown waits for service
 disconnection before another test enables a new instance.
 
+The [next run](https://github.com/WynnDev-rill/Wynn-Store/actions/runs/40623892975)
+confirmed the external selection and rendered timer assertions on both APIs,
+but failed at the real keyboard check. The API 30 screenshot shows the fixture
+inside a small PiP task above Settings; logcat reports its button as non-clickable.
+The fixture shared its default task affinity with the earlier PiP fixture.
+`FocusProbe` now has a distinct task affinity and explicitly disables PiP, so the
+cross-app/keyboard check runs against a separate fullscreen application window.
+This is test isolation, not a change to production PiP accounting.
+
 The patched local build passed all 24 JVM tests, release lint and release/debug/
 test APK compilation. Lint reports zero errors and 17 warnings (dependency
 versions, backup rules, SDK/KTX, touch accessibility and RTL), which are recorded

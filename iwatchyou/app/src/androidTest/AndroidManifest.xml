@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
  <application>
-  <activity android:name="id.wynn.iwatchyou.FocusProbe" android:exported="true" android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+  <activity android:name="id.wynn.iwatchyou.FocusProbe" android:exported="true" android:taskAffinity="id.wynn.iwatchyou.focusfixture" android:supportsPictureInPicture="false" android:theme="@android:style/Theme.Material.Light.NoActionBar" />
   <activity android:name="id.wynn.iwatchyou.ProbeActivity" android:exported="true" android:resizeableActivity="true" android:supportsPictureInPicture="true" android:theme="@android:style/Theme.Material.Light.NoActionBar" />
  </application>
 </manifest>

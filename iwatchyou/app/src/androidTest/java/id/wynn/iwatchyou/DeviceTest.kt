@@ -176,6 +176,14 @@ class DeviceTest {
     waitFor(20_000) { service.current().foreground=="com.android.settings" }
     shell("am start -W -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
     assertTrue("External app is visible",device.wait(Until.hasObject(By.text("External focus fixture").pkg("id.wynn.iwatchyou.test")),8000))
+    waitFor {
+     val focused=automation.windows.firstOrNull {
+      it.type==android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION && it.isFocused && !it.isInPictureInPictureMode
+     }
+     val root=focused?.root
+     try { root?.packageName?.toString()=="id.wynn.iwatchyou.test" }
+     finally { @Suppress("DEPRECATION") root?.recycle() }
+    }
     waitFor(20_000) { service.current().foreground=="id.wynn.iwatchyou.test" }
     assertTrue("Bubble appears over an external app",device.wait(Until.hasObject(By.clazz("android.widget.Chronometer")),8000))
     val displayed=device.findObject(By.clazz("android.widget.Chronometer")).text
