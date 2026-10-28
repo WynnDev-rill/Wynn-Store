@@ -4,6 +4,11 @@ Native Android (Kotlin/JVM, Jetpack Compose, Material 3), Android 11+, Plus Jaka
 One screen: daily unlocked screen time, actual hourly bars, application usage, date selector,
 and a monitoring card fixed at the bottom above gesture navigation.
 
+The primary outcome is an advancing timer over whichever external app you are using,
+so time passing stays visible. See [agent instructions](AGENTS.md) for architecture and
+development constraints, and [the focus/bubble audit](docs/BUG-AUDIT.md) for findings,
+verification and remaining device checks.
+
 ## Counting rules
 
 - Screen time is the union of interactive, unlocked screen intervals, including Home and IWatchYou.
@@ -29,6 +34,23 @@ Internet access is used only for GitHub update metadata and APK downloads.
 Enable Accessibility and notifications once using the bottom card. No separate overlay permission is needed.
 For Xiaomi/HyperOS, if the OS stops the service, enable autostart and unrestricted battery in system app settings.
 The application cannot silently change these vendor settings.
+
+### Checking the bubble on a phone
+
+After enabling IWatchYou in Accessibility, leave Settings and open two ordinary apps
+in turn. The bubble should appear in both and keep advancing while you use each app.
+Returning to an app resumes its accumulated time for today. At Home, inside IWatchYou,
+or while the screen is locked, there should be no app bubble. The notification shade
+and system dialogs pause app time. Dimming after three seconds should keep the timer
+readable; tap it to unlock dragging.
+
+If the bubble only appears in Settings, record the installed IWatchYou version, phone
+model, Android/HyperOS version and which apps reproduce it. A card saying "Pemantauan
+aktif" means the service is connected; it does not prove that foreground detection or
+the bubble is working. Check whether the service is still enabled before changing
+battery settings. Autostart/unrestricted battery can help when HyperOS stops the
+service, but cannot correct a foreground-detection bug. Source changes are not present
+in the published APK until a new verified, production-signed release is distributed.
 
 ## Build and verification
 

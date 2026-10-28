@@ -152,4 +152,38 @@ class DeviceTest {
   assertTrue(device.wait(Until.hasObject(By.desc("Pemantauan")),8000))
   shell("settings put system font_scale 1.0");device.setOrientationNatural();device.unfreezeRotation()
  }
+ @Test fun externalAppWithoutLauncherOrActivitySuffixShowsTimerWithoutWindowRoots() {
+  automation
+  shell("settings put secure enabled_accessibility_services id.wynn.iwatchyou/.WatchService")
+  shell("settings put secure accessibility_enabled 1")
+  waitFor(60_000) { WatchService.instance!=null }
+  val service=WatchService.instance!!
+  val info=service.serviceInfo
+  val oldFlags=info.flags
+  InstrumentationRegistry.getInstrumentation().runOnMainSync {
+   info.flags=oldFlags and android.accessibilityservice.AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS.inv()
+   service.serviceInfo=info
+  }
+  try {
+   device.wakeUp();shell("wm dismiss-keyguard")
+   repeat(3) {
+    shell("am start -a android.settings.SETTINGS")
+    waitFor(20_000) { service.current().foreground=="com.android.settings" }
+    shell("am start -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
+    waitFor(20_000) { service.current().foreground=="id.wynn.iwatchyou.test" }
+    assertTrue("Bubble appears over an external app",device.wait(Until.hasObject(By.clazz("android.widget.Chronometer")),8000))
+    val before=service.current().apps["id.wynn.iwatchyou.test"] ?: 0L
+    SystemClock.sleep(1100)
+    assertTrue("External app time advances",service.current().apps["id.wynn.iwatchyou.test"]!!>before)
+    device.pressHome()
+    waitFor { service.current().foreground==null }
+    assertTrue("Bubble disappears at Home",device.wait(Until.gone(By.clazz("android.widget.Chronometer")),8000))
+    val paused=service.current().apps["id.wynn.iwatchyou.test"]!!
+    SystemClock.sleep(200)
+    assertEquals(paused,service.current().apps["id.wynn.iwatchyou.test"])
+   }
+  } finally {
+   InstrumentationRegistry.getInstrumentation().runOnMainSync { info.flags=oldFlags; service.serviceInfo=info }
+  }
+ }
 }

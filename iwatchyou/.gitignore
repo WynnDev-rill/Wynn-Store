@@ -1,0 +1,6 @@
+.gradle/
+**/build/
+local.properties
+qa/output/
+qa/production-output/
+qa/upgrade-output/
