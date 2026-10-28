@@ -124,6 +124,11 @@ The fixture shared its default task affinity with the earlier PiP fixture.
 `FocusProbe` now has a distinct task affinity and explicitly disables PiP, so the
 cross-app/keyboard check runs against a separate fullscreen application window.
 This is test isolation, not a change to production PiP accounting.
+The old PiP cleanup used unsupported `am start --activity-new-task`; Android's
+[`Intent` command parser](https://github.com/aosp-mirror/platform_frameworks_base/blob/master/core/java/android/content/Intent.java)
+does not define that option. Cleanup now uses explicit NEW_TASK/CLEAR_TASK flags
+and verifies the PiP window disappears instead of discarding an unsuccessful
+command and contaminating the following test.
 
 The patched local build passed all 24 JVM tests, release lint and release/debug/
 test APK compilation. Lint reports zero errors and 17 warnings (dependency

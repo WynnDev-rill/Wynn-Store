@@ -111,7 +111,8 @@ class DeviceTest {
   val paused=WatchService.instance!!.current().apps["id.wynn.iwatchyou.test"]!!
   SystemClock.sleep(1200)
   assertEquals(paused,WatchService.instance!!.current().apps["id.wynn.iwatchyou.test"])
-  shell("am start -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.ProbeActivity --activity-clear-task --activity-new-task --ez finish true")
+  shell("am start -f 0x10008000 -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.ProbeActivity --ez finish true")
+  waitFor { automation.windows.none { it.isInPictureInPictureMode } }
  }
  @Test fun activityEventsTrackWhenWindowRootsAreUnavailable() {
   automation
