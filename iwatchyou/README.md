@@ -110,3 +110,12 @@ See `AGENTS.md`, `DESIGN.md`, `docs/AI-DEVELOPMENT.md` and `docs/VERIFICATION-1.
 Existing separate preview installs have a different package/data directory. An APK
 cannot silently move that private history or bypass a missing original signer.
 Production signing keys are required before issuing an installable production update.
+
+## Owner-authorized fresh installation, 29 October 2026
+
+The 1.4.0 APK supplied for a fresh installation uses a new dedicated release
+certificate, as explicitly accepted by the owner after the older signer could
+not be located. It cannot update an installation signed with an older key.
+Uninstalling that installation deletes its private history. This delivery does
+not change the public stable feed or authorize using the new key to replace
+updates for other existing installations. See `docs/VERIFICATION-1.4.md`.

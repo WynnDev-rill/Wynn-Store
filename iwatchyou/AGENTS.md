@@ -141,3 +141,15 @@ variant and its Uji label are retired. Do not distribute a new debug certificate
 as an update to an existing app. The older separate `.preview` package has its own
 private data and signer; it cannot be silently migrated into production. Never
 recommend uninstalling it to get around Android signing checks.
+
+## Owner-authorized fresh-install delivery, 29 October 2026
+
+The owner explicitly accepted removing the old APK and installing 1.4.0 afresh
+when its signing key could not be recovered. This one delivery uses the standard
+`id.wynn.iwatchyou` package and a new dedicated release certificate with SHA-256
+`96065f69e2665ad2f264f5229a0d5b765f3b0bc78d677eca3bf3276286c7e4a3`.
+It is not an in-place update for older certificates. Preserve this new signer
+for subsequent updates to that installation; do not regenerate a signing key.
+Private key and credentials are backed up outside the repository. Older stable
+feeds/releases still require their original signer and must not be replaced
+by this fresh-install APK. See `docs/VERIFICATION-1.4.md`.
