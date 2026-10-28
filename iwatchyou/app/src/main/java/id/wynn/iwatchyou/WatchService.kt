@@ -241,14 +241,14 @@ class WatchService : AccessibilityService() {
     // A background window can send late state events. When interactive-window
     // metadata is absent, query the current active root rather than retaining
     // that last event's package indefinitely. Only identity metadata is read.
-    val activePackage=if(needsRetry) {
+    val activePackage=if(needsRetry) runCatching {
      val root=rootInActiveWindow
      try { root?.let {
       ForegroundPolicy.rootPackage(it.windowId,it.packageName?.toString(),owners,auxiliaryPackages,observed)
        ?.also { pkg -> rootIdentity=it.windowId to pkg }
      } }
      finally { @Suppress("DEPRECATION") root?.recycle() }
-    } else null
+    }.getOrNull() else null
     if(!needsRetry) { rememberFocus=true;resolved }
     else if(activePackage!=null) { rememberFocus=true;activePackage.takeUnless { it in excluded } }
     else if(hadHint) ForegroundPolicy.unresolvedHint(hint,observed)

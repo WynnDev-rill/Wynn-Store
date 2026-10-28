@@ -108,3 +108,11 @@ build outputs. A source fix must be tested independently of an already staged AP
 Do not claim an existing APK contains a new fix. Publishing requires a new version,
 matching source digest, successful source/device QA, production signature and the
 checks enforced by `scripts/publish.py`.
+
+The `preview` build is an optimized, debug-signed, separate app
+(`id.wynn.iwatchyou.preview`, "IWatchYou Uji"). Use `:app:assemblePreview` when the
+production key is unavailable and a user requests a safe test download. Never
+represent it as an in-place production update or advertise it in the stable feed.
+`qa/run-preview.sh` is a dedicated-emulator smoke check after native tests: the
+production package remains installed while preview launches and shows its bubble.
+Only one monitoring service should be enabled when trying it on a real phone.

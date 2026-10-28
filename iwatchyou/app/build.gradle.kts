@@ -32,6 +32,8 @@ android {
   }
   create("preview") {
    initWith(getByName("release"))
+   applicationIdSuffix = ".preview"
+   versionNameSuffix = "-preview"
    signingConfig = signingConfigs.getByName("debug")
    matchingFallbacks += "release"
   }

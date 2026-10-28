@@ -88,6 +88,9 @@ Test isolation/readiness fixes preserve the strict duration assertions:
   test process crashed on API 36 with a missing kotlin.jvm.internal.Intrinsics;
   the target APK's Kotlin runtime was not available to that external process.
 - Teardown waits for the service to disconnect before another test enables it.
+- Rotation waits for each configuration and the recreated timer instead of assuming
+  600 ms is sufficient. The API 36 failure screenshot showed the timer had returned
+  after the earlier lookup ran too soon.
 
 The five existing native methods still cover persistence, lock/resume, PiP,
 rotation/large text and overlay gestures.
@@ -114,7 +117,7 @@ history. Successful attachment alone cannot establish visibility on every OEM.
 ## Verification and architecture
 
 - The production source digest is
-  74c162dcfe4a7a44559ff4a21052609f854417deb5bdb6244cf190f9ddef424c.
+  4f617b5ef0658987f3e3d6434c5952c83adebfa53d0b7b547197df3ce4fd48f3.
 - Local source verification passed 47 JVM tests, release lint and release/debug/
   instrumentation APK builds. Lint reports zero errors and 17 warnings
   (dependency versions, backup rules, SDK/KTX, touch accessibility and RTL).
@@ -145,6 +148,14 @@ notification shade, PiP and rotation as well.
 If the service disconnects, investigate autostart/battery restrictions. If it
 remains connected, distinguish missed foreground transitions from attachment or
 firmware visibility failures before changing permissions.
+
+The user requested a downloadable APK despite the previous session's production
+signing backup being unavailable. The optimized, debug-signed preview now uses
+`id.wynn.iwatchyou.preview` and the launcher/service label "IWatchYou Uji". It installs
+alongside production, with separate history; it cannot update or import production
+data. Its update menu explains that preview updates require a newer preview APK.
+CI builds this variant and checks coexistence, launch and its Settings bubble.
+Disable the old service before enabling the preview service on the phone.
 
 No production-signed candidate has been published or installed on the phone.
 A release still needs successful candidate QA, the new version, matching source

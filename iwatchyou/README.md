@@ -87,3 +87,18 @@ Private signing material stays outside this repository and must not be uploaded 
 
 **Preview 1.0.0 was debug-signed with a different certificate. Android will reject an in-place transition
 from that preview to production. Production-to-production updates preserve the app identity and private data.**
+
+## Trying the 1.0.3 fix without the original signing key
+
+Build `:app:assemblePreview` to obtain `app/build/outputs/apk/preview/app-preview.apk`.
+This optimized APK is debug-signed, named **IWatchYou Uji**, and uses the separate
+package `id.wynn.iwatchyou.preview`. It installs alongside production 1.0.2 without
+replacing it or deleting its history. Its history starts separately. Disable the
+old IWatchYou Accessibility service, then enable **IWatchYou Uji · pemantauan waktu**.
+Check a timer that advances over two ordinary apps, Home, keyboard and lock/unlock.
+
+This preview is a manual APK installation, not a production automatic update.
+Production updates still require the original production signing key and verified
+stable feed publication. Keep that key in a secure backup; it cannot be recovered
+from an APK. Preview signing keys are local/CI debug keys, so independently built
+previews may also use different certificates.
