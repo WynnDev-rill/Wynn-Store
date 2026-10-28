@@ -29,6 +29,8 @@ jobs:
       staged: ${{ steps.version.outputs.staged }}
     steps:
       - uses: actions/checkout@v4
+      - name: Verify device-QA outcome detection
+        run: python3 -m unittest discover -s iwatchyou/qa -p 'test_*.py' -v
       - id: version
         run: |
           python3 - <<'PYCODE'

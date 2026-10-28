@@ -57,6 +57,7 @@ in the published APK until a new verified, production-signed release is distribu
 From repository root:
 
 ```sh
+python3 -m unittest discover -s iwatchyou/qa -p 'test_*.py' -v
 ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:assembleDebugAndroidTest
 ```
 

@@ -59,6 +59,7 @@ Run from the repository root with a configured Android SDK and a full JDK 17+
 (including `javac`, not just a JRE):
 
 ```sh
+python3 -m unittest discover -s iwatchyou/qa -p 'test_*.py' -v
 ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:assembleDebug :app:assembleDebugAndroidTest
 ```
 
