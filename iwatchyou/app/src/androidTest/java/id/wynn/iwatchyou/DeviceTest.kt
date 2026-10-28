@@ -21,6 +21,7 @@ class DeviceTest {
   runCatching { device.takeScreenshot(java.io.File(dir,testName.methodName+".png"));device.dumpWindowHierarchy(java.io.File(dir,testName.methodName+".xml")) }
   println("Final ledger: "+WatchService.instance?.current())
   shell("settings put secure enabled_accessibility_services ''")
+  waitFor(20_000) { WatchService.instance==null }
   shell("settings put system font_scale 1.0");device.setOrientationNatural();device.unfreezeRotation() }
  private val context get()=ApplicationProvider.getApplicationContext<Context>()
  private val automation get()=InstrumentationRegistry.getInstrumentation().getUiAutomation(1)
@@ -64,7 +65,8 @@ class DeviceTest {
   assertEquals(x,restored.left);assertEquals(y,restored.top)
   // Repeated transitions exercise the event adapter as well as the pure ledger.
   repeat(3) {
-   shell("am start -n id.wynn.iwatchyou/.MainActivity")
+   shell("am start -W -n id.wynn.iwatchyou/.MainActivity")
+   assertTrue("Dashboard is visible before measuring pause",device.wait(Until.hasObject(By.text("IWatchYou").pkg(context.packageName)),8000))
    waitFor { WatchService.instance?.current()?.foreground==null }
    val stopped=WatchService.instance!!.current().apps["com.android.settings"]!!
    SystemClock.sleep(120)
@@ -169,9 +171,11 @@ class DeviceTest {
    device.wakeUp();shell("wm dismiss-keyguard")
    shell("settings put secure show_ime_with_hard_keyboard 1")
    repeat(3) {
-    shell("am start -a android.settings.SETTINGS")
+    device.pressHome()
+    shell("am start -W -a android.settings.SETTINGS")
     waitFor(20_000) { service.current().foreground=="com.android.settings" }
-    shell("am start -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
+    shell("am start -W -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
+    assertTrue("External app is visible",device.wait(Until.hasObject(By.text("External focus fixture").pkg("id.wynn.iwatchyou.test")),8000))
     waitFor(20_000) { service.current().foreground=="id.wynn.iwatchyou.test" }
     assertTrue("Bubble appears over an external app",device.wait(Until.hasObject(By.clazz("android.widget.Chronometer")),8000))
     val displayed=device.findObject(By.clazz("android.widget.Chronometer")).text
@@ -179,13 +183,12 @@ class DeviceTest {
     SystemClock.sleep(1100)
     assertTrue("External app time advances",service.current().apps["id.wynn.iwatchyou.test"]!!>before)
     waitFor { device.findObject(By.clazz("android.widget.Chronometer"))?.text?.let { it!=displayed }==true }
-    val imePackage=android.provider.Settings.Secure.getString(context.contentResolver,android.provider.Settings.Secure.DEFAULT_INPUT_METHOD).substringBefore('/')
-    device.findObject(By.clazz("android.widget.EditText")).click()
-    assertTrue("Real keyboard is visible",device.wait(Until.hasObject(By.pkg(imePackage)),8000))
+    device.findObject(By.text("Show keyboard").pkg("id.wynn.iwatchyou.test")).click()
+    waitFor { automation.windows.any { it.type==android.view.accessibility.AccessibilityWindowInfo.TYPE_INPUT_METHOD } }
     SystemClock.sleep(350)
     assertEquals("Real keyboard must not steal focus","id.wynn.iwatchyou.test",service.current().foreground)
     device.pressBack()
-    assertTrue("Keyboard can close",device.wait(Until.gone(By.pkg(imePackage)),8000))
+    waitFor { automation.windows.none { it.type==android.view.accessibility.AccessibilityWindowInfo.TYPE_INPUT_METHOD } }
     // With no windows available, the event adapter must also reject an IME window.
     InstrumentationRegistry.getInstrumentation().runOnMainSync {
      val event=android.view.accessibility.AccessibilityEvent.obtain(android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)
@@ -203,7 +206,7 @@ class DeviceTest {
     SystemClock.sleep(200)
     assertEquals(paused,service.current().apps["id.wynn.iwatchyou.test"])
     // Match leaving Settings via Home, then launching another app with a null hint.
-    shell("am start -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
+    shell("am start -W -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
     waitFor(20_000) { service.current().foreground=="id.wynn.iwatchyou.test" }
     assertTrue("Bubble reappears after launching from Home",device.wait(Until.hasObject(By.clazz("android.widget.Chronometer")),8000))
     device.pressHome()

@@ -96,8 +96,32 @@ uses commit `84f661a61f5a4911dce32d2b551f5f1188130b93` (unmodified production co
   defect independently of the affected HyperOS phone.
 - The QA runner now rejects `OK (0 tests)` rather than treating it as success.
 
-Patched-source validation is in progress in [draft PR #25](https://github.com/WynnDev-rill/Wynn-Store/pull/25).
-The native pause failure is recorded rather than silently dropped or declared fixed.
+Patched-source validation is tracked in [draft PR #25](https://github.com/WynnDev-rill/Wynn-Store/pull/25).
+The baseline API 30 logs expose a readiness problem in the existing pause test:
+MainActivity starts at 02:42:51.672 and resumes at 51.755, but the test launches
+Settings again at 52.032, before MainActivity's `Displayed` message at 53.001.
+The first null foreground does not establish a settled dashboard. The test now
+waits for `am start -W` and a dashboard UI marker before measuring the pause;
+the strict unchanged-duration assertion remains. The exact cause of the failing
+iteration's extra 145 ms is not established by the available event logs.
+
+The [first patched native run](https://github.com/WynnDev-rill/Wynn-Store/actions/runs/40622894748)
+passed source/JVM/lint/build checks, but the expanded regression exposed fixture
+readiness problems. API 30 timed out before the external launch because Settings
+was already top when window retrieval was disabled, so no fresh transition hint
+was guaranteed. API 36 reached external selection, bubble presence and rendered
+advancement, then could not locate a keyboard through the package-based UI query.
+These runs are not claimed as a passing native suite. The fixture now makes a
+fresh Home → Settings transition, waits for actual Activity display, opens the
+IME explicitly, and checks its real window metadata. Teardown waits for service
+disconnection before another test enables a new instance.
+
+The patched local build passed all 24 JVM tests, release lint and release/debug/
+test APK compilation. Lint reports zero errors and 17 warnings (dependency
+versions, backup rules, SDK/KTX, touch accessibility and RTL), which are recorded
+rather than described as a warning-free run.
+The device-QA shell runner also passed controlled-output checks: zero tests and
+failure output exit nonzero; one or six successful tests exit zero.
 Local baseline unit/debug builds also passed. A local software-only API 30 emulator
 did not complete reliable boot/installation, so it supplies no behavioral evidence;
 CI uses accelerated emulators instead. Local SDK/JDK files and generated artifacts
