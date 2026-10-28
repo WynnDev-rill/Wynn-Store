@@ -49,9 +49,15 @@ class DeviceTest {
   waitFor(20_000) { WatchService.instance?.current()?.foreground=="id.wynn.iwatchyou.test" }
  }
  private fun editableTimer(): UiObject2 {
-  device.findObject(By.desc("Tampilkan kontrol timer"))?.click()
-  return device.wait(Until.findObject(By.clazz("android.widget.Chronometer")),8000).also { assertNotNull(it) }!!
+  val until=SystemClock.uptimeMillis()+10_000
+  while(SystemClock.uptimeMillis()<until) {
+   device.findObject(By.clazz("android.widget.Chronometer"))?.let { return it }
+   device.findObject(By.desc("Tampilkan kontrol timer"))?.click()
+   SystemClock.sleep(50)
+  }
+  throw AssertionError("Edge handle did not restore editable timer")
  }
+
  @Test fun bubbleCollapsesResizesAndRetainsStateWithoutResettingTime() {
   startMonitoringFixture()
   val initial=editableTimer().visibleBounds
@@ -295,12 +301,11 @@ class DeviceTest {
     assertTrue("External app is visible",device.wait(Until.hasObject(By.text("External focus fixture").pkg("id.wynn.iwatchyou.test")),8000))
     waitFor { focusedApplication()=="id.wynn.iwatchyou.test" }
     waitFor(20_000) { service.current().foreground=="id.wynn.iwatchyou.test" }
-    assertTrue("Bubble appears over an external app",device.wait(Until.hasObject(By.clazz("android.widget.Chronometer")),8000))
-    val displayed=device.findObject(By.clazz("android.widget.Chronometer")).text
+    val displayed=editableTimer().text
     val before=service.current().apps["id.wynn.iwatchyou.test"] ?: 0L
     SystemClock.sleep(1100)
     assertTrue("External app time advances",service.current().apps["id.wynn.iwatchyou.test"]!!>before)
-    waitFor { device.findObject(By.clazz("android.widget.Chronometer"))?.text?.let { it!=displayed }==true }
+    assertNotEquals("Displayed timer advances even after automatic dimming",displayed,editableTimer().text)
     device.findObject(By.text("Show keyboard").pkg("id.wynn.iwatchyou.test")).click()
     waitFor { automation.windows.any { it.type==android.view.accessibility.AccessibilityWindowInfo.TYPE_INPUT_METHOD } }
     SystemClock.sleep(350)
@@ -326,7 +331,7 @@ class DeviceTest {
     // Match leaving Settings via Home, then launching another app with a null hint.
     shell("am start -W -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
     waitFor(20_000) { service.current().foreground=="id.wynn.iwatchyou.test" }
-    assertTrue("Bubble reappears after launching from Home",device.wait(Until.hasObject(By.clazz("android.widget.Chronometer")),8000))
+    assertNotNull("Bubble reappears after launching from Home",editableTimer())
     device.pressHome()
     waitFor(20_000) { focusedApplication()==device.launcherPackageName && service.current().foreground==null }
    }

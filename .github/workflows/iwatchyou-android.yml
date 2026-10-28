@@ -49,6 +49,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Unit tests, lint and optimized APKs
         run: ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
+      - name: Sign optimized release copy only for device QA
+        run: |
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
+          "$signer" sign --ks "$HOME/.android/debug.keystore" --ks-pass pass:android --key-pass pass:android --ks-key-alias androiddebugkey --out iwatchyou/app/build/outputs/apk/app-release-qa.apk iwatchyou/app/build/outputs/apk/release/app-release-unsigned.apk
+          "$signer" verify iwatchyou/app/build/outputs/apk/app-release-qa.apk
       - name: Build older fixture with the same disposable QA signer
         run: |
           git fetch origin main --depth=1
@@ -99,6 +104,7 @@ jobs:
           script: |
             IW_UPGRADE_BASELINE=iwatchyou/app/build/outputs/apk/upgrade-baseline.apk bash iwatchyou/qa/run-history-upgrade.sh
             bash iwatchyou/qa/run-device.sh
+            bash iwatchyou/qa/run-release-smoke.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
