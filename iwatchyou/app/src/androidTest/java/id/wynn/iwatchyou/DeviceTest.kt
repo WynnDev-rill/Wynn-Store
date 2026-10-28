@@ -68,8 +68,14 @@ class DeviceTest {
   val moved=device.findObject(By.clazz("android.widget.Chronometer")).visibleBounds
   assertTrue("Unlocked timer can move",moved.left>rect.left || moved.top>rect.top)
   val x=moved.left;val y=moved.top
-  device.setOrientationLeft();SystemClock.sleep(600);device.setOrientationNatural();SystemClock.sleep(600)
-  val restored=device.findObject(By.clazz("android.widget.Chronometer")).visibleBounds
+  device.setOrientationLeft()
+  waitFor { context.resources.configuration.orientation==Configuration.ORIENTATION_LANDSCAPE }
+  assertNotNull("Timer returns after landscape rotation",device.wait(Until.findObject(By.clazz("android.widget.Chronometer")),8000))
+  device.setOrientationNatural()
+  waitFor { context.resources.configuration.orientation==Configuration.ORIENTATION_PORTRAIT }
+  val restoredTimer=device.wait(Until.findObject(By.clazz("android.widget.Chronometer")),8000)
+  assertNotNull("Timer returns after portrait rotation",restoredTimer)
+  val restored=restoredTimer.visibleBounds
   assertEquals(x,restored.left);assertEquals(y,restored.top)
   // Repeated transitions exercise the event adapter as well as the pure ledger.
   repeat(3) {
