@@ -172,7 +172,7 @@ class DeviceTest {
   val rect=android.graphics.Rect(timer.visibleBounds)
   device.swipe(rect.left+20,rect.centerY(),rect.left+120,rect.centerY()+90,12)
   SystemClock.sleep(200)
-  val moved=device.findObject(By.clazz("android.widget.Chronometer")).visibleBounds
+  val moved=editableTimer().visibleBounds
   assertTrue("Unlocked timer can move",moved.left>rect.left || moved.top>rect.top)
   val x=moved.left;val y=moved.top
   device.setOrientationLeft()

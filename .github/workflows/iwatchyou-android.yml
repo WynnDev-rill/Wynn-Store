@@ -49,10 +49,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Unit tests, lint and optimized APKs
         run: ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
-      - name: Sign optimized release copy only for device QA
+      - name: Prepare a disposable common signer for QA APKs
         run: |
+          keytool -genkeypair -keystore "$RUNNER_TEMP/iwatchyou-qa.jks" -storepass android -keypass android -alias iwatchyou-qa -dname 'CN=IWatchYou disposable QA' -keyalg RSA -keysize 2048 -validity 2
           signer=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
-          "$signer" sign --ks "$HOME/.android/debug.keystore" --ks-pass pass:android --key-pass pass:android --ks-key-alias androiddebugkey --out iwatchyou/app/build/outputs/apk/app-release-qa.apk iwatchyou/app/build/outputs/apk/release/app-release-unsigned.apk
+          for apk in iwatchyou/app/build/outputs/apk/debug/app-debug.apk iwatchyou/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk; do
+            "$signer" sign --ks "$RUNNER_TEMP/iwatchyou-qa.jks" --ks-pass pass:android --key-pass pass:android --ks-key-alias iwatchyou-qa --out "$apk.qa" "$apk"
+            mv "$apk.qa" "$apk"
+          done
+          "$signer" sign --ks "$RUNNER_TEMP/iwatchyou-qa.jks" --ks-pass pass:android --key-pass pass:android --ks-key-alias iwatchyou-qa --out iwatchyou/app/build/outputs/apk/app-release-qa.apk iwatchyou/app/build/outputs/apk/release/app-release-unsigned.apk
           "$signer" verify iwatchyou/app/build/outputs/apk/app-release-qa.apk
       - name: Build older fixture with the same disposable QA signer
         run: |
@@ -60,7 +65,8 @@ jobs:
           mkdir -p "$RUNNER_TEMP/iwatchyou-upgrade-baseline"
           git archive FETCH_HEAD iwatchyou | tar -x -C "$RUNNER_TEMP/iwatchyou-upgrade-baseline"
           ./screenguard-pro/gradlew -p "$RUNNER_TEMP/iwatchyou-upgrade-baseline/iwatchyou" :app:assembleDebug
-          cp "$RUNNER_TEMP/iwatchyou-upgrade-baseline/iwatchyou/app/build/outputs/apk/debug/app-debug.apk" iwatchyou/app/build/outputs/apk/upgrade-baseline.apk
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
+          "$signer" sign --ks "$RUNNER_TEMP/iwatchyou-qa.jks" --ks-pass pass:android --key-pass pass:android --ks-key-alias iwatchyou-qa --out iwatchyou/app/build/outputs/apk/upgrade-baseline.apk "$RUNNER_TEMP/iwatchyou-upgrade-baseline/iwatchyou/app/build/outputs/apk/debug/app-debug.apk"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
