@@ -160,30 +160,59 @@ class DeviceTest {
   val service=WatchService.instance!!
   val info=service.serviceInfo
   val oldFlags=info.flags
+  val oldImePreference=android.provider.Settings.Secure.getString(context.contentResolver,"show_ime_with_hard_keyboard")
   InstrumentationRegistry.getInstrumentation().runOnMainSync {
    info.flags=oldFlags and android.accessibilityservice.AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS.inv()
    service.serviceInfo=info
   }
   try {
    device.wakeUp();shell("wm dismiss-keyguard")
+   shell("settings put secure show_ime_with_hard_keyboard 1")
    repeat(3) {
     shell("am start -a android.settings.SETTINGS")
     waitFor(20_000) { service.current().foreground=="com.android.settings" }
     shell("am start -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
     waitFor(20_000) { service.current().foreground=="id.wynn.iwatchyou.test" }
     assertTrue("Bubble appears over an external app",device.wait(Until.hasObject(By.clazz("android.widget.Chronometer")),8000))
+    val displayed=device.findObject(By.clazz("android.widget.Chronometer")).text
     val before=service.current().apps["id.wynn.iwatchyou.test"] ?: 0L
     SystemClock.sleep(1100)
     assertTrue("External app time advances",service.current().apps["id.wynn.iwatchyou.test"]!!>before)
+    waitFor { device.findObject(By.clazz("android.widget.Chronometer"))?.text?.let { it!=displayed }==true }
+    val imePackage=android.provider.Settings.Secure.getString(context.contentResolver,android.provider.Settings.Secure.DEFAULT_INPUT_METHOD).substringBefore('/')
+    device.findObject(By.clazz("android.widget.EditText")).click()
+    assertTrue("Real keyboard is visible",device.wait(Until.hasObject(By.pkg(imePackage)),8000))
+    SystemClock.sleep(350)
+    assertEquals("Real keyboard must not steal focus","id.wynn.iwatchyou.test",service.current().foreground)
+    device.pressBack()
+    assertTrue("Keyboard can close",device.wait(Until.gone(By.pkg(imePackage)),8000))
+    // With no windows available, the event adapter must also reject an IME window.
+    InstrumentationRegistry.getInstrumentation().runOnMainSync {
+     val event=android.view.accessibility.AccessibilityEvent.obtain(android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)
+     event.packageName="test.keyboard"
+     event.className="android.inputmethodservice.SoftInputWindow"
+     service.onAccessibilityEvent(event)
+     @Suppress("DEPRECATION") event.recycle()
+    }
+    SystemClock.sleep(350)
+    assertEquals("Keyboard must not steal the rootless app hint","id.wynn.iwatchyou.test",service.current().foreground)
     device.pressHome()
     waitFor { service.current().foreground==null }
     assertTrue("Bubble disappears at Home",device.wait(Until.gone(By.clazz("android.widget.Chronometer")),8000))
     val paused=service.current().apps["id.wynn.iwatchyou.test"]!!
     SystemClock.sleep(200)
     assertEquals(paused,service.current().apps["id.wynn.iwatchyou.test"])
+    // Match leaving Settings via Home, then launching another app with a null hint.
+    shell("am start -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
+    waitFor(20_000) { service.current().foreground=="id.wynn.iwatchyou.test" }
+    assertTrue("Bubble reappears after launching from Home",device.wait(Until.hasObject(By.clazz("android.widget.Chronometer")),8000))
+    device.pressHome()
+    waitFor { service.current().foreground==null }
    }
   } finally {
    InstrumentationRegistry.getInstrumentation().runOnMainSync { info.flags=oldFlags; service.serviceInfo=info }
+   if(oldImePreference==null) shell("settings delete secure show_ime_with_hard_keyboard")
+   else shell("settings put secure show_ime_with_hard_keyboard $oldImePreference")
   }
  }
 }

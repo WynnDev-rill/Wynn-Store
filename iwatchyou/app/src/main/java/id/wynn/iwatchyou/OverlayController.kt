@@ -10,6 +10,7 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.util.Log
 import android.view.*
 import android.widget.Chronometer
 import kotlin.math.hypot
@@ -88,7 +89,9 @@ class OverlayController(private val context: AccessibilityService, private val s
   timer.setOnClickListener { if(faded) { faded=false; paint() }; scheduleFade() }
   view=timer; params=w
   clamp(w)
-  if(runCatching { window.addView(timer,w) }.isFailure) { view=null; params=null; pkg=null; return }
+  if(runCatching { window.addView(timer,w) }.onFailure {
+   Log.w("IWatchYou","Could not attach the timer overlay",it)
+  }.isFailure) { view=null; params=null; pkg=null; return }
   setTime(); paint(); timer.start(); scheduleFade()
  }
  fun refresh() { if(view!=null) setTime() }

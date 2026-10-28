@@ -3,6 +3,9 @@
 Date: 2026-10-28. Base: `6d7292e90bd5f691f1c12303a08507a581cee5b4`.
 Scope: Accessibility focus detection, bubble lifetime, regression coverage and
 the CI path that verifies source changes. Published stable APK: 1.0.2/code 3.
+Reported affected phone: Poco F6, HyperOS 3.0.304.0, IWatchYou 1.0.2.
+The phone's Android base version was not supplied and is not inferred from HyperOS.
+The source candidate is 1.0.3/code 4; it has not been production-signed or published.
 
 ## User-visible acceptance criteria
 
@@ -33,6 +36,16 @@ launcher entry nor an `Activity` suffix. It disables interactive-window retrieva
 and repeats Settings → external app → Home, checking foreground identity, visible
 bubble, advancing time and pause at Home. This reproduces a concrete detection
 failure; it does not establish that every OEM failure has the same cause.
+In particular, ordinary launcher apps normally satisfy the existing launcher
+query in the manifest, so this defect alone is not proof of the reported phone's
+exact cause. Firmware-specific event/overlay behavior remains unverified.
+
+The fix accepts external window-state package metadata without the launcher/class
+suffix gate. Dialogs, popups, the app's own overlay, and standard IME window classes
+remain excluded from immediate hints. Real-window keyboard/overlay/PiP filtering
+and stale-generation checks remain in place. This also removes a package-manager
+lookup from the main-thread event path. The strengthened regression opens a real
+keyboard, checks rendered timer text advances, and relaunches the fixture from Home.
 
 ### 2. Existing staged APK bypasses source QA (high)
 
@@ -54,6 +67,9 @@ connection but not successful focus selection or window attachment. Overlay
 attachment failures were also silently discarded. Treat the real cross-app
 bubble checks as necessary; do not infer success from the dashboard or a Settings
 screenshot. Physical OEM overlay restrictions still require a device check.
+Overlay attachment exceptions now emit a warning tagged `IWatchYou`, without
+logging screen text or usage history. Successful attachment alone still cannot
+prove that firmware actually leaves the bubble visible in every app.
 
 ## Architecture decision
 
@@ -68,8 +84,24 @@ the original production identity/history. Do not invent time after process death
 
 ## Verification
 
-Verification results will be recorded here after the baseline and patched tests.
-Local SDK/JDK installation is outside the repository; generated files are ignored.
+The [baseline source/native run](https://github.com/WynnDev-rill/Wynn-Store/actions/runs/40622065270)
+uses commit `84f661a61f5a4911dce32d2b551f5f1188130b93` (unmodified production code):
+
+- Source build, 24 JVM tests, release lint and release/debug/test APK builds passed.
+- API 30: six native tests executed; the new external-app regression failed while
+  waiting for the fixture to become foreground. An existing dashboard pause test
+  also failed: Settings gained 145 ms after the first observed null foreground.
+- API 36: six native tests executed; only the new external-app regression failed,
+  at the same external foreground assertion. This establishes the rejected-event
+  defect independently of the affected HyperOS phone.
+- The QA runner now rejects `OK (0 tests)` rather than treating it as success.
+
+Patched-source validation is in progress in [draft PR #25](https://github.com/WynnDev-rill/Wynn-Store/pull/25).
+The native pause failure is recorded rather than silently dropped or declared fixed.
+Local baseline unit/debug builds also passed. A local software-only API 30 emulator
+did not complete reliable boot/installation, so it supplies no behavioral evidence;
+CI uses accelerated emulators instead. Local SDK/JDK files and generated artifacts
+remain outside version control.
 
 ## Physical-device follow-up
 

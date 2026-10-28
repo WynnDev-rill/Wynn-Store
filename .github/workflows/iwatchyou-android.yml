@@ -8,9 +8,12 @@ on:
       - 'screenguard-pro/gradle/**'
       - 'screenguard-pro/gradlew'
   push:
+    branches: [main]
     paths:
       - 'iwatchyou/**'
       - '.github/workflows/iwatchyou-android.yml'
+      - 'screenguard-pro/gradle/**'
+      - 'screenguard-pro/gradlew'
       - '!iwatchyou/updates/**'
       - '!iwatchyou/docs/**'
 permissions:

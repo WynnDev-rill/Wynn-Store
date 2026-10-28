@@ -22,7 +22,7 @@ adb install -r iwatchyou/app/build/outputs/apk/debug/app-debug.apk
 adb install -r iwatchyou/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb logcat -c
 adb shell am instrument -w id.wynn.iwatchyou.test/androidx.test.runner.AndroidJUnitRunner | tee "$out/instrumentation.txt"
-if ! grep -Eq 'OK \([0-9]+ tests\)' "$out/instrumentation.txt"; then exit 1; fi
+if ! grep -Eq 'OK \([1-9][0-9]* tests?\)' "$out/instrumentation.txt"; then exit 1; fi
 adb shell am start -n id.wynn.iwatchyou/.MainActivity
 adb shell settings put system font_scale 1.0
 adb shell settings put system user_rotation 0
