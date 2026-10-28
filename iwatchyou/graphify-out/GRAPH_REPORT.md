@@ -57,7 +57,7 @@
 ## Communities (19 total, 14 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.06
+Cohesion: 0.07
 Nodes (6): ClockGlyph(), dayLabel(), HourChart(), MainActivity, PowerGlyph(), typography()
 
 ### Community 1 - "Community 1"
@@ -73,7 +73,7 @@ Cohesion: 0.11
 Nodes (11): DeviceQaOutcomeTest, adb(), capture(), duration(), find(), shell(), tap(), tree() (+3 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.15
+Cohesion: 0.14
 Nodes (3): connection(), parse(), Release
 
 ## Knowledge Gaps
@@ -87,7 +87,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 14 inferred relationships involving `TimeLedger` (e.g. with `.backgroundAppsAreNotCounted()` and `.backgroundGapAfterProcessRestartIsNeverInvented()`) actually correct?**
   _`TimeLedger` has 14 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.06448979591836734 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06547619047619048 - nodes in this community are weakly interconnected._
 - **Why does `HistoryStore` connect `Community 9` to `Community 0`, `Community 4`, `Community 6`?**
   _High betweenness centrality (0.145) - this node is a cross-community bridge._
 - **Should `Community 1` be split into smaller, more focused modules?**

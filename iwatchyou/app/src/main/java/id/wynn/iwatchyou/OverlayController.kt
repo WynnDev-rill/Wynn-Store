@@ -161,7 +161,7 @@ class OverlayController(private val context: AccessibilityService, private val s
  }
  private fun update(v: View,w: WindowManager.LayoutParams) { runCatching { window.updateViewLayout(v,w) }.onFailure { Log.w("IWatchYou","Could not update timer overlay",it) } }
  private fun savePosition(w: WindowManager.LayoutParams) { prefs.edit().putInt("x_$positionKey",w.x).putInt("y_$positionKey",w.y).apply() }
- private fun scheduleFade() { handler.removeCallbacks(fadeTask);if(!collapsed)handler.postDelayed(fadeTask,3000) }
+ private fun scheduleFade() { handler.removeCallbacks(fadeTask);if(!collapsed)handler.postDelayed(fadeTask,context.getSystemService(android.view.accessibility.AccessibilityManager::class.java).getRecommendedTimeoutMillis(3000,android.view.accessibility.AccessibilityManager.FLAG_CONTENT_CONTROLS).toLong()) }
  private fun paint() {
   val root=view ?: return
   val w=params ?: return

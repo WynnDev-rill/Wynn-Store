@@ -38,6 +38,9 @@ graphify extract . --code-only --no-label --no-viz
 graphify cluster-only . --no-label
 ```
 
+Impeccable engine-probe returned `impeccable-engine 0.1.18`; its checksum-verified
+launcher can download the same pinned engine for later checkouts.
+
 The graph lives in `graphify-out/graph.json`; its report and HTML are checked in.
 `.graphifyignore` excludes downloaded skills, build outputs, binary distribution,
 private local settings and generated graph data. Graphify indexes Kotlin/Java and

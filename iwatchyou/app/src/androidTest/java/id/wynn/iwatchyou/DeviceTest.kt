@@ -14,10 +14,10 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class DeviceTest {
- @Before fun configureAutomation() { Configurator.getInstance().uiAutomationFlags=1 }
+ @Before fun configureAutomation() { Configurator.getInstance().apply { uiAutomationFlags=1;waitForIdleTimeout=0 } }
  @get:Rule val testName=org.junit.rules.TestName()
  @After fun restoreDisplay() {
-  val dir=java.io.File(context.getExternalFilesDir(null),"qa").apply { mkdirs() }
+  val dir=java.io.File(context.filesDir,"qa").apply { mkdirs() }
   runCatching { device.takeScreenshot(java.io.File(dir,testName.methodName+".png"));device.dumpWindowHierarchy(java.io.File(dir,testName.methodName+".xml")) }
   println("Final ledger: "+WatchService.instance?.current())
   shell("settings put secure enabled_accessibility_services ''")
@@ -113,19 +113,31 @@ class DeviceTest {
   }
  }
  @Test fun setupRequiresUnusedAppRestrictionsToBeDisabled() {
+  if(android.os.Build.VERSION.SDK_INT>=33)shell("pm grant id.wynn.iwatchyou android.permission.POST_NOTIFICATIONS")
   device.wakeUp();shell("wm dismiss-keyguard")
-  shell("cmd appops set id.wynn.iwatchyou AUTO_REVOKE_PERMISSIONS_IF_UNUSED allow")
+  shell("cmd appops set --uid id.wynn.iwatchyou AUTO_REVOKE_PERMISSIONS_IF_UNUSED allow")
+  val enabled=androidx.core.content.PackageManagerCompat.getUnusedAppRestrictionsStatus(context).get()
+  println("Unused restrictions after allow: $enabled; whitelisted=${context.packageManager.isAutoRevokeWhitelisted}")
+  assertTrue("Fixture enables unused-app restrictions ($enabled)",enabled in listOf(androidx.core.content.UnusedAppRestrictionsConstants.API_30,androidx.core.content.UnusedAppRestrictionsConstants.API_31))
   shell("am start -n id.wynn.iwatchyou/.MainActivity")
   device.wait(Until.hasObject(By.desc("Pemantauan")),8000)
   device.findObject(By.desc("Pemantauan")).click()
   assertTrue(device.wait(Until.hasObject(By.text("Lanjutkan")),8000))
-  waitFor { !device.findObject(By.text("Lanjutkan")).isEnabled }
+  device.findObject(By.text("Lanjutkan")).click()
+  SystemClock.sleep(250)
+  assertNotNull("Continue cannot leave setup while restrictions are enabled",device.findObject(By.text("Lanjutkan")))
   device.pressBack();device.pressHome()
-  shell("cmd appops set id.wynn.iwatchyou AUTO_REVOKE_PERMISSIONS_IF_UNUSED ignore")
-  shell("am start -n id.wynn.iwatchyou/.MainActivity")
+  waitFor { focusedApplication()==device.launcherPackageName }
+  shell("cmd appops set --uid id.wynn.iwatchyou AUTO_REVOKE_PERMISSIONS_IF_UNUSED ignore")
+  shell("am start -W -n id.wynn.iwatchyou/.MainActivity")
+  assertTrue(device.wait(Until.hasObject(By.desc("Pemantauan")),8000))
   device.findObject(By.desc("Pemantauan")).click()
   assertTrue(device.wait(Until.hasObject(By.text("Lanjutkan")),8000))
-  waitFor { device.findObject(By.text("Lanjutkan")).isEnabled }
+  device.findObject(By.text("Periksa lagi"))?.click()
+  val disabled=androidx.core.content.PackageManagerCompat.getUnusedAppRestrictionsStatus(context).get()
+  assertEquals(androidx.core.content.UnusedAppRestrictionsConstants.DISABLED,disabled)
+  device.findObject(By.text("Lanjutkan")).click()
+  waitFor { focusedApplication()=="com.android.settings" }
  }
  @Test fun historyIsAtomicAndSurvivesReopen() {
   val day="2001-01-01"
@@ -159,10 +171,10 @@ class DeviceTest {
   val x=moved.left;val y=moved.top
   device.setOrientationLeft()
   waitFor { context.resources.configuration.orientation==Configuration.ORIENTATION_LANDSCAPE }
-  assertNotNull("Timer returns after landscape rotation",device.wait(Until.findObject(By.clazz("android.widget.Chronometer")),8000))
+  assertNotNull("Timer returns after landscape rotation",editableTimer())
   device.setOrientationNatural()
   waitFor { context.resources.configuration.orientation==Configuration.ORIENTATION_PORTRAIT }
-  val restoredTimer=device.wait(Until.findObject(By.clazz("android.widget.Chronometer")),8000)
+  val restoredTimer=editableTimer()
   assertNotNull("Timer returns after portrait rotation",restoredTimer)
   val restored=restoredTimer.visibleBounds
   assertEquals(x,restored.left);assertEquals(y,restored.top)

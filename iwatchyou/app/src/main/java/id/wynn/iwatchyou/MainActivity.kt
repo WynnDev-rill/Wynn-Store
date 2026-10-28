@@ -87,7 +87,7 @@ class MainActivity: ComponentActivity() {
 
  private val permission=registerForActivityResult(ActivityResultContracts.RequestPermission()) {
   WatchService.instance?.refreshNotification()
-  if(continueSetup) { continueSetup=false; openAccessibility() }
+  if(continueSetup) { continueSetup=false; if(setupReady())openAccessibility() else setup=true }
  }
  private fun hasNotifications()=Build.VERSION.SDK_INT<33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED
  private fun openAccessibility() {
@@ -112,6 +112,7 @@ class MainActivity: ComponentActivity() {
      Text("Matikan ‘Jeda aktivitas apl jika tidak digunakan’ agar Android tidak mencabut izin aksesibilitas secara otomatis.",style=MaterialTheme.typography.bodyMedium)
      Text(when { restrictionStatus==-1 -> "Memeriksa pengaturan…"; restrictionsEnabled() -> "Masih aktif — nonaktifkan melalui pengaturan di bawah."; setupReady() -> "Pembatasan aplikasi tidak digunakan: nonaktif."; else -> "Status tidak dapat dibaca di perangkat ini. Periksa secara manual." },style=MaterialTheme.typography.bodyMedium,color=if(restrictionsEnabled())MaterialTheme.colorScheme.error else Muted)
      TextButton(onClick={openRestrictions()}) { Text("Buka pengaturan jeda aktivitas") }
+     TextButton(onClick={refreshRestrictions()}) { Text("Periksa lagi") }
      if(restrictionStatus==UnusedAppRestrictionsConstants.ERROR) Row(verticalAlignment=Alignment.CenterVertically) {
       Checkbox(checked=manuallyChecked,onCheckedChange={manuallyChecked=it})
       Text("Saya sudah memastikan jeda aktivitas nonaktif",modifier=Modifier.weight(1f),style=MaterialTheme.typography.bodyMedium)
