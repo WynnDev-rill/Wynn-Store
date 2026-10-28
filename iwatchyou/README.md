@@ -19,6 +19,9 @@ verification and remaining device checks.
 - Elapsed durations use `elapsedRealtime`, with wall time used only for dates and hour labels.
 - A bounded event reconciliation handles temporarily unavailable window roots. No foreground-app polling,
   wake locks, exact alarms, foreground-service loop, content-change subscription, or per-second disk writes.
+- Focused-window metadata takes priority over package events. A bounded in-memory window/package cache
+  avoids reading roots when identity is already known; an unresolved selection can query the active root.
+  Background pane events therefore cannot directly replace the timer of a known focused app.
 - A worker writes a daily SQLite row on app/screen transitions and at most every minute while unlocked.
   No maintenance loop runs while the screen is off. Notification seconds are rendered by Android's chronometer.
 - If Android/vendor firmware kills or force-stops the service, unobserved time is deliberately not invented.

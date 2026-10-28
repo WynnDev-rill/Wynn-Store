@@ -20,11 +20,26 @@ When window data was unavailable, rejected transitions retained the previous hin
 including the null hint left by Home or IWatchYou. The bubble could stay absent
 or continue the previous application's timer while the service was connected.
 
-The candidate accepts external window-state package metadata without the launcher
-or class-suffix gate. It retains filtering for dialogs, popups, the app's own
-overlay and standard IME window classes. Real-window keyboard/overlay/PiP rules
-and stale-generation checks remain. A package-manager lookup is also removed
-from the main-thread event path.
+A later repeated-transition run also exposed stale hint selection after the class
+gate was removed: the OS focused the fullscreen fixture, but the service retained
+Settings for over 20 seconds. The screenshot and WindowManager state in
+[this run](https://github.com/WynnDev-rill/Wynn-Store/actions/runs/40628561703)
+establish that this was a real selection failure, not just a test readiness issue.
+
+The candidate accepts external package hints without the launcher/class-suffix
+gate, and keeps at most 32 window-ID/package associations in memory. Known focused
+window metadata is authoritative. Only unresolved selection reads the active
+root's package/window ID; a root for another known window, keyboard, overlay or
+PiP cannot establish foreground identity. A global hint cannot identify a different
+known focused window. All new window events invalidate older asynchronous reads.
+State events request immediate asynchronous reconciliation rather than directly
+committing an unverified foreground package. This prevents background pane events
+from restoring another application's timer. No per-window root traversal or
+package-manager lookup runs in the main-thread event path.
+
+The associations are inferred from events/current-root identity, not a security
+attestation. If both current window metadata and root identity are unavailable,
+remaining event hints are best effort and require physical-device verification.
 
 The [clean control run](https://github.com/WynnDev-rill/Wynn-Store/actions/runs/40626623724)
 restores only the old WatchService while retaining an isolated fullscreen fixture.
@@ -65,6 +80,9 @@ Test isolation/readiness fixes preserve the strict duration assertions:
 - Home, Settings and the fixture must actually receive focus; launch commands use
   -W where a displayed Activity is required. Fixed animation sleeps and the first
   transient null foreground are not readiness signals.
+- The focus oracle reads WindowManager's focused component through test-only shell
+  access. Using UiAutomation's own root cache was unreliable during missing-root
+  tests, including a timeout while the real Home and paused ledger were correct.
 - The fixture applies system-bar/cutout insets for API 36.
 - FocusProbe is self-contained Java. A Kotlin inset callback in the standalone
   test process crashed on API 36 with a missing kotlin.jvm.internal.Intrinsics;
@@ -96,8 +114,8 @@ history. Successful attachment alone cannot establish visibility on every OEM.
 ## Verification and architecture
 
 - The production source digest is
-  787139a48be0099ac6d328985f9edc9f9e7afc60859d72b6c07b488a0a3f72f3.
-- Local source verification passed 24 JVM tests, release lint and release/debug/
+  74c162dcfe4a7a44559ff4a21052609f854417deb5bdb6244cf190f9ddef424c.
+- Local source verification passed 47 JVM tests, release lint and release/debug/
   instrumentation APK builds. Lint reports zero errors and 17 warnings
   (dependency versions, backup rules, SDK/KTX, touch accessibility and RTL).
 - The host QA-outcome test passes eight controlled cases, including the large-log

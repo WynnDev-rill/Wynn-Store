@@ -17,7 +17,7 @@ Package identity: `id.wynn.iwatchyou`. Build configuration is in `app/build.grad
   notification and lifecycle. Android binds this service; do not manually start it
   as an ordinary background service.
 - `ForegroundPolicy.kt`: platform-neutral rules for focused windows, keyboard,
-  overlays, split screen and PiP.
+  overlays, split screen and PiP, plus current-root eligibility and fallback priority.
 - `OverlayController.kt`: `TYPE_ACCESSIBILITY_OVERLAY` bubble, native Chronometer,
   fading, drag position and rotation. No `SYSTEM_ALERT_WINDOW` permission is needed.
 - `TimeLedger.kt`: synchronized monotonic time accounting and daily/hourly splits.
@@ -43,6 +43,14 @@ Potentially blocking Accessibility window calls stay off both threads. Reject
 stale asynchronous results after a newer focus transition. Window resolution is
 event-driven, with bounded reconciliation; do not introduce foreground polling,
 per-second database writes, wake locks or a foreground-service loop as a shortcut.
+
+Known focused-window identity is authoritative. Keep the per-window package hints
+bounded (32 entries in RAM) and copy them before background reads. These are inferred
+associations, not a security attestation. Query the active root only for unresolved
+selection, require its ID to match a known selected window, and apply window-role
+exclusions before accepting it. An unrelated missing root must not override a known
+focused app. Global event hints are a last resort when window identity is unavailable;
+background pane state events must never directly commit a new foreground app.
 
 Do not assume a foreground Activity's class ends in `Activity` or that every
 external Activity has a launcher entry. Missing Accessibility roots are a real
@@ -82,6 +90,8 @@ the wrapper's pinned distribution/checksum and normal TLS verification.
   fixtures on API 36; visible screenshots alone do not prove a text node is accessible.
   External test-APK activities run in their own process: keep them self-contained
   (the Java `FocusProbe` intentionally does not depend on Kotlin from the target APK).
+  Missing-root tests use the WindowManager focused component as an independent
+  oracle; do not make their readiness depend on UiAutomation root-cache availability.
 - Reports: `app/build/test-results/`, `app/build/reports/`, `qa/output/` (untracked).
   Record commands and actual results in the audit document. Do not claim unrun tests.
 

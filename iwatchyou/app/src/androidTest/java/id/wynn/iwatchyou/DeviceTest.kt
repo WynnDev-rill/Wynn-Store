@@ -29,12 +29,12 @@ class DeviceTest {
  private fun shell(command: String) { automation.executeShellCommand(command).use { android.os.ParcelFileDescriptor.AutoCloseInputStream(it).readBytes() } }
  private fun waitFor(timeout: Long=8000,condition:()->Boolean) { val until=SystemClock.uptimeMillis()+timeout; while(!condition() && SystemClock.uptimeMillis()<until)SystemClock.sleep(50);assertTrue("Timed out waiting for condition",condition()) }
  private fun focusedApplication(): String? {
-  val focused=automation.windows.firstOrNull {
-   it.type==android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION && it.isFocused && !it.isInPictureInPictureMode
+  // Independent oracle: these tests deliberately change root availability;
+  // UiAutomation may also temporarily have no cached root.
+  val state=automation.executeShellCommand("dumpsys window displays").use {
+   android.os.ParcelFileDescriptor.AutoCloseInputStream(it).bufferedReader().use { reader -> reader.readText() }
   }
-  val root=focused?.root
-  return try { root?.packageName?.toString() }
-  finally { @Suppress("DEPRECATION") root?.recycle() }
+  return Regex("""mCurrentFocus=Window\{[^\n]*? u\d+ ([^/\s]+)/""").find(state)?.groupValues?.get(1)
  }
  @Test fun historyIsAtomicAndSurvivesReopen() {
   val day="2001-01-01"
