@@ -33,4 +33,4 @@ adb shell dumpsys notification --noredact > "$out/notifications.txt"
 adb logcat -d > "$out/logcat.txt"
 adb exec-out screencap -p > "$out/home.png"
 # App-specific fatal exceptions are failures, not warnings hidden in a successful build.
-if grep -A3 'FATAL EXCEPTION' "$out/logcat.txt" | grep -q 'Process: id.wynn.iwatchyou,'; then exit 1; fi
+if grep -A3 'FATAL EXCEPTION' "$out/logcat.txt" | grep -Eq 'Process: id\.wynn\.iwatchyou(\.test)?,'; then exit 1; fi

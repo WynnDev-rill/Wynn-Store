@@ -138,6 +138,22 @@ The test now waits for actual focused Home and Settings windows while preserving
 the strict time-growth assertion. The native fixture applies system-bar/cutout
 insets so its controls and title are visible on API 36 as well as API 30.
 
+The [inset-corrected run](https://github.com/WynnDev-rill/Wynn-Store/actions/runs/40626259316)
+passed all six tests on API 30 and five on API 36. The remaining API 36 failure
+was a test-APK crash: `NoClassDefFoundError: kotlin.jvm.internal.Intrinsics` in
+the fixture's inset callback, not a crash of the production application. The
+external test process cannot rely on Kotlin classes supplied only by the target
+APK. `FocusProbe` is now a self-contained Java Activity; the QA runner checks
+fatal exceptions in both the app and external test package.
+
+A [clean control run](https://github.com/WynnDev-rill/Wynn-Store/actions/runs/40626623724)
+reverts only `WatchService` to the original detection logic while retaining the
+isolated fullscreen fixture and focused-window preconditions. On API 30 the
+fixture is displayed and focused, then the old service fails the external
+foreground assertion (DeviceTest line 190). One selected test executed and failed
+at that intended assertion. This removes the earlier PiP/readiness ambiguity
+from the evidence that the old detection rejects the external Activity.
+
 The patched local build passed all 24 JVM tests, release lint and release/debug/
 test APK compilation. Lint reports zero errors and 17 warnings (dependency
 versions, backup rules, SDK/KTX, touch accessibility and RTL), which are recorded

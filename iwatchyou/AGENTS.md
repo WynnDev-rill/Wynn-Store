@@ -74,6 +74,13 @@ the wrapper's pinned distribution/checksum and normal TLS verification.
   use a dedicated test device. The test teardown restores those settings.
 - Test missing-window access, Settings → another app → Home, advancing bubble,
   repeated app switches, keyboard, lock/unlock, PiP and rotation when changing focus.
+- Keep fullscreen fixtures in a separate task affinity from the PiP fixture and
+  verify their window is focused and outside PiP. Use supported intent flags for
+  task cleanup and verify the PiP window disappears. Wait for actual Home/Settings
+  focus instead of fixed animation sleeps. Apply system-bar/cutout insets to native
+  fixtures on API 36; visible screenshots alone do not prove a text node is accessible.
+  External test-APK activities run in their own process: keep them self-contained
+  (the Java `FocusProbe` intentionally does not depend on Kotlin from the target APK).
 - Reports: `app/build/test-results/`, `app/build/reports/`, `qa/output/` (untracked).
   Record commands and actual results in the audit document. Do not claim unrun tests.
 
