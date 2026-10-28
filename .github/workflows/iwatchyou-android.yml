@@ -48,7 +48,7 @@ jobs:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
       - uses: gradle/actions/setup-gradle@v4
       - name: Unit tests, lint and optimized APKs
-        run: ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:assemblePreview :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
+        run: ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -91,7 +91,6 @@ jobs:
           disable-animations: false
           script: |
             bash iwatchyou/qa/run-device.sh
-            bash iwatchyou/qa/run-preview.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:

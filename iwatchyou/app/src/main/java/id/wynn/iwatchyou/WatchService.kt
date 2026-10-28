@@ -287,6 +287,7 @@ class WatchService : AccessibilityService() {
   activityHint=null;hasActivityHint=true;focusGeneration++
   if(ledger!=null && !closing)commitSelection(null,unlocked())
  }
+ fun resetBubbleControls() { if(::overlay.isInitialized)overlay.resetControls() }
  fun refreshNotification() { if(::worker.isInitialized) worker.post { notification(SystemClock.elapsedRealtime()) } }
  private fun notification(now: Long) {
   if(closing) return

@@ -32,6 +32,9 @@ import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.IntentCompat
+import androidx.core.content.PackageManagerCompat
+import androidx.core.content.UnusedAppRestrictionsConstants
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
@@ -61,6 +64,27 @@ class MainActivity: ComponentActivity() {
  private var setup by mutableStateOf(false)
  private var busy by mutableStateOf(false)
  private var continueSetup=false
+ private var restrictionStatus by mutableStateOf(-1)
+ private var manuallyChecked by mutableStateOf(false)
+ private fun restrictionsEnabled()=restrictionStatus in listOf(UnusedAppRestrictionsConstants.API_30_BACKPORT,UnusedAppRestrictionsConstants.API_30,UnusedAppRestrictionsConstants.API_31)
+ private fun setupReady()=restrictionStatus==UnusedAppRestrictionsConstants.DISABLED || restrictionStatus==UnusedAppRestrictionsConstants.FEATURE_NOT_AVAILABLE || (restrictionStatus==UnusedAppRestrictionsConstants.ERROR && manuallyChecked)
+ private fun refreshRestrictions() {
+  val pending=PackageManagerCompat.getUnusedAppRestrictionsStatus(this)
+  pending.addListener({ restrictionStatus=runCatching { pending.get() }.getOrDefault(UnusedAppRestrictionsConstants.ERROR) },mainExecutor)
+ }
+ private fun openAppInfo() {
+  if(runCatching { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,android.net.Uri.parse("package:$packageName"))) }.isFailure)
+   message="Info aplikasi tidak dapat dibuka. Buka Setelan → Aplikasi → IWatchYou secara manual."
+ }
+ private fun openRestrictions() {
+  val intent=runCatching { IntentCompat.createManageUnusedAppRestrictionsIntent(this,packageName) }.getOrNull()
+  if(intent==null || runCatching { startActivity(intent) }.isFailure)openAppInfo()
+ }
+ private fun openAutostart() {
+  val intent=Intent().setComponent(ComponentName("com.miui.securitycenter","com.miui.permcenter.autostart.AutoStartManagementActivity"))
+  if(runCatching { startActivity(intent) }.isFailure)openAppInfo()
+ }
+
  private val permission=registerForActivityResult(ActivityResultContracts.RequestPermission()) {
   WatchService.instance?.refreshNotification()
   if(continueSetup) { continueSetup=false; openAccessibility() }
@@ -71,6 +95,7 @@ class MainActivity: ComponentActivity() {
   if(runCatching { startActivity(detail) }.isFailure) startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
  }
  private fun begin() {
+  if(!setupReady()) { setup=true;return }
   setup=false
   if(!hasNotifications() && Build.VERSION.SDK_INT>=33) { continueSetup=true; permission.launch(Manifest.permission.POST_NOTIFICATIONS) }
   else openAccessibility()
@@ -81,19 +106,27 @@ class MainActivity: ComponentActivity() {
   setContent {
    MaterialTheme(colorScheme=lightColorScheme(primary=Blue,background=Back,surface=Color.White,onSurface=Ink,onSurfaceVariant=Muted),typography=remember { typography() }) {
     Page()
-    if(setup) AlertDialog(onDismissRequest={setup=false},title={Text("Aktifkan pemantauan")},text={Column(verticalArrangement=Arrangement.spacedBy(14.dp)) {
+    if(setup) AlertDialog(onDismissRequest={setup=false},title={Text("Aktifkan pemantauan")},text={Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(14.dp)) {
      Text("Stopwatch muncul otomatis saat aplikasi digunakan dan berhenti saat layar terkunci.")
      Text("Aksesibilitas mengenali nama aplikasi dari jendela yang mendapat fokus. Isi layar, pesan, dan ketikan tidak dikumpulkan. Riwayat hanya disimpan di perangkat.",style=MaterialTheme.typography.bodyMedium)
-     Text("1. Izinkan notifikasi waktu layar.\n2. Pilih IWatchYou di Aksesibilitas dan aktifkan.",style=MaterialTheme.typography.bodyMedium)
-     if(Build.MANUFACTURER.equals("xiaomi",true)) Text("Jika HyperOS menghentikan pemantauan, izinkan mulai otomatis dan pilih baterai Tanpa batas pada info aplikasi.",style=MaterialTheme.typography.bodySmall)
-    }},confirmButton={TextButton(onClick={begin()}) { Text("Lanjutkan") }},dismissButton={TextButton(onClick={setup=false}) { Text("Nanti") }})
+     Text("Matikan ‘Jeda aktivitas apl jika tidak digunakan’ agar Android tidak mencabut izin aksesibilitas secara otomatis.",style=MaterialTheme.typography.bodyMedium)
+     Text(when { restrictionStatus==-1 -> "Memeriksa pengaturan…"; restrictionsEnabled() -> "Masih aktif — nonaktifkan melalui pengaturan di bawah."; setupReady() -> "Pembatasan aplikasi tidak digunakan: nonaktif."; else -> "Status tidak dapat dibaca di perangkat ini. Periksa secara manual." },style=MaterialTheme.typography.bodyMedium,color=if(restrictionsEnabled())MaterialTheme.colorScheme.error else Muted)
+     TextButton(onClick={openRestrictions()}) { Text("Buka pengaturan jeda aktivitas") }
+     if(restrictionStatus==UnusedAppRestrictionsConstants.ERROR) Row(verticalAlignment=Alignment.CenterVertically) {
+      Checkbox(checked=manuallyChecked,onCheckedChange={manuallyChecked=it})
+      Text("Saya sudah memastikan jeda aktivitas nonaktif",modifier=Modifier.weight(1f),style=MaterialTheme.typography.bodyMedium)
+     }
+     Text("Aktifkan ‘Mulai otomatis di latar belakang’ untuk IWatchYou. Pada Xiaomi/POCO/HyperOS: Setelan → Aplikasi → Perizinan → Mulai otomatis di latar belakang. Pilih juga baterai Tanpa batas bila tersedia.",style=MaterialTheme.typography.bodyMedium)
+     TextButton(onClick={openAutostart()}) { Text("Buka pengaturan mulai otomatis") }
+     Text("Setelah itu, izinkan notifikasi dan aktifkan IWatchYou di Aksesibilitas. Nama menu dapat berbeda di tiap perangkat.",style=MaterialTheme.typography.bodyMedium)
+    }},confirmButton={TextButton(enabled=setupReady(),onClick={begin()}) { Text("Lanjutkan") }},dismissButton={TextButton(onClick={setup=false}) { Text("Nanti") }})
     update?.let { release -> AlertDialog(onDismissRequest={if(!busy)update=null},title={Text("Pembaruan ${release.version}")},text={Text(if(busy) "Mengunduh pembaruan…" else "${release.notes}\n\nUkuran: ${"%.1f".format(Locale.US,release.size/1_000_000.0)} MB")},confirmButton={TextButton(enabled=!busy,onClick={busy=true; UpdateManager.install(this@MainActivity,release) { busy=false; update=null; message=it }}){Text(if(busy)"Mengunduh…" else "Unduh & pasang")}},dismissButton={TextButton(enabled=!busy,onClick={update=null}){Text("Nanti")}}) }
     message?.let { text -> AlertDialog(onDismissRequest={message=null},title={Text("IWatchYou")},text={Text(text)},confirmButton={TextButton(onClick={message=null}){Text("Tutup")}}) }
    }
   }
   UpdateManager.check(this) { r,_ -> update=r }
  }
- override fun onResume() { super.onResume(); WatchService.instance?.ownActivityVisible(); WatchService.instance?.refreshNotification(); UpdateManager.resumeInstall(this) { message=it } }
+ override fun onResume() { super.onResume(); refreshRestrictions(); WatchService.instance?.ownActivityVisible(); WatchService.instance?.refreshNotification(); UpdateManager.resumeInstall(this) { message=it } }
  @Composable private fun Page() {
   var data by remember { mutableStateOf(TimeLedger.Snapshot(WatchService.today(),0,emptyMap(),null)) }
   var active by remember { mutableStateOf(false) }
@@ -101,17 +134,38 @@ class MainActivity: ComponentActivity() {
   var selected by remember { mutableStateOf<String?>(null) }
   var dateMenu by remember { mutableStateOf(false) }
   var settings by remember { mutableStateOf(false) }
+  var previous by remember { mutableStateOf<TimeLedger.Snapshot?>(null) }
+  var historyError by remember { mutableStateOf(false) }
+  var refreshHistory by remember { mutableIntStateOf(0) }
   val owner=LocalLifecycleOwner.current
-  LaunchedEffect(owner,selected) {
+  LaunchedEffect(owner,selected,refreshHistory) {
    owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-    val saved=withContext(Dispatchers.IO) { HistoryStore(applicationContext).use { store -> Pair(store.read(selected ?: WatchService.today()),store.days()) } }
-    dates=(listOf(WatchService.today())+saved.second).distinct()
-    data=saved.first ?: TimeLedger.Snapshot(selected ?: WatchService.today(),0,emptyMap(),null)
+    var loadedDay=""
     while(isActive) {
+     val today=WatchService.today()
      active=WatchService.instance!=null
+     val target=selected ?: today
+     if(loadedDay!=today) {
+      val saved=withContext(Dispatchers.IO) { runCatching {
+       HistoryStore(applicationContext).use { store ->
+        store.migrateLegacy(applicationContext)
+        val available=store.days()
+        Triple(store.read(target),available,available.firstOrNull { it<target }?.let { store.read(it) })
+       }
+      } }
+      historyError=saved.isFailure
+      saved.getOrNull()?.let {
+       dates=it.second
+       data=it.first ?: TimeLedger.Snapshot(target,0,emptyMap(),null)
+       previous=it.third
+      }
+      loadedDay=today
+     }
      val current=WatchService.instance
-     if(selected==null && current!=null) data=current.current()
-     if(selected==null && data.day!=WatchService.today()) data=TimeLedger.Snapshot(WatchService.today(),0,emptyMap(),null)
+     if(selected==null && current!=null) {
+      data=current.current()
+      dates=(dates+data.day).distinct().sortedDescending()
+     }
      delay(1000)
     }
    }
@@ -130,10 +184,26 @@ class MainActivity: ComponentActivity() {
        IconButton(onClick={settings=true}) { Icon(Icons.Outlined.Settings,contentDescription="Pengaturan",tint=Ink) }
        DropdownMenu(expanded=settings,onDismissRequest={settings=false}) {
         DropdownMenuItem(text={Text("Periksa pembaruan")},onClick={settings=false; UpdateManager.check(this@MainActivity,true){r,e -> if(r!=null)update=r else message=e }})
+        DropdownMenuItem(text={Text("Atur ulang bubble timer")},onClick={settings=false;WatchService.instance?.resetBubbleControls();message="Ukuran timer dikembalikan ke 100%. Saat timer meredup, ketuk tombol tepi untuk mengatur, menyembunyikan, atau memperkecilnya."})
         DropdownMenuItem(text={Text("Izin & layanan")},onClick={settings=false; setup=true})
-        DropdownMenuItem(text={Text("Info aplikasi & baterai")},onClick={settings=false; startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,android.net.Uri.parse("package:$packageName")))})
+        DropdownMenuItem(text={Text("Info aplikasi & baterai")},onClick={settings=false;openAppInfo()})
        }
       }
+     }
+    }
+    if(restrictionsEnabled()) item {
+     Surface(color=Color(0xFFFFF0ED),shape=RoundedCornerShape(20.dp)) {
+      Column(Modifier.padding(16.dp)) {
+       Text("Lindungi izin pemantauan",fontWeight=FontWeight.Bold,color=Ink)
+       Text("Jeda aktivitas masih aktif. Nonaktifkan agar izin tidak dicabut otomatis.",style=MaterialTheme.typography.bodyMedium,color=Ink)
+       TextButton(onClick={setup=true}) { Text("Perbaiki pengaturan") }
+      }
+     }
+    }
+    if(historyError) item {
+     Column {
+      Text("Riwayat belum dapat dibaca. Data tidak dihapus.",color=MaterialTheme.colorScheme.error)
+      TextButton(onClick={refreshHistory++}) { Text("Coba lagi") }
      }
     }
     item {
@@ -147,6 +217,12 @@ class MainActivity: ComponentActivity() {
          Text(WatchService.short(data.screenMs),fontSize=27.sp,fontWeight=FontWeight.Bold,color=Ink,style=TextStyle(fontFeatureSettings="tnum"))
         }
        }
+       Text(if(selected==null)"Hari ini · "+dayLabel(data.day) else dayLabel(data.day),fontSize=12.sp,color=Muted)
+       previous?.let { before ->
+        val delta=data.screenMs-before.screenMs
+        Text(if(delta==0L)"Sama dengan ${dayLabel(before.day)}" else "${WatchService.short(kotlin.math.abs(delta))} lebih ${if(delta<0)"sedikit" else "lama"} dibanding ${dayLabel(before.day)}",fontSize=12.sp,lineHeight=18.sp,color=Muted)
+        if(selected==null) Text("Hari ini masih berjalan; perbandingan dengan total satu hari tercatat.",fontSize=11.sp,lineHeight=17.sp,color=Muted)
+       }
        HourChart(data.hours)
        Text("Durasi layar terbuka. Aplikasi dicatat saat mendapat fokus.",fontSize=11.sp,lineHeight=17.sp,color=Muted)
       }
@@ -156,9 +232,9 @@ class MainActivity: ComponentActivity() {
      Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
       Text("Penggunaan aplikasi",fontSize=16.sp,fontWeight=FontWeight.Bold,color=Ink,modifier=Modifier.weight(1f).semantics { heading() })
       Box {
-       TextButton(onClick={dateMenu=true}) { Text(if(selected==null)"Hari ini ▾" else dayLabel(selected!!)+" ▾",fontSize=12.sp,color=Muted) }
+       TextButton(enabled=dates.isNotEmpty(),onClick={dateMenu=true}) { Text(if(selected==null)"Hari ini ▾" else dayLabel(selected!!)+" ▾",fontSize=12.sp,color=Muted) }
        DropdownMenu(expanded=dateMenu,onDismissRequest={dateMenu=false},modifier=Modifier.heightIn(max=360.dp)) {
-        (listOf(WatchService.today())+dates).distinct().forEach { day -> DropdownMenuItem(text={Text(if(day==WatchService.today())"Hari ini" else dayLabel(day))},onClick={selected=day.takeUnless { it==WatchService.today() };dateMenu=false}) }
+        dates.forEach { day -> DropdownMenuItem(text={Text(if(day==WatchService.today())"Hari ini" else dayLabel(day))},onClick={selected=day.takeUnless { it==WatchService.today() };dateMenu=false}) }
        }
       }
      }
@@ -174,7 +250,8 @@ class MainActivity: ComponentActivity() {
     items(entries,key={it.key}) { entry ->
      AppRow(entry.key,entry.value,entries.first().value,Palette[(entry.key.hashCode() and Int.MAX_VALUE)%Palette.size])
     }
-    item { Text("Timer meredup setelah 3 detik. Ketuk dahulu untuk menggesernya.",fontSize=11.sp,lineHeight=18.sp,color=Muted,modifier=Modifier.padding(horizontal=3.dp)) }
+    item { Text(dates.minOrNull()?.let { "Riwayat tersedia sejak ${dayLabel(it)}. Hanya tanggal yang tercatat selama pemakaian ditampilkan." } ?: "Riwayat mulai tersimpan setelah pemantauan aktif. Tidak ada statistik sebelum kamu memakai IWatchYou.",fontSize=12.sp,lineHeight=19.sp,color=Muted) }
+    item { Text("Timer meredup setelah 3 detik dan meneruskan sentuhan ke aplikasi. Ketuk tombol tepi untuk membuka kontrol. Panah menyembunyikan timer; pegangan kanan bawah memperkecilnya hingga 80%. Ukuran dapat diatur ulang melalui Pengaturan.",fontSize=11.sp,lineHeight=18.sp,color=Muted,modifier=Modifier.padding(horizontal=3.dp)) }
    }
    val stateColor by animateColorAsState(if(active)Blue else Muted,label="monitoring")
    Surface(color=Color.White,shape=RoundedCornerShape(24.dp),shadowElevation=2.dp,modifier=Modifier.padding(start=16.dp,end=16.dp,bottom=12.dp).fillMaxWidth()) {
@@ -222,15 +299,25 @@ private fun dayLabel(day: String)=runCatching { LocalDate.parse(day).format(Date
  }
 }
 @Composable private fun HourChart(hours: List<Long>) {
+ var expanded by remember { mutableStateOf(false) }
  val max=(hours.maxOrNull() ?: 0L).coerceAtLeast(60_000)
- Column(verticalArrangement=Arrangement.spacedBy(7.dp),modifier=Modifier.semantics(mergeDescendants=true) { contentDescription="Penggunaan layar per jam, pukul 00 sampai 24" }) {
+ Column(verticalArrangement=Arrangement.spacedBy(7.dp),modifier=Modifier.semantics { contentDescription="Penggunaan layar per jam, pukul 00 sampai 24" }) {
   Row(Modifier.fillMaxWidth().height(42.dp),horizontalArrangement=Arrangement.spacedBy(4.dp),verticalAlignment=Alignment.Bottom) {
    repeat(24) { i ->
     val value=hours.getOrElse(i){0L}
     Box(Modifier.weight(1f).fillMaxHeight(if(value==0L)0.08f else (value.toFloat()/max).coerceIn(0.10f,1f)).background(if(value>0)Blue.copy(alpha=0.55f) else Track,RoundedCornerShape(3.dp)))
    }
   }
+
   Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { listOf("00","04","08","12","16","20","24").forEach { Text(it,color=Muted,fontSize=9.sp) } }
+  TextButton(onClick={expanded=!expanded}) { Text(if(expanded)"Tutup rincian per jam" else "Rincian per jam") }
+  if(expanded) repeat(24) { hour ->
+   Row(Modifier.fillMaxWidth().padding(vertical=6.dp),horizontalArrangement=Arrangement.SpaceBetween) {
+    Text("${hour.toString().padStart(2,'0')}.00–${(hour+1).toString().padStart(2,'0')}.00",fontSize=12.sp,color=Muted)
+    Text(WatchService.short(hours.getOrElse(hour){0L}),fontSize=12.sp,color=Ink)
+   }
+  }
+
  }
 }
 

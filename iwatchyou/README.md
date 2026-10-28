@@ -88,17 +88,25 @@ Private signing material stays outside this repository and must not be uploaded 
 **Preview 1.0.0 was debug-signed with a different certificate. Android will reject an in-place transition
 from that preview to production. Production-to-production updates preserve the app identity and private data.**
 
-## Trying the 1.0.3 fix without the original signing key
+## Version 1.4 (1.4.0)
 
-Build `:app:assemblePreview` to obtain `app/build/outputs/apk/preview/app-preview.apk`.
-This optimized APK is debug-signed, named **IWatchYou Uji**, and uses the separate
-package `id.wynn.iwatchyou.preview`. It installs alongside production 1.0.2 without
-replacing it or deleting its history. Its history starts separately. Disable the
-old IWatchYou Accessibility service, then enable **IWatchYou Uji · pemantauan waktu**.
-Check a timer that advances over two ordinary apps, Home, keyboard and lock/unlock.
+No Uji/preview label or production-preview build variant. The third version
+component preserves compatibility with installed update validators.
 
-This preview is a manual APK installation, not a production automatic update.
-Production updates still require the original production signing key and verified
-stable feed publication. Keep that key in a secure backup; it cannot be recovered
-from an APK. Preview signing keys are local/CI debug keys, so independently built
-previews may also use different certificates.
+- Use the upper-right arrow to dock the timer at the closest screen edge. Tap the
+  solid edge button to show it again. Hidden state persists across app switches.
+- Tap the lower-right grip to shrink in 10% steps, or drag horizontally within
+  80–100%. Settings → Atur ulang bubble timer returns to the shipped maximum.
+- After 3 seconds the entire timer body passes touches through to the app. Use
+  the solid edge button to unlock its controls; tapping the faded body has no effect.
+- Setup checks that “Jeda aktivitas apl jika tidak digunakan” is disabled and
+  guides enabling “Mulai otomatis di latar belakang”. Settings are owned by Android;
+  vendor intents fall back to App info with manual directions.
+- All saved daily/hourly/app statistics remain in the existing SQLite database.
+  The date menu lists recorded days, comparisons name the previous recorded day,
+  and “Rincian per jam” reveals all 24 hourly durations. Unobserved dates are not zeroes.
+
+See `AGENTS.md`, `DESIGN.md`, `docs/AI-DEVELOPMENT.md` and `docs/VERIFICATION-1.4.md`.
+Existing separate preview installs have a different package/data directory. An APK
+cannot silently move that private history or bypass a missing original signer.
+Production signing keys are required before issuing an installable production update.

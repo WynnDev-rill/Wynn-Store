@@ -12,6 +12,13 @@ import android.widget.TextView;
 
 /** Standalone test-APK window: no launcher, Activity suffix or target-APK dependencies. */
 public final class FocusProbe extends Activity {
+    private TextView touches;
+    private int touchCount;
+    @Override public boolean dispatchTouchEvent(android.view.MotionEvent event) {
+        if (event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN && touches != null)
+            touches.setText("Touches: " + (++touchCount));
+        return super.dispatchTouchEvent(event);
+    }
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
@@ -37,6 +44,9 @@ public final class FocusProbe extends Activity {
             getSystemService(InputMethodManager.class).showSoftInput(editor, InputMethodManager.SHOW_IMPLICIT);
         });
         content.addView(keyboard);
+        touches = new TextView(this);
+        touches.setText("Touches: 0");
+        content.addView(touches);
         setContentView(content);
     }
 }

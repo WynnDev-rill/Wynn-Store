@@ -10,8 +10,8 @@ android {
   applicationId = "id.wynn.iwatchyou"
   minSdk = 30
   targetSdk = 36
-  versionCode = 4
-  versionName = "1.0.3"
+  versionCode = 14
+  versionName = "1.4.0"
   testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   resourceConfigurations += listOf("en", "in")
  }
@@ -30,13 +30,7 @@ android {
    if (signingConfigs.names.contains("production")) signingConfig = signingConfigs.getByName("production")
    proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
   }
-  create("preview") {
-   initWith(getByName("release"))
-   applicationIdSuffix = ".preview"
-   versionNameSuffix = "-preview"
-   signingConfig = signingConfigs.getByName("debug")
-   matchingFallbacks += "release"
-  }
+
  }
  compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
  kotlinOptions { jvmTarget = "17" }

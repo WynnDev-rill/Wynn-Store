@@ -109,10 +109,35 @@ Do not claim an existing APK contains a new fix. Publishing requires a new versi
 matching source digest, successful source/device QA, production signature and the
 checks enforced by `scripts/publish.py`.
 
-The `preview` build is an optimized, debug-signed, separate app
-(`id.wynn.iwatchyou.preview`, "IWatchYou Uji"). Use `:app:assemblePreview` when the
-production key is unavailable and a user requests a safe test download. Never
-represent it as an in-place production update or advertise it in the stable feed.
-`qa/run-preview.sh` is a dedicated-emulator smoke check after native tests: the
-production package remains installed while preview launches and shows its bubble.
-Only one monitoring service should be enabled when trying it on a real phone.
+## Version 1.4 invariants and permanent tooling
+
+Read `docs/AI-DEVELOPMENT.md` and `DESIGN.md`. Project-local Ponytail (full by
+ default), UI UX Pro Max, Impeccable and Graphify are in `.agents/skills/`.
+Apply them together with Android/native and user requirements taking precedence.
+Run Graphify from this directory; query `graphify-out/graph.json` before broad
+architecture searches and refresh it after source changes. Do not index private
+usage data, credentials or installed third-party skill data into the app graph.
+
+The bubble body must set FLAG_NOT_TOUCHABLE when faded, and hide its accessibility
+actions; alpha and a gesture guard alone are insufficient. The separate solid edge
+handle stays interactive and restores editing. Collapse never pauses accounting.
+Preserve scale (80–100%), hidden state, safe-area bounds and orientation positions.
+Do not enlarge the shipped maximum just to add controls. Settings provides a
+full-size reset alternative for compact corner controls.
+
+History remains in `history.db`, schema version 1; no deletion or time-range prune.
+Keep legacy migration. List only recorded dates, explain incomplete-day comparisons,
+and never synthesize statistics before monitoring. Database read failure must show
+retry without clearing history. Live midnight changes must refresh available dates.
+
+Before enabling monitoring, check AndroidX unused-app restrictions; enabled pause
+blocks Continue. Refresh after returning from Settings. On vendor/API errors only,
+allow explicit manual confirmation. Autostart is guidance with safe intent fallback;
+never falsely report an OEM setting enabled. Keep setup scrollable at 200% text.
+
+The 1.4 release uses versionName 1.4.0 for compatibility with already-installed
+three-part update validators, versionCode 14, label IWatchYou. The preview build
+variant and its Uji label are retired. Do not distribute a new debug certificate
+as an update to an existing app. The older separate `.preview` package has its own
+private data and signer; it cannot be silently migrated into production. Never
+recommend uninstalling it to get around Android signing checks.

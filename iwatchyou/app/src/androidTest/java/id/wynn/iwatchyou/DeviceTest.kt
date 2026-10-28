@@ -36,6 +36,97 @@ class DeviceTest {
   }
   return Regex("""mCurrentFocus=Window\{[^\n]*? u\d+ ([^/\s]+)/""").find(state)?.groupValues?.get(1)
  }
+ private fun startMonitoringFixture() {
+  automation
+  context.getSharedPreferences("overlay",Context.MODE_PRIVATE).edit().clear().commit()
+  if(android.os.Build.VERSION.SDK_INT>=33)shell("pm grant id.wynn.iwatchyou android.permission.POST_NOTIFICATIONS")
+  shell("settings put secure enabled_accessibility_services id.wynn.iwatchyou/.WatchService")
+  shell("settings put secure accessibility_enabled 1")
+  waitFor { WatchService.instance!=null }
+  InstrumentationRegistry.getInstrumentation().runOnMainSync { WatchService.instance!!.resetBubbleControls() }
+  device.wakeUp();shell("wm dismiss-keyguard")
+  shell("am start -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
+  waitFor(20_000) { WatchService.instance?.current()?.foreground=="id.wynn.iwatchyou.test" }
+ }
+ private fun editableTimer(): UiObject2 {
+  device.findObject(By.desc("Tampilkan kontrol timer"))?.click()
+  return device.wait(Until.findObject(By.clazz("android.widget.Chronometer")),8000).also { assertNotNull(it) }!!
+ }
+ @Test fun bubbleCollapsesResizesAndRetainsStateWithoutResettingTime() {
+  startMonitoringFixture()
+  val initial=editableTimer().visibleBounds
+  repeat(4) {
+   editableTimer()
+   device.findObject(By.desc("Perkecil timer")).click()
+  }
+  val small=editableTimer().visibleBounds
+  assertTrue("Timer becomes smaller",small.width()<initial.width())
+  assertTrue("Minimum remains 80 percent",small.width()>=initial.width()*0.79)
+  device.findObject(By.desc("Perkecil timer")).click()
+  assertEquals(small.width(),editableTimer().visibleBounds.width())
+  val before=WatchService.instance!!.current().apps["id.wynn.iwatchyou.test"]!!
+  device.findObject(By.desc("Sembunyikan timer")).click()
+  assertTrue(device.wait(Until.hasObject(By.desc("Tampilkan kontrol timer")),8000))
+  assertFalse(device.hasObject(By.clazz("android.widget.Chronometer")))
+  SystemClock.sleep(1100)
+  assertTrue(WatchService.instance!!.current().apps["id.wynn.iwatchyou.test"]!!>before)
+  device.pressHome()
+  waitFor { WatchService.instance?.current()?.foreground==null }
+  shell("am start -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
+  waitFor { WatchService.instance?.current()?.foreground=="id.wynn.iwatchyou.test" }
+  assertTrue(device.wait(Until.hasObject(By.desc("Tampilkan kontrol timer")),8000))
+  assertFalse("Docked state survives app switches",device.hasObject(By.clazz("android.widget.Chronometer")))
+  assertEquals(small.width(),editableTimer().visibleBounds.width())
+  InstrumentationRegistry.getInstrumentation().runOnMainSync { WatchService.instance!!.resetBubbleControls() }
+  assertEquals(initial.width(),editableTimer().visibleBounds.width())
+ }
+ @Test fun fadedBubbleForwardsTapsToTheActualApp() {
+  startMonitoringFixture()
+  val bounds=editableTimer().visibleBounds
+  // Fixture counts every ACTION_DOWN anywhere, independently of accessibility metadata.
+  SystemClock.sleep(3400)
+  assertTrue(device.wait(Until.hasObject(By.desc("Tampilkan kontrol timer")),8000))
+  assertFalse("Faded timer is absent from touch/accessibility actions",device.hasObject(By.desc("Perkecil timer")))
+  val label=device.findObject(By.textStartsWith("Touches: "))
+  val before=label.text.substringAfter(": ").toInt()
+  device.click(bounds.left+bounds.width()/3,bounds.centerY())
+  waitFor { device.findObject(By.textStartsWith("Touches: ")).text.substringAfter(": ").toInt()>before }
+  assertTrue("Body tap cannot unlock faded controls",device.hasObject(By.desc("Tampilkan kontrol timer")))
+  assertFalse(device.hasObject(By.desc("Sembunyikan timer")))
+  editableTimer()
+  assertNotNull(device.findObject(By.desc("Sembunyikan timer")))
+ }
+ @Test fun historicalDatesHaveNoInventedRowsAndSurviveUpdates() {
+  val old="2026-01-02";val next="2026-01-03"
+  HistoryStore(context).use {
+   it.write(TimeLedger.Snapshot(old,120_000,mapOf("historical.app" to 90_000L),null,List(24){h -> if(h==8)120_000L else 0L}))
+   it.write(TimeLedger.Snapshot(next,60_000,emptyMap(),null))
+   it.write(TimeLedger.Snapshot(next,65_000,emptyMap(),null))
+  }
+  HistoryStore(context).use {
+   assertNull(it.read("2026-01-01"))
+   assertEquals(120_000L,it.read(old)!!.screenMs)
+   assertEquals(90_000L,it.read(old)!!.apps["historical.app"])
+   assertEquals(120_000L,it.read(old)!!.hours[8])
+   assertEquals(65_000L,it.read(next)!!.screenMs)
+   assertFalse(it.days().contains("2026-01-01"))
+  }
+ }
+ @Test fun setupRequiresUnusedAppRestrictionsToBeDisabled() {
+  device.wakeUp();shell("wm dismiss-keyguard")
+  shell("cmd appops set id.wynn.iwatchyou AUTO_REVOKE_PERMISSIONS_IF_UNUSED allow")
+  shell("am start -n id.wynn.iwatchyou/.MainActivity")
+  device.wait(Until.hasObject(By.desc("Pemantauan")),8000)
+  device.findObject(By.desc("Pemantauan")).click()
+  assertTrue(device.wait(Until.hasObject(By.text("Lanjutkan")),8000))
+  waitFor { !device.findObject(By.text("Lanjutkan")).isEnabled }
+  device.pressBack();device.pressHome()
+  shell("cmd appops set id.wynn.iwatchyou AUTO_REVOKE_PERMISSIONS_IF_UNUSED ignore")
+  shell("am start -n id.wynn.iwatchyou/.MainActivity")
+  device.findObject(By.desc("Pemantauan")).click()
+  assertTrue(device.wait(Until.hasObject(By.text("Lanjutkan")),8000))
+  waitFor { device.findObject(By.text("Lanjutkan")).isEnabled }
+ }
  @Test fun historyIsAtomicAndSurvivesReopen() {
   val day="2001-01-01"
   HistoryStore(context).use { it.write(TimeLedger.Snapshot(day,12345,mapOf("test.app" to 9999L),null,List(24){if(it==5)12345L else 0L})) }
@@ -54,16 +145,14 @@ class DeviceTest {
   SystemClock.sleep(1600)
   val after=WatchService.instance!!.current().apps["com.android.settings"] ?: 0L
   assertTrue("Foreground timer advances",after-before in 1200..2400)
-  // Dimmed swipes do not move the timer; a tap unlocks the following drag.
+  // Faded bodies pass through. Only the solid edge handle unlocks editing.
   SystemClock.sleep(3300)
-  val timer=device.findObject(By.clazz("android.widget.Chronometer"))
+  assertTrue(device.wait(Until.hasObject(By.desc("Tampilkan kontrol timer")),8000))
+  device.findObject(By.desc("Tampilkan kontrol timer")).click()
+  val timer=device.wait(Until.findObject(By.clazz("android.widget.Chronometer")),8000)
   assertNotNull("Timer overlay is present",timer)
   val rect=android.graphics.Rect(timer.visibleBounds)
-  device.swipe(rect.centerX(),rect.centerY(),rect.centerX()+100,rect.centerY()+90,12)
-  val still=device.findObject(By.clazz("android.widget.Chronometer")).visibleBounds
-  assertEquals(rect,still)
-  device.click(rect.centerX(),rect.centerY());SystemClock.sleep(250)
-  device.swipe(rect.centerX(),rect.centerY(),rect.centerX()+100,rect.centerY()+90,12)
+  device.swipe(rect.left+20,rect.centerY(),rect.left+120,rect.centerY()+90,12)
   SystemClock.sleep(200)
   val moved=device.findObject(By.clazz("android.widget.Chronometer")).visibleBounds
   assertTrue("Unlocked timer can move",moved.left>rect.left || moved.top>rect.top)
