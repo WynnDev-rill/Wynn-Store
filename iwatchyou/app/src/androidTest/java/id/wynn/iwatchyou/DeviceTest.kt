@@ -236,7 +236,10 @@ class DeviceTest {
   SystemClock.sleep(3300)
   assertTrue(device.wait(Until.hasObject(By.desc("Tampilkan kontrol timer")),8000))
   val rect=editableTimer()
-  device.swipe(rect.left+20,rect.centerY(),rect.left+120,rect.centerY()+90,12)
+  // Start inside the body, beyond Android's edge-back gesture region.
+  val dragX=rect.left+rect.width()/2
+  device.swipe(dragX,rect.centerY(),dragX+100,rect.centerY()+90,12)
+  assertEquals("Dragging keeps Settings focused", "com.android.settings", focusedApplication())
   SystemClock.sleep(200)
   val moved=editableTimer()
   assertTrue("Unlocked timer can move",moved.left>rect.left || moved.top>rect.top)

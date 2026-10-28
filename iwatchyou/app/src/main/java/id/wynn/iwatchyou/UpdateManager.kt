@@ -49,6 +49,10 @@ object UpdateManager {
   return r
  }
  fun check(activity: ComponentActivity,reportErrors: Boolean=false,callback: (Release?,String?)->Unit) {
+  if(activity.packageName.endsWith(".preview")) {
+   callback(null,if(reportErrors) "Pembaruan pemasangan ini memakai APK IWatchYou dengan kunci tanda tangan yang sama." else null)
+   return
+  }
 
   if(!checking.compareAndSet(false,true)) { if(reportErrors)callback(null,"Pemeriksaan masih berlangsung.");return }
   activity.lifecycleScope.launch {

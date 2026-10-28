@@ -22,6 +22,12 @@ android {
    keyAlias = providers.environmentVariable("IW_KEY_ALIAS").get()
    keyPassword = providers.environmentVariable("IW_KEY_PASSWORD").get()
   }
+  if (providers.environmentVariable("IW_LEGACY_KEYSTORE_PATH").isPresent) create("legacyOwner") {
+   storeFile = file(providers.environmentVariable("IW_LEGACY_KEYSTORE_PATH").get())
+   storePassword = providers.environmentVariable("IW_LEGACY_STORE_PASSWORD").get()
+   keyAlias = providers.environmentVariable("IW_LEGACY_KEY_ALIAS").get()
+   keyPassword = providers.environmentVariable("IW_LEGACY_KEY_PASSWORD").get()
+  }
  }
  buildTypes {
   getByName("release") {
@@ -30,7 +36,13 @@ android {
    if (signingConfigs.names.contains("production")) signingConfig = signingConfigs.getByName("production")
    proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
   }
-
+  // The installed Uji app retains its private history under this package.
+  create("legacy") {
+   initWith(getByName("release"))
+   applicationIdSuffix = ".preview"
+   signingConfig = signingConfigs.findByName("legacyOwner")
+   matchingFallbacks += "release"
+  }
  }
  compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
  kotlinOptions { jvmTarget = "17" }

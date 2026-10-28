@@ -48,7 +48,7 @@ jobs:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
       - uses: gradle/actions/setup-gradle@v4
       - name: Unit tests, lint and optimized APKs
-        run: ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
+        run: ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:assembleLegacy :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
       - name: Prepare a disposable common signer for QA APKs
         run: |
           keytool -genkeypair -keystore "$RUNNER_TEMP/iwatchyou-qa.jks" -storepass android -keypass android -alias iwatchyou-qa -dname 'CN=IWatchYou disposable QA' -keyalg RSA -keysize 2048 -validity 2
