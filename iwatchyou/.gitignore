@@ -1,0 +1,8 @@
+.gradle/
+.kotlin/
+__pycache__/
+**/build/
+local.properties
+qa/output/
+qa/production-output/
+qa/upgrade-output/

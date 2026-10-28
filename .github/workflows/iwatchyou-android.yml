@@ -1,10 +1,19 @@
 name: IWatchYou Android
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     paths:
       - 'iwatchyou/**'
       - '.github/workflows/iwatchyou-android.yml'
+      - 'screenguard-pro/gradle/**'
+      - 'screenguard-pro/gradlew'
+  push:
+    branches: [main]
+    paths:
+      - 'iwatchyou/**'
+      - '.github/workflows/iwatchyou-android.yml'
+      - 'screenguard-pro/gradle/**'
+      - 'screenguard-pro/gradlew'
       - '!iwatchyou/updates/**'
       - '!iwatchyou/docs/**'
 permissions:
@@ -14,13 +23,14 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
       staged: ${{ steps.version.outputs.staged }}
     steps:
       - uses: actions/checkout@v4
+      - name: Verify device-QA outcome detection
+        run: python3 -m unittest discover -s iwatchyou/qa -p 'test_*.py' -v
       - id: version
         run: |
           python3 - <<'PYCODE'
@@ -37,12 +47,10 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
       - uses: gradle/actions/setup-gradle@v4
-        if: steps.version.outputs.staged != 'true'
       - name: Unit tests, lint and optimized APKs
-        if: steps.version.outputs.staged != 'true'
-        run: ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
+        run: ./screenguard-pro/gradlew -p iwatchyou :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:assemblePreview :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
       - uses: actions/upload-artifact@v4
-        if: always() && steps.version.outputs.staged != 'true'
+        if: always()
         with:
           name: IWatchYou-build
           path: |
@@ -52,7 +60,6 @@ jobs:
             iwatchyou/app/build/outputs/mapping/release/
   device:
     needs: build
-    if: needs.build.outputs.staged != 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -82,15 +89,17 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: false
-          script: bash iwatchyou/qa/run-device.sh
+          script: |
+            bash iwatchyou/qa/run-device.sh
+            bash iwatchyou/qa/run-preview.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: IWatchYou-device-api-${{ matrix.api }}
           path: iwatchyou/qa/output/
   production:
-    needs: build
-    if: needs.build.outputs.staged == 'true'
+    needs: [build, device]
+    if: github.ref == 'refs/heads/main' && needs.build.outputs.staged == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
