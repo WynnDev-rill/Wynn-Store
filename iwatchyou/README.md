@@ -119,3 +119,12 @@ not be located. It cannot update an installation signed with an older key.
 Uninstalling that installation deletes its private history. This delivery does
 not change the public stable feed or authorize using the new key to replace
 updates for other existing installations. See `docs/VERIFICATION-1.4.md`.
+
+## 1.4.1 control cleanup
+
+Resize through Settings → Ukuran timer (50–100%). The timer retains its existing
+pill; one solid inline arrow hides it or moves it when dragged. Dimming alone
+never creates an edge tab. The body remains touch-through when dimmed; the edge
+restore tab exists only after hiding. Setup now contains three concise status
+rows instead of a tutorial. This APK retains the dedicated 1.4.0 owner's signing
+key, package and private history for a direct update.

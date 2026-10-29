@@ -16,9 +16,12 @@ import org.junit.runner.RunWith
 class DeviceTest {
  @Before fun configureAutomation() { Configurator.getInstance().apply { uiAutomationFlags=1;waitForIdleTimeout=0 } }
  @get:Rule val testName=org.junit.rules.TestName()
- @After fun restoreDisplay() {
+ private fun captureScreen(name: String) {
   val dir=java.io.File(context.filesDir,"qa").apply { mkdirs() }
-  runCatching { device.takeScreenshot(java.io.File(dir,testName.methodName+".png"));device.dumpWindowHierarchy(java.io.File(dir,testName.methodName+".xml")) }
+  runCatching { device.takeScreenshot(java.io.File(dir,name+".png"));device.dumpWindowHierarchy(java.io.File(dir,name+".xml")) }
+ }
+ @After fun restoreDisplay() {
+  captureScreen(testName.methodName)
   println("Final ledger: "+WatchService.instance?.current())
   shell("settings put secure enabled_accessibility_services ''")
   waitFor(20_000) { WatchService.instance==null }
@@ -59,10 +62,13 @@ class DeviceTest {
    fun field(name: String)=OverlayController::class.java.getDeclaredField(name).apply { isAccessible=true }.get(overlay)
    val root=field("view") as? android.widget.FrameLayout
    val params=field("params") as? android.view.WindowManager.LayoutParams
-   val v=if(label=="edge")field("tab") as? android.view.View else {
-    if(params==null || params.flags and android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE!=0)return@runOnMainSync
-    if(label=="timer")root else root?.let { r -> (0 until r.childCount).map { r.getChildAt(it) }.firstOrNull { it.contentDescription==label } }
+   val v=when(label) {
+    "edge" -> field("tab") as? android.view.View
+    "Sembunyikan timer" -> field("hideButton") as? android.view.View
+    "timer" -> root
+    else -> root?.let { r -> (0 until r.childCount).map { r.getChildAt(it) }.firstOrNull { it.contentDescription==label } }
    }
+
    if(v!=null && v.isAttachedToWindow && v.isShown && v.width>0 && v.height>0) {
     val xy=IntArray(2);v.getLocationOnScreen(xy)
     result=android.graphics.Rect(xy[0],xy[1],xy[0]+v.width,xy[1]+v.height)
@@ -99,43 +105,55 @@ class DeviceTest {
  @Test fun bubbleCollapsesResizesAndRetainsStateWithoutResettingTime() {
   startMonitoringFixture()
   val initial=editableTimer()
-  repeat(4) {
-   editableTimer()
-   bubbleClick("Perkecil timer")
-  }
+  assertNull("Visible timer has no edge handle",overlayViewBounds("edge"))
+  shell("am start -W -f 0x10008000 -n id.wynn.iwatchyou/.MainActivity")
+  val settings=device.wait(Until.findObject(By.desc("Pengaturan")),20_000) ?: error("Missing Settings")
+  settings.click()
+  device.wait(Until.findObject(By.text("Ukuran timer")),8000)!!.click()
+  val slider=device.wait(Until.findObject(By.desc("Ukuran timer")),8000) ?: error("Missing size slider")
+  val sliderBounds=slider.visibleBounds
+  device.click(sliderBounds.left+2,sliderBounds.centerY())
+  waitFor { context.getSharedPreferences("overlay",Context.MODE_PRIVATE).getFloat("scale",1f)==0.5f }
+  assertTrue(device.hasObject(By.text("50%")))
+  captureScreen("timer-size-50")
+  device.findObject(By.text("Selesai")).click()
+  shell("am start -W -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
+  waitFor { WatchService.instance?.current()?.foreground=="id.wynn.iwatchyou.test" }
   val small=editableTimer()
-  assertTrue("Timer becomes smaller",small.width()<initial.width())
-  assertTrue("Minimum remains 80 percent",small.width()>=initial.width()*0.79)
-  bubbleClick("Perkecil timer")
-  assertEquals(small.width(),editableTimer().width())
+  captureScreen("timer-half-visible")
+  assertTrue("Half size is available through the real slider",kotlin.math.abs(initial.width()/2-small.width())<=1)
   val before=WatchService.instance!!.current().apps["id.wynn.iwatchyou.test"]!!
   bubbleClick("Sembunyikan timer")
-  assertTrue(device.wait(Until.hasObject(By.desc("Tampilkan kontrol timer")),8000))
+  assertTrue(device.wait(Until.hasObject(By.desc("Tampilkan timer")),8000))
   assertNull(overlayViewBounds("timer"))
-  SystemClock.sleep(1100)
-  assertTrue(WatchService.instance!!.current().apps["id.wynn.iwatchyou.test"]!!>before)
+  waitFor { WatchService.instance!!.current().apps["id.wynn.iwatchyou.test"]!!>before }
   device.pressHome()
   waitFor { WatchService.instance?.current()?.foreground==null }
   shell("am start -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
   waitFor { WatchService.instance?.current()?.foreground=="id.wynn.iwatchyou.test" }
-  assertTrue(device.wait(Until.hasObject(By.desc("Tampilkan kontrol timer")),8000))
+  assertTrue(device.wait(Until.hasObject(By.desc("Tampilkan timer")),8000))
   assertNull("Docked state survives app switches",overlayViewBounds("timer"))
   assertEquals(small.width(),editableTimer().width())
+  assertNull("Restoring removes the edge handle",overlayViewBounds("edge"))
   InstrumentationRegistry.getInstrumentation().runOnMainSync { WatchService.instance!!.resetBubbleControls() }
   assertEquals(initial.width(),editableTimer().width())
  }
- @Test fun fadedBubbleForwardsTapsToTheActualApp() {
+ @Test fun fadedBubbleForwardsTapsWithoutCreatingAnEdgeHandle() {
   startMonitoringFixture()
   val bounds=editableTimer()
-  // Fixture counts every ACTION_DOWN anywhere, independently of accessibility metadata.
   SystemClock.sleep(3400)
-  assertTrue(device.wait(Until.hasObject(By.desc("Tampilkan kontrol timer")),8000))
-  assertNull("Faded timer window cannot receive control actions",overlayViewBounds("Perkecil timer"))
+  assertNull("Dimming must not dock the timer",overlayViewBounds("edge"))
+  captureScreen("timer-faded-expanded")
+  val hide=overlayViewBounds("Sembunyikan timer") ?: error("Missing inline hide arrow")
+  assertTrue("Hide arrow stays beside the timer",kotlin.math.abs(hide.centerY()-bounds.centerY())<=2)
   val label=device.findObject(By.textStartsWith("Touches: "))
   val before=label.text.substringAfter(": ").toInt()
   device.click(bounds.left+bounds.width()/3,bounds.centerY())
   waitFor { device.findObject(By.textStartsWith("Touches: ")).text.substringAfter(": ").toInt()>before }
-  assertTrue("Body tap cannot unlock faded controls",device.hasObject(By.desc("Tampilkan kontrol timer")))
+  assertNull("Passing through a body tap cannot create an edge handle",overlayViewBounds("edge"))
+  bubbleClick("Sembunyikan timer")
+  assertNotNull("Edge handle appears only after hiding",overlayViewBounds("edge"))
+  captureScreen("timer-hidden")
   assertNull(overlayViewBounds("Sembunyikan timer"))
   editableTimer()
   assertNotNull(overlayViewBounds("Sembunyikan timer"))
@@ -161,27 +179,27 @@ class DeviceTest {
   device.wakeUp();shell("wm dismiss-keyguard")
   shell("cmd appops set --uid id.wynn.iwatchyou AUTO_REVOKE_PERMISSIONS_IF_UNUSED allow")
   val enabled=androidx.core.content.PackageManagerCompat.getUnusedAppRestrictionsStatus(context).get()
-  println("Unused restrictions after allow: $enabled; whitelisted=${context.packageManager.isAutoRevokeWhitelisted}")
   assertTrue("Fixture enables unused-app restrictions ($enabled)",enabled in listOf(androidx.core.content.UnusedAppRestrictionsConstants.API_30,androidx.core.content.UnusedAppRestrictionsConstants.API_31))
-  shell("am start -W -n id.wynn.iwatchyou/.MainActivity")
-  val monitoring=device.wait(Until.findObject(By.desc("Pemantauan").pkg(context.packageName)),20_000)
-    ?: throw AssertionError("Monitoring switch did not appear after Activity launch")
-  monitoring.click()
-  assertTrue(device.wait(Until.hasObject(By.text("Lanjutkan")),8000))
-  device.findObject(By.text("Lanjutkan")).click()
-  SystemClock.sleep(250)
-  assertNotNull("Continue cannot leave setup while restrictions are enabled",device.findObject(By.text("Lanjutkan")))
-  device.pressBack();device.pressHome()
-  waitFor { focusedApplication()==device.launcherPackageName }
+  shell("am start -W -f 0x10008000 -n id.wynn.iwatchyou/.MainActivity")
+  device.wait(Until.findObject(By.desc("Pemantauan")),20_000)!!.click()
+  val blocked=device.wait(Until.findObject(By.desc("Atur aksesibilitas")),8000) ?: error("Missing accessibility action")
+  assertFalse("Enabled unused-app restrictions block monitoring setup",blocked.isEnabled)
+  assertFalse(device.hasObject(By.textStartsWith("Stopwatch muncul otomatis")))
+  captureScreen("permissions-compact")
+  shell("settings put system font_scale 2.0")
+  waitFor { context.resources.configuration.fontScale>=1.9f }
+  shell("am start -W -f 0x10008000 -n id.wynn.iwatchyou/.MainActivity")
+  device.wait(Until.findObject(By.desc("Pemantauan")),20_000)!!.click()
+  assertNotNull(device.wait(Until.findObject(By.text("Selesai")),8000))
+  captureScreen("permissions-large-text")
+  device.findObject(By.text("Selesai")).click()
+  shell("settings put system font_scale 1.0")
+  device.pressHome()
   shell("cmd appops set --uid id.wynn.iwatchyou AUTO_REVOKE_PERMISSIONS_IF_UNUSED ignore")
-  shell("am start -W -n id.wynn.iwatchyou/.MainActivity")
-  assertTrue(device.wait(Until.hasObject(By.desc("Pemantauan")),8000))
-  device.findObject(By.desc("Pemantauan")).click()
-  assertTrue(device.wait(Until.hasObject(By.text("Lanjutkan")),8000))
-  device.findObject(By.text("Periksa lagi"))?.click()
-  val disabled=androidx.core.content.PackageManagerCompat.getUnusedAppRestrictionsStatus(context).get()
-  assertEquals(androidx.core.content.UnusedAppRestrictionsConstants.DISABLED,disabled)
-  device.findObject(By.text("Lanjutkan")).click()
+  shell("am start -W -f 0x10008000 -n id.wynn.iwatchyou/.MainActivity")
+  device.wait(Until.findObject(By.desc("Pemantauan")),20_000)!!.click()
+  waitFor { device.findObject(By.desc("Atur aksesibilitas"))?.isEnabled==true }
+  device.findObject(By.desc("Atur aksesibilitas")).click()
   waitFor { focusedApplication()=="com.android.settings" }
  }
  @Test fun legacyMigrationCannotReplaceANewerConcurrentSnapshot() {
@@ -233,13 +251,14 @@ class DeviceTest {
   SystemClock.sleep(1600)
   val after=WatchService.instance!!.current().apps["com.android.settings"] ?: 0L
   assertTrue("Foreground timer advances",after-before in 1200..2400)
-  // Faded bodies pass through. Only the solid edge handle unlocks editing.
+  // Faded bodies pass through; the solid inline arrow still supports dragging.
   SystemClock.sleep(3300)
-  assertTrue(device.wait(Until.hasObject(By.desc("Tampilkan kontrol timer")),8000))
+  assertNull("Dimming does not hide the timer",overlayViewBounds("edge"))
   val rect=editableTimer()
-  // Start inside the body, beyond Android's edge-back gesture region.
-  val dragX=rect.left+rect.width()/2
-  device.swipe(dragX,rect.centerY(),dragX+100,rect.centerY()+90,12)
+  // Drag the visible inline control instead of the pass-through body.
+  val handle=overlayViewBounds("Sembunyikan timer") ?: error("Missing drag handle")
+  val dragX=handle.centerX()
+  device.swipe(dragX,handle.centerY(),dragX+100,handle.centerY()+90,12)
   assertEquals("Dragging keeps Settings focused", "com.android.settings", focusedApplication())
   SystemClock.sleep(200)
   val moved=editableTimer()

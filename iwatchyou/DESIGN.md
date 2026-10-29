@@ -4,14 +4,21 @@ Mode: Operate. Native Android 11+, primarily Xiaomi/POCO/HyperOS; Indonesian cop
 Preserve the existing Plus Jakarta Sans family, white/blue dashboard, light surface
 `#F6F8FC`, text `#142033`, secondary text `#637087`, accent `#246ADC`.
 
-The timer is a restrained dark pill, maximum the existing 134×44dp footprint (grows
-only when system font scaling needs more room). Supported user scale: 80–100%;
-12sp minimum base timer text. Upper-right chevron hides; lower-right grip shrinks
-on tap or resizes horizontally on drag. Hidden state and size persist. The solid
-48dp edge handle restores editing. After 3 seconds the body dims, removes all
-accessibility actions and sets FLAG_NOT_TOUCHABLE, including corner controls.
-No invisible hit targets remain over other apps. Settings supplies a full-size reset.
-Safe-area clamping applies to both orientations and every size change.
+The timer retains its restrained dark pill, font and shipped 134×44dp maximum
+(growing only for system text size). User scale is 50–100%, persisted through a
+single native Slider in Settings → Ukuran timer. A separate solid 32dp circular
+chevron follows the pill, centered vertically. Tap hides; drag moves. There are
+no stacked corner icons or on-bubble resize grips. The body dims after 3 seconds
+and passes touches through; the solid inline control remains explicit and usable.
+Only a user collapse produces the 32×48dp edge tab. Restoring removes that tab.
+Persist hidden state and separate portrait/landscape positions. The tiny 50%
+option is an explicit owner request; its type scales proportionally.
+
+The permission dialog is a compact list: Jeda aplikasi, Mulai otomatis,
+Aksesibilitas. Show real status and one short action per row. Keep only a brief
+local-data privacy line. No tutorial paragraphs, repeated setup instructions or
+long timer guidance in the dashboard. Preserve error recovery and honest unknown
+vendor states, and keep the dialog scrollable at 200% system text.
 
 History dates come only from persisted rows or the active live day. Comparisons
 name the previous recorded date, never substitute zero for an unobserved date, and

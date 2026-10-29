@@ -10,8 +10,8 @@ android {
   applicationId = "id.wynn.iwatchyou"
   minSdk = 30
   targetSdk = 36
-  versionCode = 14
-  versionName = "1.4.0"
+  versionCode = 15
+  versionName = "1.4.1"
   testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   resourceConfigurations += listOf("en", "in")
  }

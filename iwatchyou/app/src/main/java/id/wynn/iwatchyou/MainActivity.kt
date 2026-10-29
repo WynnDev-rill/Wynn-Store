@@ -42,6 +42,7 @@ import kotlinx.coroutines.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.roundToInt
 
 private val Ink=Color(0xFF142033)
 private val Muted=Color(0xFF637087)
@@ -62,6 +63,8 @@ class MainActivity: ComponentActivity() {
  private var update by mutableStateOf<UpdateManager.Release?>(null)
  private var message by mutableStateOf<String?>(null)
  private var setup by mutableStateOf(false)
+ private var timerOptions by mutableStateOf(false)
+ private var timerScale by mutableFloatStateOf(1f)
  private var busy by mutableStateOf(false)
  private var continueSetup=false
  private var restrictionStatus by mutableStateOf(-1)
@@ -100,27 +103,54 @@ class MainActivity: ComponentActivity() {
   if(!hasNotifications() && Build.VERSION.SDK_INT>=33) { continueSetup=true; permission.launch(Manifest.permission.POST_NOTIFICATIONS) }
   else openAccessibility()
  }
+ private fun setTimerSize(value: Float) {
+  timerScale=BubbleSize.clamp(value)
+  getSharedPreferences("overlay",MODE_PRIVATE).edit().putFloat("scale",timerScale).apply()
+  WatchService.instance?.setBubbleSize(timerScale)
+ }
+ @Composable private fun PermissionRow(title: String,status: String,button: String,label: String,enabled: Boolean=true,action: ()->Unit) {
+  Row(Modifier.fillMaxWidth().padding(vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+   Column(Modifier.weight(1f)) {
+    Text(title,style=MaterialTheme.typography.bodyMedium,color=Ink)
+    Text(status,style=MaterialTheme.typography.bodySmall,color=Muted)
+   }
+   TextButton(enabled=enabled,onClick=action,modifier=Modifier.semantics { contentDescription=label }) { Text(button) }
+  }
+ }
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
   enableEdgeToEdge(statusBarStyle=androidx.activity.SystemBarStyle.light(0,0),navigationBarStyle=androidx.activity.SystemBarStyle.light(0,0))
   setContent {
    MaterialTheme(colorScheme=lightColorScheme(primary=Blue,background=Back,surface=Color.White,onSurface=Ink,onSurfaceVariant=Muted),typography=remember { typography() }) {
     Page()
-    if(setup) AlertDialog(onDismissRequest={setup=false},title={Text("Aktifkan pemantauan")},text={Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(14.dp)) {
-     Text("Stopwatch muncul otomatis saat aplikasi digunakan dan berhenti saat layar terkunci.")
-     Text("Aksesibilitas mengenali nama aplikasi dari jendela yang mendapat fokus. Isi layar, pesan, dan ketikan tidak dikumpulkan. Riwayat hanya disimpan di perangkat.",style=MaterialTheme.typography.bodyMedium)
-     Text("Matikan ‘Jeda aktivitas apl jika tidak digunakan’ agar Android tidak mencabut izin aksesibilitas secara otomatis.",style=MaterialTheme.typography.bodyMedium)
-     Text(when { restrictionStatus==-1 -> "Memeriksa pengaturan…"; restrictionsEnabled() -> "Masih aktif — nonaktifkan melalui pengaturan di bawah."; setupReady() -> "Pembatasan aplikasi tidak digunakan: nonaktif."; else -> "Status tidak dapat dibaca di perangkat ini. Periksa secara manual." },style=MaterialTheme.typography.bodyMedium,color=if(restrictionsEnabled())MaterialTheme.colorScheme.error else Muted)
-     TextButton(onClick={openRestrictions()}) { Text("Buka pengaturan jeda aktivitas") }
-     TextButton(onClick={refreshRestrictions()}) { Text("Periksa lagi") }
+    if(timerOptions) AlertDialog(onDismissRequest={timerOptions=false},title={Text("Ukuran timer")},text={Column {
+     Text("${(timerScale*100).roundToInt()}%",style=MaterialTheme.typography.headlineSmall,color=Ink)
+     Slider(value=timerScale,onValueChange={setTimerSize(it)},valueRange=0.5f..1f,steps=4,
+      modifier=Modifier.fillMaxWidth().semantics { contentDescription="Ukuran timer" })
+     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+      Text("50%",color=Muted);Text("100%",color=Muted)
+     }
+    }},confirmButton={TextButton(onClick={timerOptions=false}) { Text("Selesai") }},
+     dismissButton={TextButton(onClick={setTimerSize(1f)}) { Text("Reset") }})
+    if(setup) AlertDialog(onDismissRequest={setup=false},title={Text("Izin & layanan")},text={Column(Modifier.verticalScroll(rememberScrollState())) {
+     PermissionRow("Jeda aplikasi",when {
+      restrictionStatus==-1 -> "Memeriksa…"
+      restrictionsEnabled() -> "Masih aktif"
+      restrictionStatus==UnusedAppRestrictionsConstants.ERROR -> if(manuallyChecked)"Dicek manual" else "Periksa manual"
+      setupReady() -> "Nonaktif"
+      else -> "Periksa manual"
+     },if(setupReady())"Periksa" else "Buka","Atur jeda aplikasi") {
+      if(setupReady())refreshRestrictions() else openRestrictions()
+     }
      if(restrictionStatus==UnusedAppRestrictionsConstants.ERROR) Row(verticalAlignment=Alignment.CenterVertically) {
       Checkbox(checked=manuallyChecked,onCheckedChange={manuallyChecked=it})
-      Text("Saya sudah memastikan jeda aktivitas nonaktif",modifier=Modifier.weight(1f),style=MaterialTheme.typography.bodyMedium)
+      Text("Jeda aplikasi sudah nonaktif",style=MaterialTheme.typography.bodySmall)
      }
-     Text("Aktifkan ‘Mulai otomatis di latar belakang’ untuk IWatchYou. Pada Xiaomi/POCO/HyperOS: Setelan → Aplikasi → Perizinan → Mulai otomatis di latar belakang. Pilih juga baterai Tanpa batas bila tersedia.",style=MaterialTheme.typography.bodyMedium)
-     TextButton(onClick={openAutostart()}) { Text("Buka pengaturan mulai otomatis") }
-     Text("Setelah itu, izinkan notifikasi dan aktifkan IWatchYou di Aksesibilitas. Nama menu dapat berbeda di tiap perangkat.",style=MaterialTheme.typography.bodyMedium)
-    }},confirmButton={TextButton(enabled=setupReady(),onClick={begin()}) { Text("Lanjutkan") }},dismissButton={TextButton(onClick={setup=false}) { Text("Nanti") }})
+     PermissionRow("Mulai otomatis","Pengaturan perangkat","Buka","Atur mulai otomatis",action={openAutostart()})
+     PermissionRow("Aksesibilitas",if(WatchService.instance!=null)"Aktif" else "Belum aktif","Buka","Atur aksesibilitas",enabled=setupReady(),action={begin()})
+     Spacer(Modifier.height(8.dp))
+     Text("Hanya nama aplikasi; riwayat di perangkat.",style=MaterialTheme.typography.bodySmall,color=Muted)
+    }},confirmButton={TextButton(onClick={setup=false}) { Text("Selesai") }})
     update?.let { release -> AlertDialog(onDismissRequest={if(!busy)update=null},title={Text("Pembaruan ${release.version}")},text={Text(if(busy) "Mengunduh pembaruan…" else "${release.notes}\n\nUkuran: ${"%.1f".format(Locale.US,release.size/1_000_000.0)} MB")},confirmButton={TextButton(enabled=!busy,onClick={busy=true; UpdateManager.install(this@MainActivity,release) { busy=false; update=null; message=it }}){Text(if(busy)"Mengunduh…" else "Unduh & pasang")}},dismissButton={TextButton(enabled=!busy,onClick={update=null}){Text("Nanti")}}) }
     message?.let { text -> AlertDialog(onDismissRequest={message=null},title={Text("IWatchYou")},text={Text(text)},confirmButton={TextButton(onClick={message=null}){Text("Tutup")}}) }
    }
@@ -178,14 +208,12 @@ class MainActivity: ComponentActivity() {
      Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
       Column(Modifier.weight(1f)) {
        Text("IWatchYou",fontSize=27.sp,fontWeight=FontWeight.Bold,color=Ink,modifier=Modifier.semantics { heading() })
-       Spacer(Modifier.height(4.dp))
-       Text("Waktu layar, lebih sadar setiap hari.",fontSize=12.sp,color=Muted)
       }
       Box {
        IconButton(onClick={settings=true}) { Icon(Icons.Outlined.Settings,contentDescription="Pengaturan",tint=Ink) }
        DropdownMenu(expanded=settings,onDismissRequest={settings=false}) {
         DropdownMenuItem(text={Text("Periksa pembaruan")},onClick={settings=false; UpdateManager.check(this@MainActivity,true){r,e -> if(r!=null)update=r else message=e }})
-        DropdownMenuItem(text={Text("Atur ulang bubble timer")},onClick={settings=false;WatchService.instance?.resetBubbleControls();message="Ukuran timer dikembalikan ke 100%. Saat timer meredup, ketuk tombol tepi untuk mengatur, menyembunyikan, atau memperkecilnya."})
+        DropdownMenuItem(text={Text("Ukuran timer")},onClick={settings=false;timerScale=BubbleSize.clamp(getSharedPreferences("overlay",MODE_PRIVATE).getFloat("scale",1f));timerOptions=true})
         DropdownMenuItem(text={Text("Izin & layanan")},onClick={settings=false; setup=true})
         DropdownMenuItem(text={Text("Info aplikasi & baterai")},onClick={settings=false;openAppInfo()})
        }
@@ -195,9 +223,8 @@ class MainActivity: ComponentActivity() {
     if(restrictionsEnabled()) item {
      Surface(color=Color(0xFFFFF0ED),shape=RoundedCornerShape(20.dp)) {
       Column(Modifier.padding(16.dp)) {
-       Text("Lindungi izin pemantauan",fontWeight=FontWeight.Bold,color=Ink)
-       Text("Jeda aktivitas masih aktif. Nonaktifkan agar izin tidak dicabut otomatis.",style=MaterialTheme.typography.bodyMedium,color=Ink)
-       TextButton(onClick={setup=true}) { Text("Perbaiki pengaturan") }
+       Text("Jeda aplikasi masih aktif",fontWeight=FontWeight.Bold,color=Ink)
+       TextButton(onClick={setup=true}) { Text("Atur izin") }
       }
      }
     }
@@ -222,10 +249,9 @@ class MainActivity: ComponentActivity() {
        previous?.let { before ->
         val delta=data.screenMs-before.screenMs
         Text(if(delta==0L)"Sama dengan ${dayLabel(before.day)}" else "${WatchService.short(kotlin.math.abs(delta))} lebih ${if(delta<0)"sedikit" else "lama"} dibanding ${dayLabel(before.day)}",fontSize=12.sp,lineHeight=18.sp,color=Muted)
-        if(selected==null) Text("Hari ini masih berjalan; perbandingan dengan total satu hari tercatat.",fontSize=11.sp,lineHeight=17.sp,color=Muted)
+        if(selected==null) Text("Hari ini belum selesai.",fontSize=11.sp,lineHeight=17.sp,color=Muted)
        }
        HourChart(data.hours)
-       Text("Durasi layar terbuka. Aplikasi dicatat saat mendapat fokus.",fontSize=11.sp,lineHeight=17.sp,color=Muted)
       }
      }
     }
@@ -243,16 +269,15 @@ class MainActivity: ComponentActivity() {
     if(entries.isEmpty()) item {
      Surface(color=Color.White,shape=RoundedCornerShape(22.dp),modifier=Modifier.fillMaxWidth()) {
       Column(Modifier.padding(22.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-       Text(if(active)"Belum ada penggunaan aplikasi" else "Mulai lebih sadar waktu",fontWeight=FontWeight.Medium,color=Ink,fontSize=14.sp)
-       Text(if(selected!=null)"Tidak ada aktivitas aplikasi yang tercatat pada tanggal ini." else if(active)"Buka aplikasi lain. Waktunya akan tercatat otomatis." else "Aktifkan pemantauan melalui kartu di bawah.",color=Muted,fontSize=12.sp,lineHeight=19.sp)
+       Text(if(active)"Belum ada penggunaan aplikasi" else "Belum ada data",fontWeight=FontWeight.Medium,color=Ink,fontSize=14.sp)
       }
      }
     }
     items(entries,key={it.key}) { entry ->
      AppRow(entry.key,entry.value,entries.first().value,Palette[(entry.key.hashCode() and Int.MAX_VALUE)%Palette.size])
     }
-    item { Text(dates.minOrNull()?.let { "Riwayat tersedia sejak ${dayLabel(it)}. Hanya tanggal yang tercatat selama pemakaian ditampilkan." } ?: "Riwayat mulai tersimpan setelah pemantauan aktif. Tidak ada statistik sebelum kamu memakai IWatchYou.",fontSize=12.sp,lineHeight=19.sp,color=Muted) }
-    item { Text("Timer meredup setelah 3 detik dan meneruskan sentuhan ke aplikasi. Ketuk tombol tepi untuk membuka kontrol. Panah menyembunyikan timer; pegangan kanan bawah memperkecilnya hingga 80%. Ukuran dapat diatur ulang melalui Pengaturan.",fontSize=11.sp,lineHeight=18.sp,color=Muted,modifier=Modifier.padding(horizontal=3.dp)) }
+    dates.minOrNull()?.let { first -> item { Text("Sejak ${dayLabel(first)}",fontSize=12.sp,color=Muted) } }
+
    }
    val stateColor by animateColorAsState(if(active)Blue else Muted,label="monitoring")
    Surface(color=Color.White,shape=RoundedCornerShape(24.dp),shadowElevation=2.dp,modifier=Modifier.padding(start=16.dp,end=16.dp,bottom=12.dp).fillMaxWidth()) {
@@ -260,8 +285,6 @@ class MainActivity: ComponentActivity() {
      Box(Modifier.size(46.dp).background(stateColor.copy(alpha=0.10f),RoundedCornerShape(16.dp)),contentAlignment=Alignment.Center) { PowerGlyph(Modifier.size(24.dp),stateColor) }
      Column(Modifier.weight(1f)) {
       Text(if(active)"Pemantauan aktif" else "Aktifkan pemantauan",fontSize=14.sp,fontWeight=FontWeight.Bold,color=Ink)
-      Spacer(Modifier.height(3.dp))
-      Text(if(active)"Timer otomatis saat aplikasi digunakan" else "Satu kali izin, berjalan otomatis",fontSize=10.sp,lineHeight=16.sp,color=Muted)
      }
      Switch(checked=active,onCheckedChange={if(it)setup=true else WatchService.instance?.disableSelf()},modifier=Modifier.semantics { contentDescription="Pemantauan" })
     }

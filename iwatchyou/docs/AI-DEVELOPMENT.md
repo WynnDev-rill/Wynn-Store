@@ -15,8 +15,9 @@ Read `AGENTS.md`, then the applicable skill's `SKILL.md`.
 4. Impeccable refines hierarchy, wording, states and rendered quality. This is an
    **Operate** surface: preserve the existing light/blue Jakarta identity. Its web
    recommendations do not replace Android APIs or the user's compact bubble brief.
-   The corner shortcuts are intentionally compact; the solid 48dp edge tab and
-   Settings → Atur ulang bubble timer provide full-size alternatives.
+   The solid inline hide/drag arrow is separate from the pass-through body; the
+   edge tab appears only after hiding. Settings → Ukuran timer provides a full-size
+   50–100% slider.
 5. Graphify maps code. Query before broad file scans; source remains authoritative.
 
 Ponytail: https://github.com/DietrichGebert/ponytail @ 09c434ab73ca43761c5d8b0c5d341926c2fba710 (MIT).

@@ -118,12 +118,14 @@ Run Graphify from this directory; query `graphify-out/graph.json` before broad
 architecture searches and refresh it after source changes. Do not index private
 usage data, credentials or installed third-party skill data into the app graph.
 
-The bubble body must set FLAG_NOT_TOUCHABLE when faded, and hide its accessibility
-actions; alpha and a gesture guard alone are insufficient. The separate solid edge
-handle stays interactive and restores editing. Collapse never pauses accounting.
-Preserve scale (80–100%), hidden state, safe-area bounds and orientation positions.
-Do not enlarge the shipped maximum just to add controls. Settings provides a
-full-size reset alternative for compact corner controls.
+The faded timer body must set FLAG_NOT_TOUCHABLE and hide its accessibility
+subtree. Keep a single solid inline hide/drag arrow beside it; it does not fade.
+The edge restore tab exists ONLY while explicitly collapsed, never on dimming.
+Resize lives in Settings → Ukuran timer, with a 50–100% slider. No tiny resize
+or stacked corner controls. Preserve the timer pill's existing shape, font and
+maximum size, persisted scale, hidden state and orientation positions. At the
+owner's explicitly requested 50% scale, text scales with the body. Collapse never
+pauses accounting. Keep controls out of the time text and clamp safe-area bounds.
 
 History remains in `history.db`, schema version 1; no deletion or time-range prune.
 Keep legacy migration. List only recorded dates, explain incomplete-day comparisons,

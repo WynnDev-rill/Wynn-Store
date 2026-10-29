@@ -59,6 +59,10 @@ jobs:
           done
           "$signer" sign --ks "$RUNNER_TEMP/iwatchyou-qa.jks" --ks-pass pass:android --key-pass pass:android --ks-key-alias iwatchyou-qa --out iwatchyou/app/build/outputs/apk/app-release-qa.apk iwatchyou/app/build/outputs/apk/release/app-release-unsigned.apk
           "$signer" verify iwatchyou/app/build/outputs/apk/app-release-qa.apk
+      - name: Include public signing utility for offline release signing
+        run: |
+          mkdir -p iwatchyou/app/build/signing-tools
+          cp "$ANDROID_HOME/build-tools/36.0.0/lib/apksigner.jar" iwatchyou/app/build/signing-tools/
       - name: Build older fixture with the same disposable QA signer
         run: |
           git fetch origin main --depth=1
@@ -76,6 +80,7 @@ jobs:
             iwatchyou/app/build/reports/
             iwatchyou/app/build/test-results/
             iwatchyou/app/build/outputs/mapping/release/
+            iwatchyou/app/build/signing-tools/
   device:
     needs: build
     strategy:
