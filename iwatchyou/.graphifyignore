@@ -1,0 +1,10 @@
+.agents/
+.git/
+.gradle/
+.kotlin/
+**/build/
+qa/output/
+qa/production-output/
+qa/upgrade-output/
+distribution/
+graphify-out/

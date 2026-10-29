@@ -1,0 +1,13 @@
+.gradle/
+.kotlin/
+__pycache__/
+**/build/
+local.properties
+qa/output/
+qa/production-output/
+qa/upgrade-output/
+
+graphify-out/cache/
+graphify-out/.*
+graphify-out/manifest.json
+.agents/skills/**/__pycache__/

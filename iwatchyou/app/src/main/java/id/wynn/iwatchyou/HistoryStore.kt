@@ -30,10 +30,12 @@ class HistoryStore(context: Context) : SQLiteOpenHelper(context,"history.db",nul
  fun migrateLegacy(context: Context) {
   val p=context.getSharedPreferences("times",Context.MODE_PRIVATE)
   val date=p.getString("day",null) ?: return
-  if (read(date)==null) {
-   val apps=runCatching { JSONObject(p.getString("apps","{}") ?: "{}") }.getOrDefault(JSONObject())
-   write(TimeLedger.Snapshot(date,p.getLong("screen",0).coerceAtLeast(0),apps.keys().asSequence().associateWith { apps.optLong(it).coerceAtLeast(0) },null))
-  }
+  val apps=runCatching { JSONObject(p.getString("apps","{}") ?: "{}") }.getOrDefault(JSONObject())
+  val saved=TimeLedger.Snapshot(date,p.getLong("screen",0).coerceAtLeast(0),apps.keys().asSequence().associateWith { apps.optLong(it).coerceAtLeast(0) },null)
+  // Another connection may commit a newer snapshot while migration waits for the
+  // writer lock. A read-then-REPLACE would destroy it; conflict handling is atomic.
+  writableDatabase.execSQL("INSERT OR IGNORE INTO days(day,screen,apps,hours) VALUES(?,?,?,?)",
+   arrayOf(date,saved.screenMs,JSONObject(saved.apps).toString(),JSONArray(saved.hours).toString()))
   p.edit().clear().apply()
  }
 }

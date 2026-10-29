@@ -43,12 +43,17 @@ object UpdateManager {
   require(j.getString("packageName")==context.packageName)
   require(j.getInt("minSdk")<=Build.VERSION.SDK_INT)
   val r=Release(j.getString("versionName"),j.getInt("versionCode"),j.getString("apkUrl"),j.getString("sha256"),j.getString("signerSha256"),j.getLong("sizeBytes"),j.optString("notes").take(2000))
-  require(r.version.matches(Regex("[0-9]+\\.[0-9]+\\.[0-9]+")) && r.url.startsWith(PREFIX))
+  require(r.version.matches(Regex("[0-9]+\\.[0-9]+(?:\\.[0-9]+)?")) && r.url.startsWith(PREFIX))
   require(r.sha256.matches(Regex("[a-fA-F0-9]{64}")) && r.signer.matches(Regex("[a-fA-F0-9]{64}")))
   require(r.size in 1..LIMIT && r.code>0)
   return r
  }
  fun check(activity: ComponentActivity,reportErrors: Boolean=false,callback: (Release?,String?)->Unit) {
+  if(activity.packageName.endsWith(".preview")) {
+   callback(null,if(reportErrors) "Pembaruan pemasangan ini memakai APK IWatchYou dengan kunci tanda tangan yang sama." else null)
+   return
+  }
+
   if(!checking.compareAndSet(false,true)) { if(reportErrors)callback(null,"Pemeriksaan masih berlangsung.");return }
   activity.lifecycleScope.launch {
    try {
