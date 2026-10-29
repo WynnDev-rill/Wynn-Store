@@ -17,6 +17,7 @@ class DeviceTest {
  @Before fun configureAutomation() { Configurator.getInstance().apply { uiAutomationFlags=1;waitForIdleTimeout=0 } }
  @get:Rule val testName=org.junit.rules.TestName()
  private fun captureScreen(name: String) {
+  SystemClock.sleep(250) // Capture after the native surface has committed its frame.
   val dir=java.io.File(context.filesDir,"qa").apply { mkdirs() }
   runCatching { device.takeScreenshot(java.io.File(dir,name+".png"));device.dumpWindowHierarchy(java.io.File(dir,name+".xml")) }
  }
@@ -87,6 +88,7 @@ class DeviceTest {
  }
  private fun bubbleClick(label: String) {
   editableTimer()
+  waitFor(2000) { overlayViewBounds(label)!=null }
   val bounds=overlayViewBounds(label) ?: throw AssertionError("Missing native bubble control: $label")
   device.click(bounds.centerX(),bounds.centerY())
   SystemClock.sleep(80)

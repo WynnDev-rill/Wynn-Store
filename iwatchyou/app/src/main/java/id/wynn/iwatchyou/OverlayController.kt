@@ -117,7 +117,7 @@ class OverlayController(private val context: AccessibilityService, private val s
   w.width=(maxWidth*scale).roundToInt();w.height=(maxHeight*scale).roundToInt()
   timer?.apply { textSize=15f*scale;setPadding((dp(10)*scale).roundToInt(),0,(dp(10)*scale).roundToInt(),0) }
   clamp(w)
-  view?.let { if(it.isAttachedToWindow)update(it,w) }
+  view?.let { if(it.parent!=null)update(it,w) }
  }
  fun setSize(value: Float) {
   scale=BubbleSize.clamp(value);prefs.edit().putFloat("scale",scale).apply()
@@ -162,11 +162,12 @@ class OverlayController(private val context: AccessibilityService, private val s
   root.visibility=if(collapsed)View.GONE else View.VISIBLE
   root.background=GradientDrawable().apply { cornerRadius=dp(28).toFloat();setColor(Color.rgb(26,36,51));setStroke(dp(1),Color.argb(40,255,255,255)) }
   root.animate().alpha(if(faded)0.68f else 0.94f).setDuration(220).start()
-  if(root.isAttachedToWindow)update(root,w)
+  if(root.parent!=null)update(root,w)
   if(collapsed) { removeHideControl();showTab(w) } else { removeTab();showHideControl(w) }
  }
  private fun showHideControl(anchor: WindowManager.LayoutParams) {
-  if(collapsed || view?.isAttachedToWindow!=true)return
+  // addView registers the window before its first layout/attachment callback.
+  if(collapsed || view==null)return
   val button=hideButton ?: control("Sembunyikan timer").also {
    hideButton=it;drag(it,anchor) { dock() }
   }
@@ -179,7 +180,7 @@ class OverlayController(private val context: AccessibilityService, private val s
   val left=anchor.x+anchor.width/2 < metrics.bounds.width()/2
   button.setImageResource(if(left)R.drawable.ic_chevron_left else R.drawable.ic_chevron)
   button.setPadding(dp(9),dp(9),dp(9),dp(9))
-  if(button.isAttachedToWindow)update(button,p) else runCatching { window.addView(button,p) }
+  if(button.parent!=null)update(button,p) else runCatching { window.addView(button,p) }
    .onFailure { Log.w("IWatchYou","Could not attach hide control",it) }
  }
  private fun showTab(anchor: WindowManager.LayoutParams) {
@@ -190,15 +191,15 @@ class OverlayController(private val context: AccessibilityService, private val s
   button.setImageResource(if(left)R.drawable.ic_chevron else R.drawable.ic_chevron_left)
   val p=tabParams ?: layout(dp(32),dp(48)).also { tabParams=it }
   p.x=if(left)insets.left else metrics.bounds.width()-insets.right-p.width;p.y=anchor.y;clamp(p)
-  if(button.isAttachedToWindow)update(button,p) else runCatching { window.addView(button,p) }
+  if(button.parent!=null)update(button,p) else runCatching { window.addView(button,p) }
    .onFailure { Log.w("IWatchYou","Could not attach timer handle",it) }
  }
  private fun removeHideControl() {
-  hideButton?.let { if(it.isAttachedToWindow)runCatching { window.removeViewImmediate(it) } }
+  hideButton?.let { runCatching { window.removeViewImmediate(it) } }
   hideButton=null;hideParams=null
  }
  private fun removeTab() {
-  tab?.let { if(it.isAttachedToWindow)runCatching { window.removeViewImmediate(it) } }
+  tab?.let { runCatching { window.removeViewImmediate(it) } }
   tab=null;tabParams=null
  }
  fun recreate() {
