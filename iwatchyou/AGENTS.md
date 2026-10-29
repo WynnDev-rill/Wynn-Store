@@ -137,8 +137,8 @@ blocks Continue. Refresh after returning from Settings. On vendor/API errors onl
 allow explicit manual confirmation. Autostart is guidance with safe intent fallback;
 never falsely report an OEM setting enabled. Keep setup scrollable at 200% text.
 
-The 1.4 release uses versionName 1.4.0 for compatibility with already-installed
-three-part update validators, versionCode 14, label IWatchYou. The preview build
+The current 1.4.1 patch uses versionName 1.4.1 for compatibility with already-installed
+three-part update validators, versionCode 15, label IWatchYou. The preview build
 variant and its Uji label are retired. Do not distribute a new debug certificate
 as an update to an existing app. The older separate `.preview` package has its own
 private data and signer; it cannot be silently migrated into production. Never
