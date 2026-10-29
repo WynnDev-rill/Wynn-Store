@@ -112,7 +112,7 @@ class DeviceTest {
   device.wait(Until.findObject(By.text("Ukuran timer")),8000)!!.click()
   val slider=device.wait(Until.findObject(By.desc("Ukuran timer")),8000) ?: error("Missing size slider")
   val sliderBounds=slider.visibleBounds
-  device.click(sliderBounds.left+2,sliderBounds.centerY())
+  device.click(sliderBounds.left+sliderBounds.height()/2,sliderBounds.centerY())
   waitFor { context.getSharedPreferences("overlay",Context.MODE_PRIVATE).getFloat("scale",1f)==0.5f }
   assertTrue(device.hasObject(By.text("50%")))
   captureScreen("timer-size-50")
@@ -140,8 +140,9 @@ class DeviceTest {
  }
  @Test fun fadedBubbleForwardsTapsWithoutCreatingAnEdgeHandle() {
   startMonitoringFixture()
-  val bounds=editableTimer()
+  editableTimer()
   SystemClock.sleep(3400)
+  val bounds=editableTimer()
   assertNull("Dimming must not dock the timer",overlayViewBounds("edge"))
   captureScreen("timer-faded-expanded")
   val hide=overlayViewBounds("Sembunyikan timer") ?: error("Missing inline hide arrow")
@@ -183,7 +184,9 @@ class DeviceTest {
   shell("am start -W -f 0x10008000 -n id.wynn.iwatchyou/.MainActivity")
   device.wait(Until.findObject(By.desc("Pemantauan")),20_000)!!.click()
   val blocked=device.wait(Until.findObject(By.desc("Atur aksesibilitas")),8000) ?: error("Missing accessibility action")
-  assertFalse("Enabled unused-app restrictions block monitoring setup",blocked.isEnabled)
+  assertFalse("Enabled unused-app restrictions block monitoring setup",blocked.parent.isEnabled)
+  blocked.click()
+  assertEquals("Blocked setup stays inside IWatchYou",context.packageName,focusedApplication())
   assertFalse(device.hasObject(By.textStartsWith("Stopwatch muncul otomatis")))
   captureScreen("permissions-compact")
   shell("settings put system font_scale 2.0")
@@ -198,7 +201,7 @@ class DeviceTest {
   shell("cmd appops set --uid id.wynn.iwatchyou AUTO_REVOKE_PERMISSIONS_IF_UNUSED ignore")
   shell("am start -W -f 0x10008000 -n id.wynn.iwatchyou/.MainActivity")
   device.wait(Until.findObject(By.desc("Pemantauan")),20_000)!!.click()
-  waitFor { device.findObject(By.desc("Atur aksesibilitas"))?.isEnabled==true }
+  waitFor { device.findObject(By.desc("Atur aksesibilitas"))?.parent?.isEnabled==true }
   device.findObject(By.desc("Atur aksesibilitas")).click()
   waitFor { focusedApplication()=="com.android.settings" }
  }

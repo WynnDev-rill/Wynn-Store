@@ -76,7 +76,8 @@ class OverlayController(private val context: AccessibilityService, private val s
   PixelFormat.TRANSLUCENT).apply { gravity=Gravity.TOP or Gravity.LEFT }
  private fun control(label: String)=ImageButton(context).apply {
   setImageResource(R.drawable.ic_chevron);setColorFilter(Color.WHITE);contentDescription=label
-  background=GradientDrawable().apply { cornerRadius=dp(28).toFloat();setColor(Color.rgb(26,36,51)) }
+  val surface=GradientDrawable().apply { cornerRadius=dp(28).toFloat();setColor(Color.rgb(26,36,51)) }
+  background=android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(Color.argb(50,255,255,255)),surface,null)
  }
  private fun drag(target: View,w: WindowManager.LayoutParams,tap: ()->Unit) {
   var startX=0;var startY=0;var downX=0f;var downY=0f;var moved=false;var cancelled=false
@@ -85,7 +86,7 @@ class OverlayController(private val context: AccessibilityService, private val s
   target.setOnTouchListener { v,e ->
    when(e.actionMasked) {
     MotionEvent.ACTION_DOWN -> {
-     handler.removeCallbacks(fadeTask)
+     handler.removeCallbacks(fadeTask);v.isPressed=true;v.drawableHotspotChanged(e.x,e.y)
      startX=w.x;startY=w.y;downX=e.rawX;downY=e.rawY;moved=false;cancelled=false
      true
     }
@@ -94,6 +95,7 @@ class OverlayController(private val context: AccessibilityService, private val s
       val dx=e.rawX-downX;val dy=e.rawY-downY
       if(hypot(dx,dy)>slop)moved=true
       if(moved) {
+       v.isPressed=false
        w.x=startX+dx.roundToInt();w.y=startY+dy.roundToInt();clamp(w)
        view?.let { update(it,w) };showHideControl(w)
       }
@@ -101,10 +103,11 @@ class OverlayController(private val context: AccessibilityService, private val s
      true
     }
     MotionEvent.ACTION_UP -> {
+     v.isPressed=false
      if(!cancelled) { if(moved)savePosition(w) else v.performClick() }
      scheduleFade();true
     }
-    MotionEvent.ACTION_CANCEL,MotionEvent.ACTION_POINTER_DOWN -> { cancelled=true;scheduleFade();true }
+    MotionEvent.ACTION_CANCEL,MotionEvent.ACTION_POINTER_DOWN -> { v.isPressed=false;cancelled=true;scheduleFade();true }
     else -> true
    }
   }
@@ -174,7 +177,7 @@ class OverlayController(private val context: AccessibilityService, private val s
   p.x=if(right+p.width<=metrics.bounds.width()-insets.right)right else anchor.x-p.width-dp(4)
   p.y=anchor.y+(anchor.height-p.height)/2;clamp(p)
   val left=anchor.x+anchor.width/2 < metrics.bounds.width()/2
-  button.rotation=if(left)180f else 0f
+  button.setImageResource(if(left)R.drawable.ic_chevron_left else R.drawable.ic_chevron)
   button.setPadding(dp(9),dp(9),dp(9),dp(9))
   if(button.isAttachedToWindow)update(button,p) else runCatching { window.addView(button,p) }
    .onFailure { Log.w("IWatchYou","Could not attach hide control",it) }
@@ -184,7 +187,7 @@ class OverlayController(private val context: AccessibilityService, private val s
   val insets=metrics.windowInsets.getInsetsIgnoringVisibility(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
   val left=anchor.x+anchor.width/2 < metrics.bounds.width()/2
   val button=tab ?: control("Tampilkan timer").apply { setPadding(dp(10),dp(14),dp(10),dp(14));setOnClickListener { unlock() } }.also { tab=it }
-  button.rotation=if(left)0f else 180f
+  button.setImageResource(if(left)R.drawable.ic_chevron else R.drawable.ic_chevron_left)
   val p=tabParams ?: layout(dp(32),dp(48)).also { tabParams=it }
   p.x=if(left)insets.left else metrics.bounds.width()-insets.right-p.width;p.y=anchor.y;clamp(p)
   if(button.isAttachedToWindow)update(button,p) else runCatching { window.addView(button,p) }
