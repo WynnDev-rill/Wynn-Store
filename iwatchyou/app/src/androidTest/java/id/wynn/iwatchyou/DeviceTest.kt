@@ -251,16 +251,22 @@ class DeviceTest {
   val dir=java.io.File(context.getExternalFilesDir(null),"qa").apply { mkdirs() }
   UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(10)
   device.waitForIdle()
+  assertTrue("Populated screen total is loaded",device.wait(Until.hasObject(By.text("5j 21m 0d")),8000))
   device.takeScreenshot(java.io.File(dir,"populated-history-portrait.png"))
+  UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("3j 31m 0d"))
+  assertTrue("Populated app duration is loaded",device.hasObject(By.text("3j 31m 0d"))))
   device.setOrientationLeft()
   UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("1 Jan 1999 ▾"))
   assertTrue(device.wait(Until.hasObject(By.text("1 Jan 1999 ▾")),8000))
+  UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(10)
+  assertTrue(device.wait(Until.hasObject(By.text("5j 21m 0d")),8000))
   device.takeScreenshot(java.io.File(dir,"populated-history-landscape.png"))
   device.setOrientationNatural();shell("settings put system font_scale 2.0")
   UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("1 Jan 1999 ▾"))
   assertTrue(device.wait(Until.hasObject(By.text("1 Jan 1999 ▾")),8000))
   UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(10)
   device.waitForIdle()
+  assertTrue(device.wait(Until.hasObject(By.text("5j 21m 0d")),8000))
   device.takeScreenshot(java.io.File(dir,"populated-history-large-text.png"))
  }
 
