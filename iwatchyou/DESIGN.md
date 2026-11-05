@@ -16,9 +16,11 @@ Its poster is blank; the actual MP4 was inspected as a 1fps contact sheet coveri
 white time digits, green active indicator, and later a lock-screen widget. This
 is an iOS task example, not evidence of Android stopwatch functionality.
 
-Adapt rounded dark compactness and short eased transitions. Do not copy expansion
-into task details, task/avatar UI, lock-screen behavior, focus modes, app limits,
-notification/unlock counters or imaginary comparative statistics.
+Adapt the actual compact-to-expanded interaction, not merely a dark color. The
+owner explicitly requests an edge handle, a smaller visible timer, an expanded
+app identity/duration panel, and real weekly history. System HyperOS islands are
+not a dependency: implement our own native accessibility window on Android.
+No task/avatar UI, lock-screen timer or invented statistics.
 
 ## Tokens and assets
 
@@ -34,24 +36,22 @@ notification/unlock counters or imaginary comparative statistics.
 
 ## Layout and behavior
 
-Header/settings → screen-time composition → hourly rhythm → date-selectable app
-ranking → timer help. Monitoring control remains visible below the scrolling body.
-The ring shows the five leading app durations divided by all recorded app time;
-remaining/tiny shares keep the pale track. It is not progress toward an invented
-goal. Its center is unlocked screen time, which includes Home and IWatchYou.
-Hourly graph remains unlocked screen duration. App rows remain one focused app's
-local-day total, sorted descending; lazy list and async icon loading are retained.
-Historical date survives rotation. At widths of 600dp and above, the summary uses
-a horizontal 112dp ring and a separate text column to fit short landscape screens. Dates, permission/HyperOS advice, notification
-permission, update download/consent/error flows, settings and monitoring off stay.
+Header/settings → screen-time ring with real app icons aligned to segment midpoints
+→ top five app rows → Lihat selengkapnya. Detail provides Harian/Mingguan, all app
+rows, previous/next seven-day windows and tappable days. Weekly totals sum recorded
+local days, including unlocked screen time outside apps; missing dates are zero.
+Hourly accounting remains stored but the hourly rhythm UI is removed by request.
+Keep permission privacy disclosure in setup, not repeated on the dashboard.
 
-Overlay: dark #141722 pill, white 16sp tabular time, 48dp minimum height, subtle
-cool border, readable 76% dimmed / 97% active opacity. Native Chronometer remains
-one-second ticking, no Compose runtime or custom timer loop in the overlay. Existing
-fade after 3s, tap-to-unlock, drag, rotation positions and screen/PiP/IME rules stay.
-200ms decelerated opacity transitions respect ValueAnimator.areAnimatorsEnabled.
-Compose native animation scale is respected; no perpetual ring animation, blur,
-network assets, additional permissions or per-frame database writes.
+Overlay: three states in one TYPE_ACCESSIBILITY_OVERLAY window. Compact visual
+pill is 36dp high inside a 48dp touch area, approximately128dp wide with13sp time;
+large fonts grow the window. Tap the clock to expand to app icon/name and24sp time.
+The explicit edge button docks a16×36dp handle inside a48dp target. Tapping restores
+the clock. Hidden mode persists across app changes/rotation/service reconnect and
+never pauses time. Dimmed clocks drag immediately; tap-to-unlock is intentionally
+replaced. Expanded panel provides collapse and hide actions. Native Chronometer
+stops while hidden. Short220ms geometry and180ms opacity transitions honor disabled
+system animation, no perpetual animation, polling, new permission or dependency.
 
 ## Skill integration
 

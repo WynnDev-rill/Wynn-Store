@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class DeviceTest {
- @Before fun configureAutomation() { Configurator.getInstance().uiAutomationFlags=1 }
+ @Before fun configureAutomation() { Configurator.getInstance().uiAutomationFlags=1;context.getSharedPreferences("overlay",Context.MODE_PRIVATE).edit().clear().commit() }
  @get:Rule val testName=org.junit.rules.TestName()
  @After fun restoreDisplay() {
   val dir=java.io.File(context.filesDir,"qa").apply { mkdirs() }
@@ -54,19 +54,15 @@ class DeviceTest {
   SystemClock.sleep(1600)
   val after=WatchService.instance!!.current().apps["com.android.settings"] ?: 0L
   assertTrue("Foreground timer advances",after-before in 1200..2400)
-  // Dimmed swipes do not move the timer; a tap unlocks the following drag.
+  // A dimmed island remains immediately draggable; a tap expands it.
   SystemClock.sleep(3300)
   val timer=device.findObject(By.clazz("android.widget.Chronometer"))
   assertNotNull("Timer overlay is present",timer)
   val rect=android.graphics.Rect(timer.visibleBounds)
   device.swipe(rect.centerX(),rect.centerY(),rect.centerX()+100,rect.centerY()+90,12)
-  val still=device.findObject(By.clazz("android.widget.Chronometer")).visibleBounds
-  assertEquals(rect,still)
-  device.click(rect.centerX(),rect.centerY());SystemClock.sleep(250)
-  device.swipe(rect.centerX(),rect.centerY(),rect.centerX()+100,rect.centerY()+90,12)
-  SystemClock.sleep(200)
+  SystemClock.sleep(250)
   val moved=device.findObject(By.clazz("android.widget.Chronometer")).visibleBounds
-  assertTrue("Unlocked timer can move",moved.left>rect.left || moved.top>rect.top)
+  assertTrue("Timer moves without an unlock tap",moved.left>rect.left || moved.top>rect.top)
   val x=moved.left;val y=moved.top
   device.setOrientationLeft()
   waitFor { device.displayWidth>device.displayHeight }
@@ -193,7 +189,7 @@ class DeviceTest {
     shell("am start -W -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
     assertTrue("External app is visible",device.wait(Until.hasObject(By.text("External focus fixture").pkg("id.wynn.iwatchyou.test")),8000))
     waitFor { focusedApplication()=="id.wynn.iwatchyou.test" }
-    waitFor(20_000) { service.current().foreground=="id.wynn.iwatchyou.test" }
+    waitFor(2000) { service.current().foreground=="id.wynn.iwatchyou.test" }
     assertTrue("Bubble appears over an external app",device.wait(Until.hasObject(By.clazz("android.widget.Chronometer")),8000))
     val displayed=device.findObject(By.clazz("android.widget.Chronometer")).text
     val before=service.current().apps["id.wynn.iwatchyou.test"] ?: 0L
@@ -224,7 +220,7 @@ class DeviceTest {
     assertEquals(paused,service.current().apps["id.wynn.iwatchyou.test"])
     // Match leaving Settings via Home, then launching another app with a null hint.
     shell("am start -W -n id.wynn.iwatchyou.test/id.wynn.iwatchyou.FocusProbe")
-    waitFor(20_000) { service.current().foreground=="id.wynn.iwatchyou.test" }
+    waitFor(2000) { service.current().foreground=="id.wynn.iwatchyou.test" }
     assertTrue("Bubble reappears after launching from Home",device.wait(Until.hasObject(By.clazz("android.widget.Chronometer")),8000))
     device.pressHome()
     waitFor(20_000) { focusedApplication()==device.launcherPackageName && service.current().foreground==null }
@@ -234,6 +230,60 @@ class DeviceTest {
    if(oldImePreference==null) shell("settings delete secure show_ime_with_hard_keyboard")
    else shell("settings put secure show_ime_with_hard_keyboard $oldImePreference")
   }
+ }
+ @Test fun floatingIslandExpandsDocksAndKeepsCounting() {
+  shell("settings put secure enabled_accessibility_services id.wynn.iwatchyou/.WatchService")
+  shell("settings put secure accessibility_enabled 1")
+  waitFor { WatchService.instance!=null }
+  device.wakeUp();shell("wm dismiss-keyguard")
+  shell("am start -W -a android.settings.SETTINGS")
+  waitFor { WatchService.instance?.current()?.foreground=="com.android.settings" }
+  val dir=java.io.File(context.filesDir,"qa").apply { mkdirs() }
+  val clock=device.wait(Until.findObject(By.clazz("android.widget.Chronometer")),2000)
+  assertNotNull(clock);device.waitForIdle();device.takeScreenshot(java.io.File(dir,"island-compact.png"))
+  clock.click()
+  assertNotNull(device.wait(Until.findObject(By.desc("Ringkas timer")),2000))
+  device.waitForIdle();device.takeScreenshot(java.io.File(dir,"island-expanded.png"))
+  device.findObject(By.desc("Sembunyikan timer ke tepi")).click()
+  assertNotNull(device.wait(Until.findObject(By.desc("Tampilkan timer")),2000))
+  assertTrue(device.wait(Until.gone(By.clazz("android.widget.Chronometer")),2000))
+  val before=WatchService.instance!!.current().apps["com.android.settings"]!!
+  SystemClock.sleep(1100)
+  assertTrue(WatchService.instance!!.current().apps["com.android.settings"]!!>before)
+  device.takeScreenshot(java.io.File(dir,"island-edge.png"))
+  device.setOrientationLeft();waitFor { device.displayWidth>device.displayHeight }
+  assertNotNull(device.wait(Until.findObject(By.desc("Tampilkan timer")),2000))
+  device.findObject(By.desc("Tampilkan timer")).click()
+  assertNotNull(device.wait(Until.findObject(By.clazz("android.widget.Chronometer")),2000))
+  device.setOrientationNatural();waitFor { device.displayHeight>device.displayWidth }
+  shell("settings put system font_scale 2.0");device.waitForIdle()
+  device.findObject(By.clazz("android.widget.Chronometer")).click()
+  assertNotNull(device.wait(Until.findObject(By.desc("Ringkas timer")),2000))
+  device.waitForIdle();device.takeScreenshot(java.io.File(dir,"island-expanded-large-text.png"))
+ }
+ @Test fun overviewLimitsAppsAndWeeklyDaysAreClickable() {
+  val end=WatchService.today()
+  HistoryStore(context).use { store ->
+   (0..6).forEach { offset ->
+    val day=java.time.LocalDate.parse(end).minusDays(offset.toLong()).toString()
+    store.write(TimeLedger.Snapshot(day,60_000L*(offset+1), (1..7).associate { "fixture.app$it" to 1000L*it },null))
+   }
+  }
+  device.wakeUp();shell("wm dismiss-keyguard")
+  shell("am start -W -n id.wynn.iwatchyou/.MainActivity")
+  revealText("Lihat selengkapnya")
+  assertFalse("Only five apps on overview",device.hasObject(By.text("app1")))
+  device.findObject(By.text("Lihat selengkapnya")).click()
+  revealText("Mingguan",false);device.findObject(By.text("Mingguan")).click()
+  assertNotNull(device.wait(Until.findObject(By.text("Sebelumnya")),8000))
+  val dir=java.io.File(context.filesDir,"qa").apply { mkdirs() }
+  device.waitForIdle();device.takeScreenshot(java.io.File(dir,"weekly-statistics.png"))
+  val yesterday=java.time.LocalDate.parse(end).minusDays(1)
+  val dateLabel=yesterday.format(java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy",java.util.Locale.forLanguageTag("id")))
+  val bar=device.wait(Until.findObject(By.descStartsWith(dateLabel+":")),8000)
+  assertNotNull("Weekly day has real accessible duration",bar);bar.click()
+  assertTrue(device.wait(Until.hasObject(By.text("Waktu layar · "+dateLabel)),8000))
+  device.pressBack()
  }
  // Bounded real swipes avoid UiScrollable's legacy scroll-event assumptions
  // after a Compose viewport is resized. Read the current on-screen list bounds.

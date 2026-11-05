@@ -2,6 +2,10 @@ package id.wynn.iwatchyou
 
 /** Platform-neutral selection rule, independently testable for multi-window/PiP. */
 object ForegroundPolicy {
+ // Android window-change bits: added, removed, type, active, focused, parent,
+ // children and PiP can change selection. Bounds/title/a11y focus alone cannot.
+ fun identityChanged(changes: Int)=changes==0 || changes and (1 or 2 or 16 or 32 or 64 or 256 or 512 or 1024)!=0
+
  fun rootPackage(windowId: Int, nodePackage: String?, owners: Map<Int,String>, auxiliaryPackages: Set<String>, windows: List<Window> = emptyList()): String? {
   val selected=target(windows)
   if(selected!=null && selected.id>=0 && selected.id!=windowId)return null
