@@ -63,7 +63,8 @@ class OverlayController(private val context: AccessibilityService, private val s
  private fun action(description: String,kind: Int,onClick:()->Unit)=object: View(context) {
   private val pen=Paint(Paint.ANTI_ALIAS_FLAG).apply { color=Color.WHITE;strokeWidth=dp(2).toFloat();style=Paint.Style.STROKE;strokeCap=Paint.Cap.ROUND;strokeJoin=Paint.Join.ROUND }
   override fun onDraw(canvas: Canvas) {
-   val x=width/2f;val y=height/2f;val d=dp(4).toFloat()
+   val x=if(mode==Mode.EDGE) { if(this@OverlayController.right)width-dp(8).toFloat() else dp(8).toFloat() } else width/2f
+   val y=height/2f;val d=dp(4).toFloat()
    val path=Path()
    if(kind==0) { path.moveTo(x-d,y-d/2);path.lineTo(x,y+d/2);path.lineTo(x+d,y-d/2) }
    else { val sign=if((mode==Mode.EDGE && this@OverlayController.right) || (mode!=Mode.EDGE && !this@OverlayController.right)) -1 else 1
