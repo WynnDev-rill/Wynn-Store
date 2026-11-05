@@ -36,3 +36,18 @@ Final source CI41977782245 at3de10a903eaab5298b68a9d98c69e3912323a777 passed
 build,50 JVM tests, lint, optimized APKs, and all9 device methods on each API30/36.
 The final weekly and edge captures on API30 were inspected and show the corrected
 states. Production signing uses the same pinned certificate; v2/v3 both verified.
+
+Main release run41979132406 initially failed: API30 input-dispatch timeout during
+a drag, with concurrent emulator/system latency, and API36 could not reach the
+weekly chip during UI automation. Logs were retained. A single retry, without
+changing the APK or test assertions, passed all native tests on both APIs. This
+records nondeterministic emulator/test behavior; it does not prove physical Poco
+responsiveness or battery performance. Source verification was already green on
+both APIs before merge. Production publication/upgrade is checked separately.
+
+Final production run41979132406 attempt2 completed successfully, including production
+smoke and actual public-feed/in-app download/Android installation consent from
+versionCode5 to6. Private screen history remained10→24 seconds after update.
+Public APK and stable-v2 feed were independently downloaded and their SHA256,
+version and pinned signer metadata matched the staged production APK.
+Release: https://github.com/WynnDev-rill/Wynn-Store/releases/tag/iwatchyou-v1.0.5
