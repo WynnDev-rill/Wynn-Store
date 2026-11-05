@@ -83,13 +83,13 @@ class MainActivity: ComponentActivity() {
   setContent {
    MaterialTheme(colorScheme=lightColorScheme(primary=Blue,background=Back,surface=Color.White,onSurface=Ink,onSurfaceVariant=Muted,secondary=Color(0xFF8270EA),primaryContainer=Color(0xFFEAF0FF),onPrimaryContainer=Ink,outline=Color(0xFFCFD5E6)),shapes=Shapes(small=RoundedCornerShape(12.dp),medium=RoundedCornerShape(20.dp),large=RoundedCornerShape(28.dp),extraLarge=RoundedCornerShape(28.dp)),typography=remember { typography() }) {
     Page()
-    if(setup) AlertDialog(onDismissRequest={setup=false},title={Text("Aktifkan pemantauan")},text={Column(verticalArrangement=Arrangement.spacedBy(14.dp)) {
+    if(setup) AlertDialog(onDismissRequest={setup=false},title={Text("Aktifkan pemantauan")},text={Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(14.dp)) {
      Text("Stopwatch muncul otomatis saat aplikasi digunakan dan berhenti saat layar terkunci.")
      Text("Aksesibilitas mengenali nama aplikasi dari jendela yang mendapat fokus. Isi layar, pesan, dan ketikan tidak dikumpulkan. Riwayat hanya disimpan di perangkat.",style=MaterialTheme.typography.bodyMedium)
      Text("1. Izinkan notifikasi waktu layar.\n2. Pilih IWatchYou di Aksesibilitas dan aktifkan.",style=MaterialTheme.typography.bodyMedium)
      if(Build.MANUFACTURER.equals("xiaomi",true)) Text("Jika HyperOS menghentikan pemantauan, izinkan mulai otomatis dan pilih baterai Tanpa batas pada info aplikasi.",style=MaterialTheme.typography.bodySmall)
     }},confirmButton={TextButton(onClick={begin()}) { Text("Lanjutkan") }},dismissButton={TextButton(onClick={setup=false}) { Text("Nanti") }})
-    update?.let { release -> AlertDialog(onDismissRequest={if(!busy)update=null},title={Text("Pembaruan ${release.version}")},text={Text(if(busy) "Mengunduh pembaruan…" else "${release.notes}\n\nUkuran: ${"%.1f".format(Locale.US,release.size/1_000_000.0)} MB")},confirmButton={TextButton(enabled=!busy,onClick={busy=true; UpdateManager.install(this@MainActivity,release) { busy=false; update=null; message=it }}){Text(if(busy)"Mengunduh…" else "Unduh & pasang")}},dismissButton={TextButton(enabled=!busy,onClick={update=null}){Text("Nanti")}}) }
+    update?.let { release -> AlertDialog(onDismissRequest={if(!busy)update=null},title={Text("Pembaruan ${release.version}")},text={Text(if(busy) "Mengunduh pembaruan…" else "${release.notes}\n\nUkuran: ${"%.1f".format(Locale.US,release.size/1_000_000.0)} MB",modifier=Modifier.verticalScroll(rememberScrollState()))},confirmButton={TextButton(enabled=!busy,onClick={busy=true; UpdateManager.install(this@MainActivity,release) { busy=false; update=null; message=it }}){Text(if(busy)"Mengunduh…" else "Unduh & pasang")}},dismissButton={TextButton(enabled=!busy,onClick={update=null}){Text("Nanti")}}) }
     message?.let { text -> AlertDialog(onDismissRequest={message=null},title={Text("IWatchYou")},text={Text(text)},confirmButton={TextButton(onClick={message=null}){Text("Tutup")}}) }
    }
   }
@@ -223,14 +223,6 @@ class MainActivity: ComponentActivity() {
  }
 }
 private fun dayLabel(day: String)=runCatching { LocalDate.parse(day).format(DateTimeFormatter.ofPattern("d MMM yyyy",Locale.forLanguageTag("id"))) }.getOrDefault(day)
-@Composable private fun ClockGlyph(modifier: Modifier,color: Color) {
- Canvas(modifier) {
-  val stroke=2.dp.toPx(); val c=center; val r=size.minDimension*0.42f
-  drawCircle(color,r,c,style=androidx.compose.ui.graphics.drawscope.Stroke(stroke))
-  drawLine(color,c,c.copy(y=c.y-r*0.6f),stroke,androidx.compose.ui.graphics.StrokeCap.Round)
-  drawLine(color,c,c.copy(x=c.x+r*0.45f,y=c.y+r*0.25f),stroke,androidx.compose.ui.graphics.StrokeCap.Round)
- }
-}
 @Composable private fun HourChart(hours: List<Long>) {
  val max=(hours.maxOrNull() ?: 0L).coerceAtLeast(60_000)
  Column(verticalArrangement=Arrangement.spacedBy(7.dp),modifier=Modifier.semantics(mergeDescendants=true) { contentDescription="Penggunaan layar per jam. "+hours.mapIndexedNotNull { hour, ms -> if(ms>0) "Pukul $hour: ${WatchService.short(ms)}" else null }.joinToString(". ") }) {

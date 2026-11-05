@@ -11,7 +11,8 @@ collect() {
  adb shell dumpsys notification --noredact > "$out/notifications.txt" || true
  adb logcat -d > "$out/logcat.txt" || true
  adb exec-out screencap -p > "$out/home.png" || true
- adb pull /sdcard/Android/data/id.wynn.iwatchyou/files/qa "$out/test-screens" || true
+ mkdir -p "$out/test-screens"
+ adb exec-out run-as id.wynn.iwatchyou tar -C files/qa -cf - . | tar -xf - -C "$out/test-screens" || true
 }
 trap collect EXIT
 adb wait-for-device

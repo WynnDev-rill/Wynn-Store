@@ -17,7 +17,7 @@ class DeviceTest {
  @Before fun configureAutomation() { Configurator.getInstance().uiAutomationFlags=1 }
  @get:Rule val testName=org.junit.rules.TestName()
  @After fun restoreDisplay() {
-  val dir=java.io.File(context.getExternalFilesDir(null),"qa").apply { mkdirs() }
+  val dir=java.io.File(context.filesDir,"qa").apply { mkdirs() }
   runCatching { device.takeScreenshot(java.io.File(dir,testName.methodName+".png"));device.dumpWindowHierarchy(java.io.File(dir,testName.methodName+".xml")) }
   println("Final ledger: "+WatchService.instance?.current())
   shell("settings put secure enabled_accessibility_services ''")
@@ -69,10 +69,10 @@ class DeviceTest {
   assertTrue("Unlocked timer can move",moved.left>rect.left || moved.top>rect.top)
   val x=moved.left;val y=moved.top
   device.setOrientationLeft()
-  waitFor { context.resources.configuration.orientation==Configuration.ORIENTATION_LANDSCAPE }
+  waitFor { device.displayWidth>device.displayHeight }
   assertNotNull("Timer returns after landscape rotation",device.wait(Until.findObject(By.clazz("android.widget.Chronometer")),8000))
   device.setOrientationNatural()
-  waitFor { context.resources.configuration.orientation==Configuration.ORIENTATION_PORTRAIT }
+  waitFor { device.displayHeight>device.displayWidth }
   val restoredTimer=device.wait(Until.findObject(By.clazz("android.widget.Chronometer")),8000)
   assertNotNull("Timer returns after portrait rotation",restoredTimer)
   val restored=restoredTimer.visibleBounds
@@ -235,6 +235,19 @@ class DeviceTest {
    else shell("settings put secure show_ime_with_hard_keyboard $oldImePreference")
   }
  }
+ // Bounded real swipes avoid UiScrollable's legacy scroll-event assumptions
+ // after a Compose viewport is resized. Read the current on-screen list bounds.
+ private fun revealText(text: String,towardEnd: Boolean=true) {
+  repeat(16) {
+   if(device.hasObject(By.text(text))) { device.waitForIdle();return }
+   val bounds=device.wait(Until.findObject(By.scrollable(true)),8000)?.visibleBounds
+    ?: throw AssertionError("No scrollable content while finding $text")
+   val top=bounds.top+bounds.height()/6;val bottom=bounds.bottom-bounds.height()/6
+   device.swipe(bounds.centerX(),if(towardEnd)bottom else top,bounds.centerX(),if(towardEnd)top else bottom,20)
+   device.waitForIdle()
+  }
+  assertTrue("Content is reachable: $text",device.hasObject(By.text(text)))
+ }
  @Test fun populatedHistoryKeepsSelectedDateAfterRotation() {
   val day="1999-01-01"
   HistoryStore(context).use { it.write(TimeLedger.Snapshot(day,19_260_000,
@@ -242,32 +255,39 @@ class DeviceTest {
    List(24) { if(it in 8..17) 1_926_000L else 0L })) }
   device.wakeUp();shell("wm dismiss-keyguard")
   shell("am start -W -n id.wynn.iwatchyou/.MainActivity")
-  UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("Hari ini ▾"))
-  assertNotNull(device.wait(Until.findObject(By.text("Hari ini ▾")),8000))
+  revealText("Hari ini ▾")
   device.findObject(By.text("Hari ini ▾")).click()
   assertNotNull(device.wait(Until.findObject(By.text("1 Jan 1999")),8000))
   device.findObject(By.text("1 Jan 1999")).click()
   assertTrue(device.wait(Until.hasObject(By.text("1 Jan 1999 ▾")),8000))
-  val dir=java.io.File(context.getExternalFilesDir(null),"qa").apply { mkdirs() }
-  UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(10)
-  device.waitForIdle()
-  assertTrue("Populated screen total is loaded",device.wait(Until.hasObject(By.text("5j 21m 0d")),8000))
-  device.takeScreenshot(java.io.File(dir,"populated-history-portrait.png"))
-  UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("3j 31m 0d"))
+  val dir=java.io.File(context.filesDir,"qa").apply { mkdirs() }
+  fun summaryCapture(name: String) {
+   revealText("IWatchYou",false)
+   assertTrue("Historical date is preserved",device.wait(Until.hasObject(By.text("Waktu layar · 1 Jan 1999")),8000))
+   revealText("5j 21m 0d")
+   assertTrue("Populated screen total is loaded",device.hasObject(By.text("5j 21m 0d")))
+   device.waitForIdle();assertTrue(device.takeScreenshot(java.io.File(dir,name)))
+  }
+  summaryCapture("populated-history-portrait.png")
+  revealText("3j 31m 0d")
   assertTrue("Populated app duration is loaded",device.hasObject(By.text("3j 31m 0d")))
-  device.setOrientationLeft()
-  UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("1 Jan 1999 ▾"))
-  assertTrue(device.wait(Until.hasObject(By.text("1 Jan 1999 ▾")),8000))
-  UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(10)
-  assertTrue(device.wait(Until.hasObject(By.text("5j 21m 0d")),8000))
-  device.takeScreenshot(java.io.File(dir,"populated-history-landscape.png"))
-  device.setOrientationNatural();shell("settings put system font_scale 2.0")
-  UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("1 Jan 1999 ▾"))
-  assertTrue(device.wait(Until.hasObject(By.text("1 Jan 1999 ▾")),8000))
-  UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(10)
-  device.waitForIdle()
-  assertTrue(device.wait(Until.hasObject(By.text("5j 21m 0d")),8000))
-  device.takeScreenshot(java.io.File(dir,"populated-history-large-text.png"))
+  device.takeScreenshot(java.io.File(dir,"populated-history-apps.png"))
+  device.setOrientationLeft();waitFor { device.displayWidth>device.displayHeight };device.waitForIdle()
+  summaryCapture("populated-history-landscape.png")
+  device.setOrientationNatural();waitFor { device.displayHeight>device.displayWidth }
+  shell("settings put system font_scale 2.0");device.waitForIdle()
+  summaryCapture("populated-history-large-text.png")
+  revealText("3j 31m 0d")
+  device.takeScreenshot(java.io.File(dir,"populated-history-apps-large-text.png"))
+  revealText("IWatchYou",false)
+  device.findObject(By.desc("Pengaturan")).click()
+  assertNotNull(device.wait(Until.findObject(By.text("Izin & layanan")),8000))
+  device.findObject(By.text("Izin & layanan")).click()
+  assertTrue(device.wait(Until.hasObject(By.text("Lanjutkan")),8000))
+  device.waitForIdle();device.takeScreenshot(java.io.File(dir,"setup-large-text.png"))
+  device.pressBack()
+  assertTrue(device.wait(Until.gone(By.text("Lanjutkan")),8000))
  }
+
 
 }

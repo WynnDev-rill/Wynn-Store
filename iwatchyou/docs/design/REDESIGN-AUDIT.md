@@ -19,3 +19,14 @@ Local software emulator is not used: this environment has no /dev/kvm. Behaviora
 and visual verification use accelerated CI emulators on API 30 and 36. Source
 build, unit and lint verification also run locally. Exact current results are in
 the redesign PR checks and final handoff, not inferred from previous APKs.
+
+Native verification exposed QA problems rather than lost selected history: the
+landscape failure capture still displayed the correct 1999 total, while the legacy
+UiScrollable search stopped before the date control. The test now uses bounded
+real swipes, current list bounds, and verifies the selected date plus loaded total
+at the summary. Rotation uses actual display geometry, since a background app's
+Application resources can retain the old orientation while Settings is focused.
+API 30 shell could not pull scoped external storage; test captures now use private
+files/qa and debug run-as tar extraction. No production storage permission is added.
+Added app-list and 2x setup-dialog captures; setup and long update notes scroll while
+the native dialog action buttons remain accessible.
