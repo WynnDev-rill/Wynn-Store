@@ -53,7 +53,7 @@ try:
   subprocess.run(['javac','-source','8','-target','8','-d',str(probe),'iwatchyou/qa/NetworkProbe.java'],check=True)
   subprocess.run([os.environ['ANDROID_HOME']+'/build-tools/36.0.0/d8','--min-api','30','--output',str(probe/'probe.jar'),str(probe/'NetworkProbe.class')],check=True)
   adb('push',str(probe/'probe.jar'),'/data/local/tmp/iw-probe.jar')
-  result=subprocess.run(['adb','shell','CLASSPATH=/data/local/tmp/iw-probe.jar app_process /system/bin NetworkProbe https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/iwatchyou/updates/stable.json?probe='+str(int(time.time()*1000))],capture_output=True,text=True,timeout=40)
+  result=subprocess.run(['adb','shell','CLASSPATH=/data/local/tmp/iw-probe.jar app_process /system/bin NetworkProbe https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/iwatchyou/updates/stable-v2.json?probe='+str(int(time.time()*1000))],capture_output=True,text=True,timeout=40)
   (out/'android-network.txt').write_text(result.stdout+result.stderr)
   print('Android network probe:',result.stdout+result.stderr,flush=True)
   wait_for('Pengaturan',attr='content-desc')

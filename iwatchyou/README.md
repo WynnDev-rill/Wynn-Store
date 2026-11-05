@@ -71,7 +71,7 @@ and keeps uncompressed DEX/native libraries for efficient memory mapping.
 ## Production releases
 
 Never publish debug builds as stable. Production signing uses the owner's existing private production
-certificate (SHA-256 `eca17e8afa84775e941e0e490741b01636e7941da545c508f85b8a256a4f346a`).
+certificate (SHA-256 `04ed3a280377b2671ad1f6fb6f7fd1c335684302ab35d50d0000ca2b23b585f5`).
 Private signing material stays outside this repository and must not be uploaded in workflow artifacts.
 
 1. Increase `versionCode` and `versionName`. CI builds and runs QA, uploads an unsigned optimized release.
@@ -79,7 +79,7 @@ Private signing material stays outside this repository and must not be uploaded 
    identity, release flags, source digest and unchanged ZIP payload. Stage only the public APK and metadata.
 3. `scripts/publish.py` requires a successful source-build/emulator run, verifies staged source identity,
    production certificate and artifact hashes, publishes immutable release assets, downloads them for
-   verification, then updates `updates/stable.json`.
+   verification, then updates `updates/stable-v2.json`.
 4. Installed production builds check for updates on launch (metadata cached for six hours); Settings can force
    a check. Downloads are bounded and HTTPS-only, with size, SHA-256, package, exact version and original
    certificate checks. Android installation consent is always required. Unknown-source consent resumes
@@ -102,3 +102,11 @@ Production updates still require the original production signing key and verifie
 stable feed publication. Keep that key in a secure backup; it cannot be recovered
 from an APK. Preview signing keys are local/CI debug keys, so independently built
 previews may also use different certificates.
+
+## Production key rotation — 2026-11-05
+
+The owner explicitly authorized a new permanent production key and understands
+uninstall/reinstall is required from the old signer. Version 1.0.4 retains package
+`id.wynn.iwatchyou`. The old stable.json channel is frozen; new production installs
+use stable-v2.json so legacy installs are not offered an unverifiable replacement.
+Never generate another key for subsequent releases. See docs/PRODUCTION-SIGNING.md.

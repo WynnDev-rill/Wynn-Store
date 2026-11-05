@@ -18,7 +18,7 @@ import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
 
 object UpdateManager {
- private const val FEED="https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/iwatchyou/updates/stable.json"
+ private const val FEED="https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/iwatchyou/updates/stable-v2.json"
  private const val PREFIX="https://github.com/WynnDev-rill/Wynn-Store/releases/download/iwatchyou-v"
  private const val LIMIT=100_000_000L
  private val checking=AtomicBoolean(false)

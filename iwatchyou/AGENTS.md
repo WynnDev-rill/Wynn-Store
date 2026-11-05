@@ -135,3 +135,13 @@ for a native Canvas chart. Verification-first: define acceptance and capture bef
 editing; build/lint/unit checks plus API 30/36 native regressions and rendered normal,
 large-font/rotation, populated-history and overlay captures must be reviewed. Respect
 system animation scale, stop UI work offscreen and retain the native clock tick.
+
+## Authorized production key rotation (2026-11-05)
+
+The owner explicitly approved replacing the unavailable legacy key, understands
+manual uninstall/reinstall from older signatures, and requested final production.
+This is a one-time exception to preserving the old signer, not permission to rotate
+keys again. Future releases MUST reuse the new permanent key documented in
+`docs/PRODUCTION-SIGNING.md`. Never use debug signing for final APKs. The encrypted
+keystore and passwords stay outside Git; retain the private recovery bundle.
+New installs use stable-v2.json; keep legacy stable.json frozen.
