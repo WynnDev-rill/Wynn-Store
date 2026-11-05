@@ -1,0 +1,10 @@
+{
+  "versionCode": 6,
+  "versionName": "1.0.5",
+  "sourceCommit": "3de10a903eaab5298b68a9d98c69e3912323a777",
+  "sourceDigest": "418c5a02594e4b8c20ef44341db3f5685cf92b5d8ff6862e3e981ff4327fec4f",
+  "workflowRunId": 41977782245,
+  "sha256": "62eda9b7f6b1140d1c50ff5509ab6313dce7be041ae8e16afa166f02f327e563",
+  "sizeBytes": 2069028,
+  "signerSha256": "04ed3a280377b2671ad1f6fb6f7fd1c335684302ab35d50d0000ca2b23b585f5"
+}

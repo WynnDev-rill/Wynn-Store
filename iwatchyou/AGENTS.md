@@ -19,7 +19,7 @@ Package identity: `id.wynn.iwatchyou`. Build configuration is in `app/build.grad
 - `ForegroundPolicy.kt`: platform-neutral rules for focused windows, keyboard,
   overlays, split screen and PiP, plus current-root eligibility and fallback priority.
 - `OverlayController.kt`: `TYPE_ACCESSIBILITY_OVERLAY` bubble, native Chronometer,
-  fading, drag position and rotation. No `SYSTEM_ALERT_WINDOW` permission is needed.
+  compact/expanded/edge states, fading, drag position and rotation. No `SYSTEM_ALERT_WINDOW` permission is needed.
 - `TimeLedger.kt`: synchronized monotonic time accounting and daily/hourly splits.
 - `HistoryStore.kt`: private SQLite history and legacy migration.
 - `MainActivity.kt`: dashboard, setup, monitoring state and updates.
@@ -145,3 +145,14 @@ keys again. Future releases MUST reuse the new permanent key documented in
 `docs/PRODUCTION-SIGNING.md`. Never use debug signing for final APKs. The encrypted
 keystore and passwords stay outside Git; retain the private recovery bundle.
 New installs use stable-v2.json; keep legacy stable.json frozen.
+
+## Floating revision (1.0.5)
+
+The owner's revised brief supersedes the old tap-to-unlock/hourly-UI preservation:
+keep a smaller compact stopwatch, expandable app panel, explicit hide-to-edge and
+restore action. Hidden state must not pause the ledger. Use full48dp touch targets
+around smaller visible chrome. Overview is limited to five rows; details show all
+apps and real clickable weekly history. Do not restore repeated tutorial copy.
+Window geometry/title/a11y-focus events alone must not starve application focus.
+LatestWork bounds metadata and root queues separately, so slow roots cannot hold
+up a known focused app. Carry the generation through ledger and overlay callbacks.

@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.ImageView
+import androidx.activity.compose.BackHandler
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -18,6 +19,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -102,32 +104,43 @@ class MainActivity: ComponentActivity() {
   var active by remember { mutableStateOf(false) }
   var dates by remember { mutableStateOf(emptyList<String>()) }
   var selected by rememberSaveable { mutableStateOf<String?>(null) }
+  var details by rememberSaveable { mutableStateOf(false) }
+  var weekly by rememberSaveable { mutableStateOf(false) }
+  var weekEnd by rememberSaveable { mutableStateOf(WatchService.today()) }
+  var week by remember { mutableStateOf(emptyList<TimeLedger.Snapshot>()) }
+  val listState=rememberLazyListState()
+  LaunchedEffect(details,weekly) { listState.scrollToItem(0) }
+  BackHandler(details) { details=false;weekly=false }
   var dateMenu by remember { mutableStateOf(false) }
   var settings by remember { mutableStateOf(false) }
   val owner=LocalLifecycleOwner.current
-  LaunchedEffect(owner,selected) {
+  LaunchedEffect(owner,selected,details,weekly,weekEnd) {
    owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
     val saved=withContext(Dispatchers.IO) { HistoryStore(applicationContext).use { store -> Pair(store.read(selected ?: WatchService.today()),store.days()) } }
+    if(details && weekly)week=withContext(Dispatchers.IO) { HistoryStore(applicationContext).use { store ->
+     (6 downTo 0).map { offset -> val day=LocalDate.parse(weekEnd).minusDays(offset.toLong()).toString();store.read(day) ?: TimeLedger.Snapshot(day,0,emptyMap(),null) }
+    } }
     dates=(listOf(WatchService.today())+saved.second).distinct()
     data=saved.first ?: TimeLedger.Snapshot(selected ?: WatchService.today(),0,emptyMap(),null)
     while(isActive) {
      active=WatchService.instance!=null
      val current=WatchService.instance
-     if(selected==null && current!=null) data=current.current()
+     if(selected==null && current!=null)data=current.current()
+     if(details && weekly && current!=null)week=week.map { if(it.day==WatchService.today())current.current() else it }
      if(selected==null && data.day!=WatchService.today()) data=TimeLedger.Snapshot(WatchService.today(),0,emptyMap(),null)
      delay(1000)
     }
    }
   }
-  val entries=remember(data.apps) { data.apps.entries.filter { it.value>=1000 }.sortedByDescending { it.value } }
+  val shown=if(details && weekly)UsageSummary.combine(week,weekEnd) else data
+  val entries=remember(shown.apps) { shown.apps.entries.filter { it.value>=1000 }.sortedByDescending { it.value } }
   Column(Modifier.fillMaxSize().background(Back).windowInsetsPadding(WindowInsets.safeDrawing)) {
-   LazyColumn(Modifier.weight(1f).fillMaxWidth(),contentPadding=PaddingValues(20.dp,22.dp,20.dp,18.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
+   LazyColumn(Modifier.weight(1f).fillMaxWidth(),state=listState,contentPadding=PaddingValues(20.dp,22.dp,20.dp,18.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
     item {
      Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
       Column(Modifier.weight(1f)) {
-       Text("IWatchYou",fontSize=27.sp,fontWeight=FontWeight.Bold,color=Ink,modifier=Modifier.semantics { heading() })
-       Spacer(Modifier.height(4.dp))
-       Text("Kenali ke mana waktumu pergi.",fontSize=13.sp,color=Muted)
+       Text(if(details)"Statistik" else "IWatchYou",fontSize=27.sp,fontWeight=FontWeight.Bold,color=Ink,modifier=Modifier.semantics { heading() })
+       if(details)TextButton(onClick={details=false;weekly=false}) { Text("Kembali") }
       }
       Box {
        IconButton(onClick={settings=true}) { Icon(Icons.Outlined.Settings,contentDescription="Pengaturan",tint=Ink) }
@@ -139,11 +152,27 @@ class MainActivity: ComponentActivity() {
       }
      }
     }
-    item {
+    if(details)item {
+     Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+      FilterChip(selected=!weekly,onClick={weekly=false},label={Text("Harian")})
+      FilterChip(selected=weekly,onClick={weekEnd=selected ?: WatchService.today();weekly=true},label={Text("Mingguan")})
+     }
+    }
+    if(details && weekly)item {
+     Column(verticalArrangement=Arrangement.spacedBy(16.dp)) {
+      Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
+       TextButton(onClick={weekEnd=LocalDate.parse(weekEnd).minusDays(7).toString()}) { Text("Sebelumnya") }
+       TextButton(enabled=weekEnd<WatchService.today(),onClick={weekEnd=minOf(LocalDate.parse(weekEnd).plusDays(7).toString(),WatchService.today())}) { Text("Berikutnya") }
+      }
+      Text(dayLabel(LocalDate.parse(weekEnd).minusDays(6).toString())+" – "+dayLabel(weekEnd),style=MaterialTheme.typography.titleMedium)
+      Text(WatchService.short(shown.screenMs),style=MaterialTheme.typography.headlineMedium,color=Blue,fontWeight=FontWeight.Bold)
+      WeekChart(week) { day -> selected=day.takeUnless { it==WatchService.today() };weekly=false }
+     }
+    }
+    if(!details || !weekly)item {
      Surface(color=Color.White,shape=RoundedCornerShape(28.dp),border=BorderStroke(1.dp,Track),modifier=Modifier.fillMaxWidth()) {
       val wide=LocalConfiguration.current.screenWidthDp>=600
       val title=if(selected==null) "Waktu layar hari ini" else "Waktu layar · "+dayLabel(data.day)
-      val caption="Ring menampilkan lima aplikasi teratas; sisanya berwarna pucat."
       Column(Modifier.padding(if(wide)16.dp else 24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(16.dp)) {
        if(wide) {
         Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(24.dp)) {
@@ -151,36 +180,30 @@ class MainActivity: ComponentActivity() {
          Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(8.dp)) {
           Text(title,style=MaterialTheme.typography.titleMedium,color=Ink)
           Text(WatchService.short(data.screenMs),style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold,color=Blue)
-          Text(caption,style=MaterialTheme.typography.bodySmall,color=Muted)
+
          }
         }
        } else {
         Text(title,style=MaterialTheme.typography.titleMedium,color=Ink)
         val largeText=LocalDensity.current.fontScale>1.3f
-        Box(Modifier.size(if(largeText)112.dp else 216.dp),contentAlignment=Alignment.Center) {
-         UsageRing(entries.map { it.key to it.value },Modifier.fillMaxSize())
+        Box(Modifier.size(if(largeText)112.dp else 232.dp),contentAlignment=Alignment.Center) {
+         UsageRing(entries.map { it.key to it.value },Modifier.fillMaxSize().padding(20.dp))
+         if(!largeText)RingIcons(entries.map { it.key to it.value })
          if(!largeText) Column(horizontalAlignment=Alignment.CenterHorizontally) {
           Text(WatchService.short(data.screenMs),fontSize=23.sp,fontWeight=FontWeight.Bold,color=Blue,style=TextStyle(fontFeatureSettings="tnum"))
           Text("Layar terbuka",fontSize=12.sp,color=Muted)
          }
         }
         if(largeText) Text(WatchService.short(data.screenMs),style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold,color=Blue)
-        Text(caption,style=MaterialTheme.typography.bodySmall,color=Muted)
+
        }
       }
      }
     }
     item {
-     Column(Modifier.fillMaxWidth().padding(horizontal=4.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-      Text("Ritme harian",style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold,color=Ink,modifier=Modifier.semantics { heading() })
-      HourChart(data.hours)
-      Text("Durasi layar terbuka per jam. Waktu aplikasi mengikuti jendela yang mendapat fokus.",style=MaterialTheme.typography.bodySmall,color=Muted)
-     }
-    }
-    item {
      Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
       Text("Penggunaan aplikasi",fontSize=16.sp,fontWeight=FontWeight.Bold,color=Ink,modifier=Modifier.weight(1f).semantics { heading() })
-      Box {
+      if(!weekly)Box {
        TextButton(onClick={dateMenu=true}) { Text(if(selected==null)"Hari ini ▾" else dayLabel(selected!!)+" ▾",fontSize=13.sp,color=Blue) }
        DropdownMenu(expanded=dateMenu,onDismissRequest={dateMenu=false},modifier=Modifier.heightIn(max=360.dp)) {
         (listOf(WatchService.today())+dates).distinct().forEach { day -> DropdownMenuItem(text={Text(if(day==WatchService.today())"Hari ini" else dayLabel(day))},onClick={selected=day.takeUnless { it==WatchService.today() };dateMenu=false}) }
@@ -196,10 +219,10 @@ class MainActivity: ComponentActivity() {
       }
      }
     }
-    items(entries,key={it.key}) { entry ->
+    items(if(details)entries else entries.take(5),key={it.key}) { entry ->
      AppRow(entry.key,entry.value,entries.first().value,Palette[(entry.key.hashCode() and Int.MAX_VALUE)%Palette.size])
     }
-    item { Text("Timer meredup setelah 3 detik. Ketuk dahulu untuk menggesernya.",fontSize=11.sp,lineHeight=18.sp,color=Muted,modifier=Modifier.padding(horizontal=3.dp)) }
+    if(!details)item { TextButton(onClick={details=true;weekly=false},modifier=Modifier.fillMaxWidth()) { Text("Lihat selengkapnya") } }
    }
    val stateColor by animateColorAsState(if(active)Blue else Muted,label="monitoring")
    Surface(color=Color.White,shape=RoundedCornerShape(24.dp),border=BorderStroke(1.dp,Track),modifier=Modifier.padding(start=16.dp,end=16.dp,bottom=12.dp).fillMaxWidth()) {
@@ -207,10 +230,26 @@ class MainActivity: ComponentActivity() {
      Box(Modifier.size(46.dp).background(stateColor.copy(alpha=0.10f),RoundedCornerShape(16.dp)),contentAlignment=Alignment.Center) { PowerGlyph(Modifier.size(24.dp),stateColor) }
      Column(Modifier.weight(1f)) {
       Text(if(active)"Pemantauan aktif" else "Aktifkan pemantauan",fontSize=14.sp,fontWeight=FontWeight.Bold,color=Ink)
-      Spacer(Modifier.height(3.dp))
-      Text(if(active)"Buka aplikasi lain untuk melihat timer" else "Satu kali izin, berjalan otomatis",fontSize=12.sp,lineHeight=18.sp,color=Muted)
+
      }
      Switch(checked=active,onCheckedChange={if(it)setup=true else WatchService.instance?.disableSelf()},modifier=Modifier.semantics { contentDescription="Pemantauan" })
+    }
+   }
+  }
+ }
+ @Composable private fun RingIcons(entries: List<Pair<String,Long>>) {
+  val sum=entries.sumOf { it.second }.coerceAtLeast(1)
+  var angle=-90.0
+  Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center) {
+   entries.take(5).forEach { (pkg,duration) ->
+    val sweep=duration.toDouble()/sum*360
+    val radians=Math.toRadians(angle+sweep/2);angle+=sweep
+    if(sweep>=12) {
+     val icon by produceState<android.graphics.drawable.Drawable?>(null,pkg) {
+      value=withContext(Dispatchers.IO) { runCatching { packageManager.getApplicationIcon(pkg) }.getOrNull() }
+     }
+     val offset=Modifier.offset((kotlin.math.cos(radians)*105).dp,(kotlin.math.sin(radians)*105).dp).size(28.dp)
+     icon?.let { drawable -> AndroidView(factory={ImageView(it)},update={it.setImageDrawable(drawable)},modifier=offset.clearAndSetSemantics {}) }
     }
    }
   }
@@ -238,16 +277,18 @@ class MainActivity: ComponentActivity() {
  }
 }
 private fun dayLabel(day: String)=runCatching { LocalDate.parse(day).format(DateTimeFormatter.ofPattern("d MMM yyyy",Locale.forLanguageTag("id"))) }.getOrDefault(day)
-@Composable private fun HourChart(hours: List<Long>) {
- val max=(hours.maxOrNull() ?: 0L).coerceAtLeast(60_000)
- Column(verticalArrangement=Arrangement.spacedBy(7.dp),modifier=Modifier.semantics(mergeDescendants=true) { contentDescription="Penggunaan layar per jam. "+hours.mapIndexedNotNull { hour, ms -> if(ms>0) "Pukul $hour: ${WatchService.short(ms)}" else null }.joinToString(". ") }) {
-  Row(Modifier.fillMaxWidth().height(72.dp),horizontalArrangement=Arrangement.spacedBy(4.dp),verticalAlignment=Alignment.Bottom) {
-   repeat(24) { i ->
-    val value=hours.getOrElse(i){0L}
-    Box(Modifier.weight(1f).fillMaxHeight(if(value==0L)0.08f else (value.toFloat()/max).coerceIn(0.10f,1f)).background(if(value>0)Blue.copy(alpha=0.8f) else Track,RoundedCornerShape(3.dp)))
+@Composable private fun WeekChart(days: List<TimeLedger.Snapshot>,onDay:(String)->Unit) {
+ val max=days.maxOfOrNull { it.screenMs }?.coerceAtLeast(1) ?: 1L
+ Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(4.dp),verticalAlignment=Alignment.Bottom) {
+  days.forEach { day ->
+   Column(Modifier.weight(1f).clickable { onDay(day.day) }.semantics(mergeDescendants=true) { contentDescription=dayLabel(day.day)+": "+WatchService.short(day.screenMs) },horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(10.dp)) {
+    Box(Modifier.fillMaxWidth().height(132.dp),contentAlignment=Alignment.BottomCenter) {
+     Box(Modifier.width(20.dp).fillMaxHeight((day.screenMs.toFloat()/max).coerceIn(0.02f,1f)).background(if(day.screenMs>0)Blue else Track,RoundedCornerShape(6.dp)))
+    }
+    Text(LocalDate.parse(day.day).dayOfMonth.toString(),fontSize=12.sp,color=Ink)
+    Text(LocalDate.parse(day.day).format(DateTimeFormatter.ofPattern("EE",Locale.forLanguageTag("id"))).take(if(LocalDensity.current.fontScale>1.3f)1 else 3),fontSize=12.sp,color=Muted)
    }
   }
-  Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { listOf("00","04","08","12","16","20","24").forEach { Text(it,color=Muted,fontSize=12.sp) } }
  }
 }
 
