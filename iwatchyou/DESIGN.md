@@ -41,7 +41,8 @@ remaining/tiny shares keep the pale track. It is not progress toward an invented
 goal. Its center is unlocked screen time, which includes Home and IWatchYou.
 Hourly graph remains unlocked screen duration. App rows remain one focused app's
 local-day total, sorted descending; lazy list and async icon loading are retained.
-Historical date survives rotation. Dates, permission/HyperOS advice, notification
+Historical date survives rotation. At widths of 600dp and above, the summary uses
+a horizontal 112dp ring and a separate text column to fit short landscape screens. Dates, permission/HyperOS advice, notification
 permission, update download/consent/error flows, settings and monitoring off stay.
 
 Overlay: dark #141722 pill, white 16sp tabular time, 48dp minimum height, subtle

@@ -26,6 +26,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.*
@@ -140,18 +141,32 @@ class MainActivity: ComponentActivity() {
     }
     item {
      Surface(color=Color.White,shape=RoundedCornerShape(28.dp),border=BorderStroke(1.dp,Track),modifier=Modifier.fillMaxWidth()) {
-      Column(Modifier.padding(24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(16.dp)) {
-       Text(if(selected==null) "Waktu layar hari ini" else "Waktu layar · "+dayLabel(data.day),style=MaterialTheme.typography.titleMedium,color=Ink)
-       val largeText=LocalDensity.current.fontScale>1.4f
-       Box(Modifier.size(if(largeText)112.dp else 216.dp),contentAlignment=Alignment.Center) {
-        UsageRing(entries.map { it.key to it.value },Modifier.fillMaxSize())
-        if(!largeText) Column(horizontalAlignment=Alignment.CenterHorizontally) {
-         Text(WatchService.short(data.screenMs),fontSize=23.sp,fontWeight=FontWeight.Bold,color=Blue,style=TextStyle(fontFeatureSettings="tnum"))
-         Text("Layar terbuka",fontSize=12.sp,color=Muted)
+      val wide=LocalConfiguration.current.screenWidthDp>=600
+      val title=if(selected==null) "Waktu layar hari ini" else "Waktu layar · "+dayLabel(data.day)
+      val caption="Ring menampilkan lima aplikasi teratas; sisanya berwarna pucat."
+      Column(Modifier.padding(if(wide)16.dp else 24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(16.dp)) {
+       if(wide) {
+        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(24.dp)) {
+         UsageRing(entries.map { it.key to it.value },Modifier.size(112.dp))
+         Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+          Text(title,style=MaterialTheme.typography.titleMedium,color=Ink)
+          Text(WatchService.short(data.screenMs),style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold,color=Blue)
+          Text(caption,style=MaterialTheme.typography.bodySmall,color=Muted)
+         }
         }
+       } else {
+        Text(title,style=MaterialTheme.typography.titleMedium,color=Ink)
+        val largeText=LocalDensity.current.fontScale>1.3f
+        Box(Modifier.size(if(largeText)112.dp else 216.dp),contentAlignment=Alignment.Center) {
+         UsageRing(entries.map { it.key to it.value },Modifier.fillMaxSize())
+         if(!largeText) Column(horizontalAlignment=Alignment.CenterHorizontally) {
+          Text(WatchService.short(data.screenMs),fontSize=23.sp,fontWeight=FontWeight.Bold,color=Blue,style=TextStyle(fontFeatureSettings="tnum"))
+          Text("Layar terbuka",fontSize=12.sp,color=Muted)
+         }
+        }
+        if(largeText) Text(WatchService.short(data.screenMs),style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold,color=Blue)
+        Text(caption,style=MaterialTheme.typography.bodySmall,color=Muted)
        }
-       if(largeText) Text(WatchService.short(data.screenMs),style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold,color=Blue)
-       Text("Ring menampilkan lima aplikasi teratas; sisanya berwarna pucat.",style=MaterialTheme.typography.bodySmall,color=Muted)
       }
      }
     }
