@@ -24,6 +24,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.*
@@ -40,13 +42,13 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val Ink=Color(0xFF142033)
-private val Muted=Color(0xFF637087)
-private val Blue=Color(0xFF246ADC)
-private val Back=Color(0xFFF6F8FC)
-private val Track=Color(0xFFE9EEF6)
+private val Ink=Color(0xFF20245C)
+private val Muted=Color(0xFF646B88)
+private val Blue=Color(0xFF1769E0)
+private val Back=Color(0xFFF7F8FD)
+private val Track=Color(0xFFE8ECF6)
 private val Jakarta=FontFamily(Font(R.font.jakarta_regular,FontWeight.Normal),Font(R.font.jakarta_medium,FontWeight.Medium),Font(R.font.jakarta_bold,FontWeight.Bold))
-private val Palette=listOf(Blue,Color(0xFFAB76E8),Color(0xFFF26E83),Color(0xFFE3AD38),Color(0xFF62BA91),Color(0xFF8C9EB7))
+private val Palette=listOf(Blue,Color(0xFF8270EA),Color(0xFF008EAA),Color(0xFF138563),Color(0xFFAE5679),Color(0xFF64718E))
 private fun typography(): Typography {
  val t=Typography()
  return Typography(displayLarge=t.displayLarge.copy(fontFamily=Jakarta),displayMedium=t.displayMedium.copy(fontFamily=Jakarta),displaySmall=t.displaySmall.copy(fontFamily=Jakarta),
@@ -79,7 +81,7 @@ class MainActivity: ComponentActivity() {
   super.onCreate(savedInstanceState)
   enableEdgeToEdge(statusBarStyle=androidx.activity.SystemBarStyle.light(0,0),navigationBarStyle=androidx.activity.SystemBarStyle.light(0,0))
   setContent {
-   MaterialTheme(colorScheme=lightColorScheme(primary=Blue,background=Back,surface=Color.White,onSurface=Ink,onSurfaceVariant=Muted),typography=remember { typography() }) {
+   MaterialTheme(colorScheme=lightColorScheme(primary=Blue,background=Back,surface=Color.White,onSurface=Ink,onSurfaceVariant=Muted,secondary=Color(0xFF8270EA),primaryContainer=Color(0xFFEAF0FF),onPrimaryContainer=Ink,outline=Color(0xFFCFD5E6)),shapes=Shapes(small=RoundedCornerShape(12.dp),medium=RoundedCornerShape(20.dp),large=RoundedCornerShape(28.dp),extraLarge=RoundedCornerShape(28.dp)),typography=remember { typography() }) {
     Page()
     if(setup) AlertDialog(onDismissRequest={setup=false},title={Text("Aktifkan pemantauan")},text={Column(verticalArrangement=Arrangement.spacedBy(14.dp)) {
      Text("Stopwatch muncul otomatis saat aplikasi digunakan dan berhenti saat layar terkunci.")
@@ -98,7 +100,7 @@ class MainActivity: ComponentActivity() {
   var data by remember { mutableStateOf(TimeLedger.Snapshot(WatchService.today(),0,emptyMap(),null)) }
   var active by remember { mutableStateOf(false) }
   var dates by remember { mutableStateOf(emptyList<String>()) }
-  var selected by remember { mutableStateOf<String?>(null) }
+  var selected by rememberSaveable { mutableStateOf<String?>(null) }
   var dateMenu by remember { mutableStateOf(false) }
   var settings by remember { mutableStateOf(false) }
   val owner=LocalLifecycleOwner.current
@@ -118,13 +120,13 @@ class MainActivity: ComponentActivity() {
   }
   val entries=remember(data.apps) { data.apps.entries.filter { it.value>=1000 }.sortedByDescending { it.value } }
   Column(Modifier.fillMaxSize().background(Back).windowInsetsPadding(WindowInsets.safeDrawing)) {
-   LazyColumn(Modifier.weight(1f).fillMaxWidth(),contentPadding=PaddingValues(20.dp,22.dp,20.dp,18.dp),verticalArrangement=Arrangement.spacedBy(18.dp)) {
+   LazyColumn(Modifier.weight(1f).fillMaxWidth(),contentPadding=PaddingValues(20.dp,22.dp,20.dp,18.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
     item {
      Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
       Column(Modifier.weight(1f)) {
        Text("IWatchYou",fontSize=27.sp,fontWeight=FontWeight.Bold,color=Ink,modifier=Modifier.semantics { heading() })
        Spacer(Modifier.height(4.dp))
-       Text("Waktu layar, lebih sadar setiap hari.",fontSize=12.sp,color=Muted)
+       Text("Kenali ke mana waktumu pergi.",fontSize=13.sp,color=Muted)
       }
       Box {
        IconButton(onClick={settings=true}) { Icon(Icons.Outlined.Settings,contentDescription="Pengaturan",tint=Ink) }
@@ -137,26 +139,34 @@ class MainActivity: ComponentActivity() {
      }
     }
     item {
-     Surface(color=Color.White,shape=RoundedCornerShape(26.dp),tonalElevation=0.dp,shadowElevation=1.dp,modifier=Modifier.fillMaxWidth()) {
-      Column(Modifier.padding(22.dp),verticalArrangement=Arrangement.spacedBy(18.dp)) {
-       Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
-        Box(Modifier.size(56.dp).background(Back,CircleShape),contentAlignment=Alignment.Center) { ClockGlyph(Modifier.size(28.dp),Ink) }
-        Column(Modifier.weight(1f)) {
-         Text(if(selected==null)"Waktu layar aktif hari ini" else "Waktu layar aktif",fontSize=12.sp,color=Muted)
-         Spacer(Modifier.height(4.dp))
-         Text(WatchService.short(data.screenMs),fontSize=27.sp,fontWeight=FontWeight.Bold,color=Ink,style=TextStyle(fontFeatureSettings="tnum"))
+     Surface(color=Color.White,shape=RoundedCornerShape(28.dp),border=BorderStroke(1.dp,Track),modifier=Modifier.fillMaxWidth()) {
+      Column(Modifier.padding(24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(16.dp)) {
+       Text(if(selected==null) "Waktu layar hari ini" else "Waktu layar · "+dayLabel(data.day),style=MaterialTheme.typography.titleMedium,color=Ink)
+       val largeText=LocalDensity.current.fontScale>1.4f
+       Box(Modifier.size(if(largeText)112.dp else 216.dp),contentAlignment=Alignment.Center) {
+        UsageRing(entries.map { it.key to it.value },Modifier.fillMaxSize())
+        if(!largeText) Column(horizontalAlignment=Alignment.CenterHorizontally) {
+         Text(WatchService.short(data.screenMs),fontSize=23.sp,fontWeight=FontWeight.Bold,color=Blue,style=TextStyle(fontFeatureSettings="tnum"))
+         Text("Layar terbuka",fontSize=12.sp,color=Muted)
         }
        }
-       HourChart(data.hours)
-       Text("Durasi layar terbuka. Aplikasi dicatat saat mendapat fokus.",fontSize=11.sp,lineHeight=17.sp,color=Muted)
+       if(largeText) Text(WatchService.short(data.screenMs),style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold,color=Blue)
+       Text("Ring menampilkan lima aplikasi teratas; sisanya berwarna pucat.",style=MaterialTheme.typography.bodySmall,color=Muted)
       }
+     }
+    }
+    item {
+     Column(Modifier.fillMaxWidth().padding(horizontal=4.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+      Text("Ritme harian",style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold,color=Ink,modifier=Modifier.semantics { heading() })
+      HourChart(data.hours)
+      Text("Durasi layar terbuka per jam. Waktu aplikasi mengikuti jendela yang mendapat fokus.",style=MaterialTheme.typography.bodySmall,color=Muted)
      }
     }
     item {
      Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
       Text("Penggunaan aplikasi",fontSize=16.sp,fontWeight=FontWeight.Bold,color=Ink,modifier=Modifier.weight(1f).semantics { heading() })
       Box {
-       TextButton(onClick={dateMenu=true}) { Text(if(selected==null)"Hari ini ▾" else dayLabel(selected!!)+" ▾",fontSize=12.sp,color=Muted) }
+       TextButton(onClick={dateMenu=true}) { Text(if(selected==null)"Hari ini ▾" else dayLabel(selected!!)+" ▾",fontSize=13.sp,color=Blue) }
        DropdownMenu(expanded=dateMenu,onDismissRequest={dateMenu=false},modifier=Modifier.heightIn(max=360.dp)) {
         (listOf(WatchService.today())+dates).distinct().forEach { day -> DropdownMenuItem(text={Text(if(day==WatchService.today())"Hari ini" else dayLabel(day))},onClick={selected=day.takeUnless { it==WatchService.today() };dateMenu=false}) }
        }
@@ -177,13 +187,13 @@ class MainActivity: ComponentActivity() {
     item { Text("Timer meredup setelah 3 detik. Ketuk dahulu untuk menggesernya.",fontSize=11.sp,lineHeight=18.sp,color=Muted,modifier=Modifier.padding(horizontal=3.dp)) }
    }
    val stateColor by animateColorAsState(if(active)Blue else Muted,label="monitoring")
-   Surface(color=Color.White,shape=RoundedCornerShape(24.dp),shadowElevation=2.dp,modifier=Modifier.padding(start=16.dp,end=16.dp,bottom=12.dp).fillMaxWidth()) {
+   Surface(color=Color.White,shape=RoundedCornerShape(24.dp),border=BorderStroke(1.dp,Track),modifier=Modifier.padding(start=16.dp,end=16.dp,bottom=12.dp).fillMaxWidth()) {
     Row(Modifier.padding(14.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
      Box(Modifier.size(46.dp).background(stateColor.copy(alpha=0.10f),RoundedCornerShape(16.dp)),contentAlignment=Alignment.Center) { PowerGlyph(Modifier.size(24.dp),stateColor) }
      Column(Modifier.weight(1f)) {
       Text(if(active)"Pemantauan aktif" else "Aktifkan pemantauan",fontSize=14.sp,fontWeight=FontWeight.Bold,color=Ink)
       Spacer(Modifier.height(3.dp))
-      Text(if(active)"Timer otomatis saat aplikasi digunakan" else "Satu kali izin, berjalan otomatis",fontSize=10.sp,lineHeight=16.sp,color=Muted)
+      Text(if(active)"Buka aplikasi lain untuk melihat timer" else "Satu kali izin, berjalan otomatis",fontSize=12.sp,lineHeight=18.sp,color=Muted)
      }
      Switch(checked=active,onCheckedChange={if(it)setup=true else WatchService.instance?.disableSelf()},modifier=Modifier.semantics { contentDescription="Pemantauan" })
     }
@@ -196,15 +206,15 @@ class MainActivity: ComponentActivity() {
    value=withContext(Dispatchers.IO) { runCatching { val app=packageManager.getApplicationInfo(pkg,0); packageManager.getApplicationLabel(app).toString() to packageManager.getApplicationIcon(app) }.getOrElse { pkg.substringAfterLast('.') to null } }
   }
   val progress by animateFloatAsState((duration.toFloat()/max.coerceAtLeast(1)).coerceIn(0f,1f),label="usage")
-  Surface(color=Color.White,shape=RoundedCornerShape(20.dp),modifier=Modifier.fillMaxWidth()) {
-   Row(Modifier.padding(14.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(13.dp)) {
+  Surface(color=Color.Transparent,modifier=Modifier.fillMaxWidth()) {
+   Row(Modifier.padding(horizontal=4.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
     val icon=info?.second
     if(icon!=null) AndroidView(factory={ImageView(it).apply { scaleType=ImageView.ScaleType.FIT_CENTER }},update={it.setImageDrawable(icon)},modifier=Modifier.size(38.dp).clearAndSetSemantics {})
     else Box(Modifier.size(38.dp).background(Back,RoundedCornerShape(11.dp)),contentAlignment=Alignment.Center) { Text(info?.first?.take(1) ?: "·",color=Muted) }
     Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(8.dp)) {
      Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-      Text(info?.first ?: "Aplikasi",modifier=Modifier.weight(1f),maxLines=1,overflow=TextOverflow.Ellipsis,fontSize=13.sp,fontWeight=FontWeight.Medium,color=Ink)
-      Text(WatchService.short(duration),fontSize=11.sp,color=Ink)
+      Text(info?.first ?: "Aplikasi",modifier=Modifier.weight(1f),maxLines=1,overflow=TextOverflow.Ellipsis,fontSize=14.sp,fontWeight=FontWeight.Medium,color=Ink)
+      Text(WatchService.short(duration),fontSize=13.sp,color=Ink,style=TextStyle(fontFeatureSettings="tnum"))
      }
      LinearProgressIndicator(progress={progress},modifier=Modifier.fillMaxWidth().height(5.dp).clearAndSetSemantics {},color=color,trackColor=Track,strokeCap=androidx.compose.ui.graphics.StrokeCap.Round,drawStopIndicator={})
     }
@@ -223,14 +233,14 @@ private fun dayLabel(day: String)=runCatching { LocalDate.parse(day).format(Date
 }
 @Composable private fun HourChart(hours: List<Long>) {
  val max=(hours.maxOrNull() ?: 0L).coerceAtLeast(60_000)
- Column(verticalArrangement=Arrangement.spacedBy(7.dp),modifier=Modifier.semantics(mergeDescendants=true) { contentDescription="Penggunaan layar per jam, pukul 00 sampai 24" }) {
-  Row(Modifier.fillMaxWidth().height(42.dp),horizontalArrangement=Arrangement.spacedBy(4.dp),verticalAlignment=Alignment.Bottom) {
+ Column(verticalArrangement=Arrangement.spacedBy(7.dp),modifier=Modifier.semantics(mergeDescendants=true) { contentDescription="Penggunaan layar per jam. "+hours.mapIndexedNotNull { hour, ms -> if(ms>0) "Pukul $hour: ${WatchService.short(ms)}" else null }.joinToString(". ") }) {
+  Row(Modifier.fillMaxWidth().height(72.dp),horizontalArrangement=Arrangement.spacedBy(4.dp),verticalAlignment=Alignment.Bottom) {
    repeat(24) { i ->
     val value=hours.getOrElse(i){0L}
-    Box(Modifier.weight(1f).fillMaxHeight(if(value==0L)0.08f else (value.toFloat()/max).coerceIn(0.10f,1f)).background(if(value>0)Blue.copy(alpha=0.55f) else Track,RoundedCornerShape(3.dp)))
+    Box(Modifier.weight(1f).fillMaxHeight(if(value==0L)0.08f else (value.toFloat()/max).coerceIn(0.10f,1f)).background(if(value>0)Blue.copy(alpha=0.8f) else Track,RoundedCornerShape(3.dp)))
    }
   }
-  Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { listOf("00","04","08","12","16","20","24").forEach { Text(it,color=Muted,fontSize=9.sp) } }
+  Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { listOf("00","04","08","12","16","20","24").forEach { Text(it,color=Muted,fontSize=12.sp) } }
  }
 }
 
@@ -239,5 +249,23 @@ private fun dayLabel(day: String)=runCatching { LocalDate.parse(day).format(Date
   val stroke=2.dp.toPx();val r=size.minDimension*0.39f
   drawArc(color,-50f,280f,false,topLeft=androidx.compose.ui.geometry.Offset(center.x-r,center.y-r),size=androidx.compose.ui.geometry.Size(r*2,r*2),style=androidx.compose.ui.graphics.drawscope.Stroke(stroke,cap=androidx.compose.ui.graphics.StrokeCap.Round))
   drawLine(color,center.copy(y=center.y-r*1.15f),center.copy(y=center.y-r*0.12f),stroke,androidx.compose.ui.graphics.StrokeCap.Round)
+ }
+}
+
+// Data-only chart: no timer loop, goal, or invented progress toward a daily limit.
+@Composable private fun UsageRing(entries: List<Pair<String,Long>>,modifier: Modifier) {
+ val sum=entries.sumOf { it.second }.coerceAtLeast(1)
+ Canvas(modifier.clearAndSetSemantics { contentDescription="Komposisi waktu aplikasi; rinciannya ada di daftar penggunaan aplikasi" }) {
+  val stroke=12.dp.toPx()
+  val inset=stroke/2+4.dp.toPx()
+  val bounds=androidx.compose.ui.geometry.Size(size.width-inset*2,size.height-inset*2)
+  val origin=androidx.compose.ui.geometry.Offset(inset,inset)
+  drawArc(Track,0f,360f,false,origin,bounds,style=androidx.compose.ui.graphics.drawscope.Stroke(stroke))
+  var angle=-90f
+  entries.take(5).forEach { (pkg,ms) ->
+   val sweep=ms.toFloat()/sum*360f
+   if(sweep>3f) drawArc(Palette[(pkg.hashCode() and Int.MAX_VALUE)%Palette.size],angle+1.5f,sweep-3f,false,origin,bounds,style=androidx.compose.ui.graphics.drawscope.Stroke(stroke,cap=androidx.compose.ui.graphics.StrokeCap.Round))
+   angle+=sweep
+  }
  }
 }

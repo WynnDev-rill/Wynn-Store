@@ -116,3 +116,22 @@ represent it as an in-place production update or advertise it in the stable feed
 `qa/run-preview.sh` is a dedicated-emulator smoke check after native tests: the
 production package remains installed while preview launches and shows its bubble.
 Only one monitoring service should be enabled when trying it on a real phone.
+
+## Permanent UI workflow
+
+Read PRODUCT.md and DESIGN.md before UI changes. Repo-local skills are installed
+in `.agents/skills/`: Ponytail (DietrichGebert), UI UX Pro Max, and Impeccable.
+Pinned upstream commits and licenses are included. Read each SKILL.md when applied.
+The precedence is user request, existing safety/privacy/data instructions, PRODUCT.md,
+DESIGN.md, then skill suggestions. Scope is native Android; web/marketing templates,
+interview loops and image-comp gates do not override a supplied Android brief.
+Ponytail limits complexity, UI UX Pro Max supplies platform/interaction guidance,
+Impeccable handles hierarchy/craft/audit. Recommendations cannot remove features.
+
+Asset-first: inventory licensed bundled fonts, vector icons and runtime app icons
+before layout work. Reference screenshots/video are research evidence, never shipped
+as UI. No network-loaded decorative assets, looping animations, blur or new library
+for a native Canvas chart. Verification-first: define acceptance and capture before
+editing; build/lint/unit checks plus API 30/36 native regressions and rendered normal,
+large-font/rotation, populated-history and overlay captures must be reviewed. Respect
+system animation scale, stop UI work offscreen and retain the native clock tick.

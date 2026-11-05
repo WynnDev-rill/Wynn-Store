@@ -235,4 +235,33 @@ class DeviceTest {
    else shell("settings put secure show_ime_with_hard_keyboard $oldImePreference")
   }
  }
+ @Test fun populatedHistoryKeepsSelectedDateAfterRotation() {
+  val day="1999-01-01"
+  HistoryStore(context).use { it.write(TimeLedger.Snapshot(day,19_260_000,
+   mapOf("com.android.settings" to 12_660_000L,"id.wynn.iwatchyou.test" to 3_840_000L),null,
+   List(24) { if(it in 8..17) 1_926_000L else 0L })) }
+  device.wakeUp();shell("wm dismiss-keyguard")
+  shell("am start -W -n id.wynn.iwatchyou/.MainActivity")
+  UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("Hari ini ▾"))
+  assertNotNull(device.wait(Until.findObject(By.text("Hari ini ▾")),8000))
+  device.findObject(By.text("Hari ini ▾")).click()
+  assertNotNull(device.wait(Until.findObject(By.text("1 Jan 1999")),8000))
+  device.findObject(By.text("1 Jan 1999")).click()
+  assertTrue(device.wait(Until.hasObject(By.text("1 Jan 1999 ▾")),8000))
+  val dir=java.io.File(context.getExternalFilesDir(null),"qa").apply { mkdirs() }
+  UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(10)
+  device.waitForIdle()
+  device.takeScreenshot(java.io.File(dir,"populated-history-portrait.png"))
+  device.setOrientationLeft()
+  UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("1 Jan 1999 ▾"))
+  assertTrue(device.wait(Until.hasObject(By.text("1 Jan 1999 ▾")),8000))
+  device.takeScreenshot(java.io.File(dir,"populated-history-landscape.png"))
+  device.setOrientationNatural();shell("settings put system font_scale 2.0")
+  UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("1 Jan 1999 ▾"))
+  assertTrue(device.wait(Until.hasObject(By.text("1 Jan 1999 ▾")),8000))
+  UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(10)
+  device.waitForIdle()
+  device.takeScreenshot(java.io.File(dir,"populated-history-large-text.png"))
+ }
+
 }

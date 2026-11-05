@@ -1,0 +1,14 @@
+{
+  "ponytail": {
+    "repository": "https://github.com/DietrichGebert/ponytail",
+    "commit": "96608e078b2d5ea607c5c3b8b5a54d1c1fba6846"
+  },
+  "ui-ux-pro-max": {
+    "repository": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+    "commit": "ccce51cba388476d4f403091ddb91636d5cd9fed"
+  },
+  "impeccable": {
+    "repository": "https://github.com/pbakaus/impeccable",
+    "commit": "83dc1bbe4c37636632e72a7752e9cc433e9a9901"
+  }
+}
