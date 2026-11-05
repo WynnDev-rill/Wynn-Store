@@ -7,7 +7,7 @@ Reuse this key for EVERY future production update. Never create another key mere
 because a workspace was replaced. Public APKs cannot recover private signing keys.
 
 Private workspace path: `/workspace/private/iwatchyou/production.jks`, password file
-`/workspace/private/iwatchyou/store-password`. Use keytool/apksigner password-file
+`/workspace/private/iwatchyou/store-password`. The separate key-password file is stored beside store-password. Use keytool/apksigner password-file
 arguments; never print passwords or commit keys, passwords or the recovery bundle.
 The owner receives `IWatchYou-production-key-backup.zip` privately, containing the
 encrypted keystore, password file and restore instructions. Store it in a private

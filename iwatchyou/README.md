@@ -86,7 +86,7 @@ Private signing material stays outside this repository and must not be uploaded 
    installation on return without repeating the download.
 
 **Preview 1.0.0 was debug-signed with a different certificate. Android will reject an in-place transition
-from that preview to production. Production-to-production updates preserve the app identity and private data.**
+from that preview to production. Within the same signing lineage, production updates preserve the app identity and private data.**
 
 ## Trying the 1.0.3 fix without the original signing key
 
