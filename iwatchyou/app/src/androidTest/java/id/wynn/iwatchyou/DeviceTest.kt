@@ -279,11 +279,12 @@ class DeviceTest {
   revealText("Mingguan",false);device.findObject(By.text("Mingguan")).click()
   assertNotNull(device.wait(Until.findObject(By.text("Sebelumnya")),8000))
   val dir=java.io.File(context.filesDir,"qa").apply { mkdirs() }
-  device.waitForIdle();device.takeScreenshot(java.io.File(dir,"weekly-statistics.png"))
   val yesterday=java.time.LocalDate.parse(end).minusDays(1)
   val dateLabel=yesterday.format(java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy",java.util.Locale.forLanguageTag("id")))
   val bar=device.wait(Until.findObject(By.descStartsWith(dateLabel+":")),8000)
-  assertNotNull("Weekly day has real accessible duration",bar);bar.click()
+  assertNotNull("Weekly day has real accessible duration",bar)
+  device.waitForIdle();device.takeScreenshot(java.io.File(dir,"weekly-statistics.png"))
+  bar.click()
   assertTrue(device.wait(Until.hasObject(By.text("Waktu layar · "+dateLabel)),8000))
   device.pressBack()
  }
