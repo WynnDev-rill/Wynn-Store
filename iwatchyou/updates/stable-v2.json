@@ -1,11 +1,11 @@
 {
-  "versionCode": 5,
-  "versionName": "1.0.4",
+  "versionCode": 6,
+  "versionName": "1.0.5",
   "packageName": "id.wynn.iwatchyou",
   "minSdk": 30,
-  "apkUrl": "https://github.com/WynnDev-rill/Wynn-Store/releases/download/iwatchyou-v1.0.4/IWatchYou-1.0.4.apk",
-  "sha256": "e472841834afbbe11d23ffd8dd9d53e527c70485861e67db3c78cca80f68b929",
+  "apkUrl": "https://github.com/WynnDev-rill/Wynn-Store/releases/download/iwatchyou-v1.0.5/IWatchYou-1.0.5.apk",
+  "sha256": "62eda9b7f6b1140d1c50ff5509ab6313dce7be041ae8e16afa166f02f327e563",
   "signerSha256": "04ed3a280377b2671ad1f6fb6f7fd1c335684302ab35d50d0000ca2b23b585f5",
-  "sizeBytes": 2003492,
-  "notes": "Desain baru IWatchYou dan timer mengambang. Rilis produksi dengan kunci baru yang disetujui pemilik; pemasangan ulang diperlukan dari garis rilis lama. Pembaruan berikutnya memakai sertifikat baru yang sama."
+  "sizeBytes": 2069028,
+  "notes": "Timer ringkas yang dapat mengembang dan disembunyikan ke tepi, deteksi aplikasi lebih responsif, serta statistik mingguan. Pembaruan dari1.0.4 mempertahankan riwayat dan memakai kunci yang sama."
 }
