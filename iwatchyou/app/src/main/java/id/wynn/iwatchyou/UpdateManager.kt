@@ -18,7 +18,7 @@ import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
 
 object UpdateManager {
- private const val FEED="https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/iwatchyou/updates/stable.json"
+ private const val FEED="https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/iwatchyou/updates/stable-v2.json"
  private const val PREFIX="https://github.com/WynnDev-rill/Wynn-Store/releases/download/iwatchyou-v"
  private const val LIMIT=100_000_000L
  private val checking=AtomicBoolean(false)
@@ -49,6 +49,10 @@ object UpdateManager {
   return r
  }
  fun check(activity: ComponentActivity,reportErrors: Boolean=false,callback: (Release?,String?)->Unit) {
+  if(activity.packageName.endsWith(".preview")) {
+   if(reportErrors) callback(null,"Ini versi uji. Pembaruan versi uji dipasang dari APK uji terbaru.")
+   return
+  }
   if(!checking.compareAndSet(false,true)) { if(reportErrors)callback(null,"Pemeriksaan masih berlangsung.");return }
   activity.lifecycleScope.launch {
    try {
@@ -125,6 +129,7 @@ object UpdateManager {
   onResult("Konfirmasi pemasangan pada dialog Android.")
  }
  fun resumeInstall(activity: ComponentActivity,onResult: (String)->Unit) {
+  if(activity.packageName.endsWith(".preview"))return
   if(downloading.get() || !activity.packageManager.canRequestPackageInstalls())return
   val p=activity.getSharedPreferences("updater",Context.MODE_PRIVATE)
   val raw=p.getString("pending",null) ?: return

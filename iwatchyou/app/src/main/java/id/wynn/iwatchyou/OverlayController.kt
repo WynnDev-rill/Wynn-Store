@@ -10,6 +10,7 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.util.Log
 import android.view.*
 import android.widget.Chronometer
 import kotlin.math.hypot
@@ -37,7 +38,7 @@ class OverlayController(private val context: AccessibilityService, private val s
   val timer=object: Chronometer(context) {
    override fun performClick(): Boolean { super.performClick(); return true }
   }.apply {
-   setTextColor(Color.WHITE); textSize=15f
+   setTextColor(Color.WHITE); textSize=16f
    typeface=Typeface.create(context.resources.getFont(R.font.jakarta_medium),Typeface.NORMAL)
    fontFeatureSettings="tnum"
    gravity=Gravity.CENTER; includeFontPadding=false
@@ -49,9 +50,9 @@ class OverlayController(private val context: AccessibilityService, private val s
    contentDescription="Waktu aplikasi. Ketuk untuk membuka kunci posisi, lalu geser."
    setOnChronometerTickListener { text=WatchService.format(SystemClock.elapsedRealtime()-base) }
   }
-  val timerWidth=maxOf(dp(134),kotlin.math.ceil(timer.paint.measureText("00:00:00")).toInt()+dp(47))
+  val timerWidth=maxOf(dp(144),kotlin.math.ceil(timer.paint.measureText("00:00:00")).toInt()+dp(47))
   val metrics=timer.paint.fontMetrics
-  val timerHeight=maxOf(dp(44),kotlin.math.ceil(metrics.bottom-metrics.top).toInt()+dp(16))
+  val timerHeight=maxOf(dp(48),kotlin.math.ceil(metrics.bottom-metrics.top).toInt()+dp(16))
   val w=WindowManager.LayoutParams(timerWidth,timerHeight,WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
    PixelFormat.TRANSLUCENT).apply {
@@ -88,7 +89,9 @@ class OverlayController(private val context: AccessibilityService, private val s
   timer.setOnClickListener { if(faded) { faded=false; paint() }; scheduleFade() }
   view=timer; params=w
   clamp(w)
-  if(runCatching { window.addView(timer,w) }.isFailure) { view=null; params=null; pkg=null; return }
+  if(runCatching { window.addView(timer,w) }.onFailure {
+   Log.w("IWatchYou","Could not attach the timer overlay",it)
+  }.isFailure) { view=null; params=null; pkg=null; return }
   setTime(); paint(); timer.start(); scheduleFade()
  }
  fun refresh() { if(view!=null) setTime() }
@@ -108,9 +111,12 @@ class OverlayController(private val context: AccessibilityService, private val s
  private fun scheduleFade() { handler.removeCallbacks(fadeTask); handler.postDelayed(fadeTask,3000) }
  private fun paint() {
   view?.apply {
-   background=GradientDrawable().apply { cornerRadius=dp(28).toFloat(); setColor(Color.rgb(26,36,51)); setStroke(dp(1),Color.argb(40,255,255,255)) }
+   background=GradientDrawable().apply { cornerRadius=dp(28).toFloat(); setColor(Color.rgb(20,23,34)); setStroke(dp(1),Color.argb(55,155,171,220)) }
    // Dark backing is kept for legibility over bright games. Text and pill dim together.
-   animate().alpha(if(faded) 0.68f else 0.94f).setDuration(220).start()
+   val target=if(faded) 0.76f else 0.97f
+   if(android.animation.ValueAnimator.areAnimatorsEnabled()) {
+    animate().alpha(target).setDuration(200).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+   } else { animate().cancel();alpha=target }
   }
  }
  fun recreate() {
