@@ -31,7 +31,7 @@ run=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs/{
 assert run['head_sha']==meta['sourceCommit'] and run['conclusion']=='success','Source build and emulator checks must pass'
 manifest=dict(versionCode=code,versionName=version,packageName='id.wynn.iwatchyou',minSdk=30,
  apkUrl=f'https://github.com/{repo}/releases/download/{tag}/{name}',sha256=meta['sha256'],signerSha256=cert,sizeBytes=apk.stat().st_size,
- notes=('Perbaikan timer yang tidak mulai pada sebagian perangkat: deteksi langsung dari event perpindahan aplikasi, dengan fallback saat data jendela belum tersedia.' if version=='1.0.2' else 'Desain baru IWatchYou dan timer mengambang. Rilis produksi dengan kunci baru yang disetujui pemilik; pemasangan ulang diperlukan dari garis rilis lama. Pembaruan berikutnya memakai sertifikat baru yang sama.'))
+ notes='Timer ringkas yang dapat mengembang dan disembunyikan ke tepi, deteksi aplikasi lebih responsif, serta statistik mingguan. Pembaruan dari1.0.4 mempertahankan riwayat dan memakai kunci yang sama.')
 feed=root/'distribution/update.json';feed.write_text(json.dumps(manifest,indent=2)+'\n')
 endpoint=f'repos/{repo}/contents/iwatchyou/updates/stable-v2.json'
 response=subprocess.run(['gh','api',endpoint],text=True,capture_output=True)
@@ -51,7 +51,7 @@ if existing.returncode==0:
  subprocess.run(['gh','release','download',tag,'--repo',repo,'--pattern',name,'--dir',str(verify),'--clobber'],check=True)
  assert hashlib.sha256((verify/name).read_bytes()).hexdigest()==manifest['sha256']
 else:
- notes=f'Android 11+. APK produksi. Build dan pengujian emulator: {run["html_url"]}. Pergantian kunci produksi disetujui pemilik pada 2026-11-05. Rilis lama perlu dihapus dan dipasang ulang; simpan data yang diperlukan terlebih dahulu. Rilis baru memakai kanal stable-v2; pembaruan selanjutnya tetap di dalam aplikasi. HyperOS fisik dan konsumsi baterai jangka panjang belum diuji.'
+ notes=f'Timer mengembang/sembunyi ke tepi dan statistik mingguan. Pembaruan dari1.0.4 memakai kunci yang sama dan tidak perlu uninstall. Android 11+. APK produksi. Build dan pengujian emulator: {run["html_url"]}. Pergantian kunci produksi disetujui pemilik pada 2026-11-05. Rilis lama perlu dihapus dan dipasang ulang; simpan data yang diperlukan terlebih dahulu. Rilis baru memakai kanal stable-v2; pembaruan selanjutnya tetap di dalam aplikasi. HyperOS fisik dan konsumsi baterai jangka panjang belum diuji.'
  subprocess.run(['gh','release','create',tag,str(apk),str(feed),'--repo',repo,'--target',os.environ['GITHUB_SHA'],'--title',f'IWatchYou {version}','--notes',notes,'--latest=false'],check=True)
 # Verify the actual release bytes before advertising them to installed clients.
 verify=root/'distribution/verified';verify.mkdir(exist_ok=True)
