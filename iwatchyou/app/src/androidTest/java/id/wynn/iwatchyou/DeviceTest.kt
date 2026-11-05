@@ -257,7 +257,9 @@ class DeviceTest {
   assertNotNull(device.wait(Until.findObject(By.clazz("android.widget.Chronometer")),2000))
   device.setOrientationNatural();waitFor { device.displayHeight>device.displayWidth }
   shell("settings put system font_scale 2.0");device.waitForIdle()
-  device.findObject(By.clazz("android.widget.Chronometer")).click()
+  val resizedClock=device.wait(Until.findObject(By.clazz("android.widget.Chronometer")),8000)
+  assertNotNull("Clock is recreated after font configuration",resizedClock)
+  resizedClock.click()
   assertNotNull(device.wait(Until.findObject(By.desc("Ringkas timer")),2000))
   device.waitForIdle();device.takeScreenshot(java.io.File(dir,"island-expanded-large-text.png"))
  }
