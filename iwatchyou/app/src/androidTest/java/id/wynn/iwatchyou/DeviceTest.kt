@@ -254,7 +254,7 @@ class DeviceTest {
   assertTrue("Populated screen total is loaded",device.wait(Until.hasObject(By.text("5j 21m 0d")),8000))
   device.takeScreenshot(java.io.File(dir,"populated-history-portrait.png"))
   UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("3j 31m 0d"))
-  assertTrue("Populated app duration is loaded",device.hasObject(By.text("3j 31m 0d"))))
+  assertTrue("Populated app duration is loaded",device.hasObject(By.text("3j 31m 0d")))
   device.setOrientationLeft()
   UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("1 Jan 1999 ▾"))
   assertTrue(device.wait(Until.hasObject(By.text("1 Jan 1999 ▾")),8000))
