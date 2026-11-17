@@ -21,6 +21,13 @@ else:
 assert hashlib.sha256((out/'ArithMemo.apk').read_bytes()).hexdigest()==m['sha256']
 assets=[str(out/name) for name in ['ArithMemo.apk','SHA256SUMS','update.json','signing-certificate.sha256']]
 existing=subprocess.run(['gh','release','view',tag,'--repo',repo,'--json','isPrerelease'],capture_output=True,text=True)
+if existing.returncode==0 and json.loads(existing.stdout)['isPrerelease']:
+ head=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+ ref=json.loads(gh('api',f'repos/{repo}/git/ref/tags/{tag}'))
+ if ref['object']['sha']!=head:
+  assert ref['object']['type']=='commit','Refusing to move an annotated release tag'
+  gh('api','--method','PATCH',f'repos/{repo}/git/refs/tags/{tag}','-f','sha='+head,'-F','force=true')
+  gh('release','edit',tag,'--repo',repo,'--target',head)
 if stage:
  if existing.returncode==0:
   assert json.loads(existing.stdout)['isPrerelease'],'Published final releases are immutable'

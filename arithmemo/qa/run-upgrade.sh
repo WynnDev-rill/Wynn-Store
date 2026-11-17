@@ -64,13 +64,28 @@ for attempt in range(60):
  time.sleep(1)
 else:raise AssertionError('Production upgrade did not install')
 (out/'installed-package.txt').write_text(package)
+# Dismiss Android's completed-install dialog through its real Open/Done action.
+for attempt in range(10):
+ subprocess.run(['adb','shell','uiautomator','dump','/sdcard/complete.xml'],stdout=subprocess.DEVNULL)
+ text=subprocess.check_output(['adb','shell','cat','/sdcard/complete.xml'],text=True)
+ root=E.fromstring(text[text.index('<hierarchy'):])
+ buttons=[n for n in root.iter('node') if n.attrib.get('text','').lower() in ['open','done','buka','selesai'] and n.attrib.get('enabled')=='true']
+ if buttons:
+  target=next((n for n in buttons if n.attrib.get('text','').lower() in ['open','buka']),buttons[0])
+  x1,y1,x2,y2=map(int,re.findall(r'\d+',target.attrib['bounds']))
+  subprocess.run(['adb','shell','input','tap',str((x1+x2)//2),str((y1+y2)//2)],check=True)
+  break
+ if 'Lanjutkan sesi' in text:break
+ time.sleep(1)
 subprocess.run(['adb','shell','am','start','-W','-n','id.wynn.arithmemo/id.wynn.arithmemo.MainActivity'],check=True)
 for attempt in range(20):
  subprocess.run(['adb','shell','uiautomator','dump','/sdcard/upgraded.xml'],check=True,stdout=subprocess.DEVNULL)
  text=subprocess.check_output(['adb','shell','cat','/sdcard/upgraded.xml'],text=True)
  if 'Lanjutkan sesi' in text and '1 jawaban tersimpan' in text:break
  time.sleep(1)
-else:raise AssertionError('Saved arithmetic answer/session did not survive upgrade')
+else:
+ (out/'after-upgrade-failed.xml').write_text(text)
+ raise AssertionError('Saved arithmetic answer/session did not survive upgrade')
 (out/'after-upgrade.xml').write_text(text)
 with (out/'after-upgrade.png').open('wb') as f:subprocess.run(['adb','exec-out','screencap','-p'],stdout=f,check=True)
 print('Real verified in-app GitHub download, Android installer upgrade and data preservation PASS')

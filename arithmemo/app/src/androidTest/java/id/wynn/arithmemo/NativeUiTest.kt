@@ -1,11 +1,15 @@
 package id.wynn.arithmemo
 
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.graphics.Bitmap
+import android.os.ParcelFileDescriptor
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import id.wynn.arithmemo.data.MemoStore
 import java.io.File
 import org.junit.Rule
 import org.junit.Test
@@ -23,10 +27,60 @@ class NativeUiTest {
 
     private fun capture(name: String) {
         rule.waitForIdle()
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
-        val image = instrumentation.uiAutomation.takeScreenshot() ?: error("Screenshot unavailable")
-        File(instrumentation.targetContext.filesDir, "qa-$name.png").outputStream().use {
-            check(image.compress(Bitmap.CompressFormat.PNG, 100, it))
+        saveDeviceCapture(name)
+    }
+
+    private fun shell(command: String) {
+        val result =
+            InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)
+        ParcelFileDescriptor.AutoCloseInputStream(result).use { it.readBytes() }
+    }
+
+    @Test
+    fun visualVariantsStayUsable() {
+        ready()
+        try {
+            shell("cmd uimode night yes")
+            shell("settings put system font_scale 1.6")
+            rule.waitUntil(15000) {
+                runCatching {
+                        val c = rule.activity.resources.configuration
+                        c.fontScale > 1.5f &&
+                            c.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
+                                Configuration.UI_MODE_NIGHT_YES
+                    }
+                    .getOrDefault(false)
+            }
+            rule.onNodeWithText("Setelan").assertExists()
+            capture("dark-large")
+            shell("settings put system font_scale 1.0")
+            shell("cmd uimode night no")
+            rule.activityRule.scenario.onActivity {
+                it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            }
+            rule.waitUntil(15000) {
+                runCatching {
+                        rule.activity.resources.configuration.orientation ==
+                            Configuration.ORIENTATION_LANDSCAPE
+                    }
+                    .getOrDefault(false)
+            }
+            rule.onNodeWithText("Setelan").assertExists()
+            capture("landscape")
+        } finally {
+            shell("settings put system font_scale 1.0")
+            shell("cmd uimode night no")
+            rule.activityRule.scenario.onActivity {
+                it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            }
+            rule.waitUntil(15000) {
+                runCatching {
+                        val c = rule.activity.resources.configuration
+                        c.orientation == Configuration.ORIENTATION_PORTRAIT && c.fontScale < 1.1f
+                    }
+                    .getOrDefault(false)
+            }
+            rule.waitForIdle()
         }
     }
 
@@ -99,5 +153,32 @@ class NativeUiTest {
         rule.onNodeWithText("Lanjut").performScrollTo().performClick()
         rule.onNodeWithContentDescription("Jeda sesi").performClick()
         rule.onNodeWithText("Lanjutkan sesi").assertExists()
+    }
+}
+
+internal fun saveDeviceCapture(name: String) {
+    val instrumentation = InstrumentationRegistry.getInstrumentation()
+    val image = instrumentation.uiAutomation.takeScreenshot() ?: error("Screenshot unavailable")
+    File(instrumentation.targetContext.filesDir, "qa-$name.png").outputStream().use {
+        check(image.compress(Bitmap.CompressFormat.PNG, 100, it))
+    }
+}
+
+@RunWith(AndroidJUnit4::class)
+class RestorationTest {
+    @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @Test
+    fun completedAnswerAndSessionSurviveForceStop() {
+        rule.waitUntil(15000) {
+            rule.onAllNodesWithText("Lanjutkan sesi").fetchSemanticsNodes().isNotEmpty()
+        }
+        val store = MemoStore(rule.activity)
+        org.junit.Assert.assertEquals(1, store.read().attempts.size)
+        org.junit.Assert.assertEquals(1, store.read().session?.answered)
+        store.close()
+        rule.onNodeWithText("Lanjutkan sesi").assertExists()
+        rule.waitForIdle()
+        saveDeviceCapture("relaunch")
     }
 }
