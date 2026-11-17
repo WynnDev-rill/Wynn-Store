@@ -39,7 +39,7 @@ sleep 2
 capture_settled() {
   local name="$1"
   sleep 5
-  "$ADB_BIN" shell dumpsys window windows > "qa/output/$name-window.txt"
+  "$ADB_BIN" shell dumpsys window > "qa/output/$name-window.txt"
   "$ADB_BIN" shell dumpsys display > "qa/output/$name-display.txt"
   python3 - "$name" <<'PYCHECK'
 import re,sys
