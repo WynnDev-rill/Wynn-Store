@@ -12,9 +12,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/java/id/wynn/vocamemo/UiTest.kt": {
-    "mtime": 1794934770.0069838,
-    "seen": 1794935084.3011556,
-    "ast_hash": "6755654216c89af08c7c2f2e9426d8f5",
+    "mtime": 1794935594.8331623,
+    "seen": 1794935831.212393,
+    "ast_hash": "3fca5907104a661e997b5b41b8cf8467",
     "semantic_hash": ""
   },
   "app/src/main/java/id/wynn/vocamemo/Data.kt": {
@@ -42,9 +42,9 @@
     "semantic_hash": ""
   },
   "app/src/main/java/id/wynn/vocamemo/Theme.kt": {
-    "mtime": 1794934756.052761,
-    "seen": 1794935084.3011627,
-    "ast_hash": "8d79eee1eef94cc5b2eca16bd6c0577f",
+    "mtime": 1794935596.1543593,
+    "seen": 1794935831.2123988,
+    "ast_hash": "10e4803b870755565aa4395ee50c2a52",
     "semantic_hash": ""
   },
   "app/src/main/java/id/wynn/vocamemo/Updates.kt": {
@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "scripts/device-tests.sh": {
-    "mtime": 1794934756.0724423,
-    "seen": 1794935084.3011758,
-    "ast_hash": "e3489e4a42d75357084861d7aca0b580",
+    "mtime": 1794935676.9055464,
+    "seen": 1794935831.2124116,
+    "ast_hash": "2ee126ef15af103af6aec82f9f418c30",
     "semantic_hash": ""
   },
   "scripts/project-version.py": {
@@ -168,9 +168,9 @@
     "semantic_hash": ""
   },
   "docs/assets/provenance.md": {
-    "mtime": 1794934756.0716133,
-    "seen": 1794935084.3011913,
-    "ast_hash": "6742e3cbbfd83bc562123416ff8d8dbc",
+    "mtime": 1794935594.8334217,
+    "seen": 1794935831.2124255,
+    "ast_hash": "c76762191701b0bc79440f3f6aa0dec0",
     "semantic_hash": ""
   },
   "docs/releasing.md": {
@@ -213,6 +213,24 @@
     "mtime": 1794934999.091848,
     "seen": 1794935084.3011808,
     "ast_hash": "bd11667254a3235b37f8e1f14cde305e",
+    "semantic_hash": ""
+  },
+  "docs/release-verification.json": {
+    "mtime": 1794935156.1447058,
+    "seen": 1794935831.2124054,
+    "ast_hash": "a5ddb8a80f097578c19d672a60742357",
+    "semantic_hash": ""
+  },
+  "scripts/prepare-fonts.py": {
+    "mtime": 1794935830.3334658,
+    "seen": 1794935831.2124128,
+    "ast_hash": "811d7bda87e5c5949751f959542957c4",
+    "semantic_hash": ""
+  },
+  "QA.md": {
+    "mtime": 1794935293.48762,
+    "seen": 1794935831.212422,
+    "ast_hash": "667e1971230a55a73dda8502e8bf6a0e",
     "semantic_hash": ""
   }
 }

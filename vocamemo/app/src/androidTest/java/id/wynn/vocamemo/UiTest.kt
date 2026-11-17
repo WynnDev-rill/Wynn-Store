@@ -16,6 +16,9 @@ class UiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
 
     private fun capture(name: String) {
+        rule.onRoot().assertExists()
+        rule.waitForIdle()
+        Thread.sleep(350)
         val c = rule.activity
         val file = File(c.getExternalFilesDir(null), "screenshots/$name.png")
         file.parentFile!!.mkdirs()
@@ -92,6 +95,7 @@ class UiTest {
             }
             device.executeShellCommand("settings put system font_scale 1.5")
             Thread.sleep(700)
+            rule.activityRule.scenario.recreate()
             rule.waitForIdle()
             rule.onNodeWithTag("search").assertIsDisplayed()
             capture("08-dark-large-text")

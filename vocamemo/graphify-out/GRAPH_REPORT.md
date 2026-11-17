@@ -4,12 +4,12 @@
 - cluster-only mode — file stats not available
 
 ## Summary
-- 335 nodes · 562 edges · 25 communities (9 shown, 16 thin omitted)
+- 345 nodes · 571 edges · 27 communities (10 shown, 17 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 19 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0c10acfc`
+- Built from commit: `89a25b32`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -29,6 +29,7 @@
 - Community 14
 - Community 15
 - Community 16
+- Community 25
 
 ## God Nodes (most connected - your core abstractions)
 1. `VocaModel` - 35 edges
@@ -47,21 +48,21 @@
   app/src/main/java/id/wynn/vocamemo/VocaModel.kt → app/src/main/java/id/wynn/vocamemo/Data.kt
 - `VocaApp` --calls--> `Dictionary`  [INFERRED]
   app/src/main/java/id/wynn/vocamemo/VocaModel.kt → app/src/main/java/id/wynn/vocamemo/Dictionary.kt
-- `Practice` --references--> `Memo`  [EXTRACTED]
-  app/src/main/java/id/wynn/vocamemo/VocaModel.kt → app/src/main/java/id/wynn/vocamemo/Data.kt
-- `DictionaryScreen()` --references--> `VocaModel`  [EXTRACTED]
-  app/src/main/java/id/wynn/vocamemo/MainActivity.kt → app/src/main/java/id/wynn/vocamemo/VocaModel.kt
-- `MemoScreen()` --references--> `VocaModel`  [EXTRACTED]
-  app/src/main/java/id/wynn/vocamemo/MainActivity.kt → app/src/main/java/id/wynn/vocamemo/VocaModel.kt
+- `MemoEditor()` --references--> `Memo`  [EXTRACTED]
+  app/src/main/java/id/wynn/vocamemo/MainActivity.kt → app/src/main/java/id/wynn/vocamemo/Data.kt
+- `MemoScreen()` --references--> `Memo`  [EXTRACTED]
+  app/src/main/java/id/wynn/vocamemo/MainActivity.kt → app/src/main/java/id/wynn/vocamemo/Data.kt
+- `PracticeHome()` --references--> `Memo`  [EXTRACTED]
+  app/src/main/java/id/wynn/vocamemo/MainActivity.kt → app/src/main/java/id/wynn/vocamemo/Data.kt
 
 ## Import Cycles
 - None detected.
 
-## Communities (25 total, 16 thin omitted)
+## Communities (27 total, 17 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.07
-Nodes (20): DictionaryScreen(), FlowRowCompat(), GroupPicker(), Hint(), MemoEditor(), MemoScreen(), Pill(), posLabel() (+12 more)
+Cohesion: 0.06
+Nodes (21): DictionaryScreen(), FlowRowCompat(), GroupPicker(), Hint(), MainActivity, MemoEditor(), MemoScreen(), Pill() (+13 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
@@ -76,11 +77,11 @@ Cohesion: 0.07
 Nodes (3): Release, Updates, UpdateWorker
 
 ### Community 5 - "Community 5"
-Cohesion: 0.29
+Cohesion: 0.26
 Nodes (4): Dictionary, Example, Sense, WordResult
 
 ### Community 7 - "Community 7"
-Cohesion: 0.08
+Cohesion: 0.09
 Nodes (3): Practice, VocaApp, VocaModel
 
 ### Community 10 - "Community 10"
@@ -95,23 +96,27 @@ Nodes (5): Architecture and alternatives, Quality floor, Update and signing, Voc
 Cohesion: 0.40
 Nodes (4): Global constraints, Review focus, Tasks, VocaMemo Implementation Plan
 
+### Community 14 - "Community 14"
+Cohesion: 0.40
+Nodes (4): Device checks, Host checks completed, Practical limits, VocaMemo 1.0.0 verification
+
 ## Knowledge Gaps
-- **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Memo` connect `Community 2` to `Community 0`, `Community 6`, `Community 7`, `Community 8`, `Community 10`?**
-  _High betweenness centrality (0.139) - this node is a cross-community bridge._
+  _High betweenness centrality (0.130) - this node is a cross-community bridge._
 - **Are the 5 inferred relationships involving `Memo` (e.g. with `.persistentRoomReopens()` and `.progressIsAtomicBackupIsValidated()`) actually correct?**
   _`Memo` has 5 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected._
-- **Why does `VocaModel` connect `Community 7` to `Community 0`, `Community 10`, `Community 5`?**
-  _High betweenness centrality (0.132) - this node is a cross-community bridge._
+  _Cohesion score 0.06400409626216078 - nodes in this community are weakly interconnected._
+- **Why does `VocaModel` connect `Community 7` to `Community 0`, `Community 10`, `Community 3`, `Community 5`?**
+  _High betweenness centrality (0.121) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `Updates` (e.g. with `.checkUpdates()` and `.installUpdate()`) actually correct?**
   _`Updates` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.04878048780487805 - nodes in this community are weakly interconnected._
-- **Why does `Updates` connect `Community 3` to `Community 7`?**
-  _High betweenness centrality (0.055) - this node is a cross-community bridge._
+- **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.11904761904761904 - nodes in this community are weakly interconnected._

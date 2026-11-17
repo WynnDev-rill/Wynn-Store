@@ -4,3 +4,5 @@
 - Dictionary and examples: see dictionary.json input hashes and ATTRIBUTION.txt. No stock or reference artwork redistributed.
 
 Monochrome Android themed icon: authored native vector representing layered memo cards, no third-party artwork.
+
+Nunito weights 400/500/600/700/800 instantiated with fontTools from the official variable master in design-assets/. This avoids the variable font defaulting to its lightest weight on Android. Reproduction: scripts/prepare-fonts.py. OFL retained.
