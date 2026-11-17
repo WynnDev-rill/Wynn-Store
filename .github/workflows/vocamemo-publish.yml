@@ -1,0 +1,91 @@
+name: VocaMemo Publish Verified Release
+on:
+  workflow_dispatch:
+    inputs:
+      validated_run_id:
+        description: 'Successful VocaMemo Android workflow run ID'
+        required: true
+        type: string
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: vocamemo-publish
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Verify completed device and build checks
+        id: verified
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.validated_run_id }}
+        run: |
+          [[ "$RUN_ID" =~ ^[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" > "$RUNNER_TEMP/run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/jobs" > "$RUNNER_TEMP/jobs.json"
+          python3 - <<'PY'
+          import json,os,pathlib,re
+          run=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'run.json').read_text())
+          jobs=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'jobs.json').read_text())['jobs']
+          assert run['status']=='completed' and run['conclusion']=='success','CI did not pass'
+          assert run['head_branch']=='main' and run['head_repository']['full_name']==os.environ['GITHUB_REPOSITORY']
+          assert run['path']=='.github/workflows/vocamemo-android.yml','Wrong verification workflow'
+          for name in ['build','device (26)','device (35)']:
+              assert any(j['name']==name and j['conclusion']=='success' for j in jobs),name
+          assert re.fullmatch('[0-9a-f]{40}',run['head_sha'])
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:f.write('sha='+run['head_sha']+'\n')
+          PY
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Ensure production and test inputs still match verified revision
+        env:
+          VERIFIED_SHA: ${{ steps.verified.outputs.sha }}
+        run: |
+          git diff --exit-code "$VERIFIED_SHA" HEAD -- vocamemo/app vocamemo/gradle vocamemo/build.gradle.kts vocamemo/settings.gradle.kts vocamemo/gradle.properties vocamemo/scripts/device-tests.sh .github/workflows/vocamemo-android.yml
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools build-tools;36.0.0'
+      - name: Reverify exact signed APK
+        working-directory: vocamemo
+        run: |
+          VERSION=$(python3 scripts/project-version.py)
+          mkdir -p dist
+          cp "distribution/VocaMemo-$VERSION.apk" dist/VocaMemo.apk
+          python3 scripts/audit-dictionary.py
+          python3 scripts/release-manifest.py
+      - name: Publish APK and activate VocaMemo feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import subprocess,json,pathlib,base64
+          root=pathlib.Path('vocamemo'); dist=root/'dist'; m=json.loads((dist/'stable.json').read_text())
+          repo='WynnDev-rill/Wynn-Store';tag='vocamemo-v'+m['versionName']
+          target=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          existing=subprocess.run(['gh','release','view',tag,'--repo',repo,'--json','isDraft'],capture_output=True,text=True)
+          assets=[str(dist/p) for p in ['VocaMemo.apk','stable.json','SHA256SUMS','signature-verification.txt']]
+          if existing.returncode==0:
+              assert json.loads(existing.stdout)['isDraft'],'Refusing to replace a public release'
+              subprocess.run(['gh','release','upload',tag,*assets,'--repo',repo,'--clobber'],check=True)
+              subprocess.run(['gh','release','edit',tag,'--repo',repo,'--target',target,'--draft=false','--latest=false','--notes-file',str(root/'RELEASE_NOTES.md')],check=True)
+          else:
+              subprocess.run(['gh','release','create',tag,*assets,'--repo',repo,'--target',target,'--latest=false','--title','VocaMemo '+m['versionName'],'--notes-file',str(root/'RELEASE_NOTES.md')],check=True)
+          endpoint='repos/'+repo+'/contents/vocamemo/updates/stable.json'
+          old=subprocess.run(['gh','api',endpoint],capture_output=True,text=True)
+          request={'message':'release(vocamemo): activate '+m['versionName'],'branch':'main','content':base64.b64encode((dist/'stable.json').read_bytes()).decode()}
+          if old.returncode==0:
+              data=json.loads(old.stdout); previous=json.loads(base64.b64decode(data['content']))
+              assert previous['versionCode']<m['versionCode'] or previous['sha256']==m['sha256'],'Non-monotonic or conflicting feed'
+              request['sha']=data['sha']
+          else: assert '404' in old.stderr,'Could not read existing feed'
+          subprocess.run(['gh','api','--method','PUT',endpoint,'--input','-'],input=json.dumps(request),text=True,check=True,stdout=subprocess.DEVNULL)
+          PY
