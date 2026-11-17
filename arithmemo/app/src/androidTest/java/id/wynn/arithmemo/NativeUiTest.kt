@@ -36,6 +36,15 @@ class NativeUiTest {
         ParcelFileDescriptor.AutoCloseInputStream(result).use { it.readBytes() }
     }
 
+    private fun assertSystemBarAppearance(light: Boolean) {
+        rule.waitUntil(10000) {
+            val window = rule.activity.window
+            val bars = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+            bars.isAppearanceLightStatusBars == light &&
+                bars.isAppearanceLightNavigationBars == light
+        }
+    }
+
     @Test
     fun visualVariantsStayUsable() {
         ready()
@@ -51,6 +60,7 @@ class NativeUiTest {
                     }
                     .getOrDefault(false)
             }
+            assertSystemBarAppearance(light = false)
             rule.onNodeWithText("Setelan").assertExists()
             capture("dark-large")
             shell("settings put system font_scale 1.0")
@@ -65,6 +75,7 @@ class NativeUiTest {
                     }
                     .getOrDefault(false)
             }
+            assertSystemBarAppearance(light = true)
             rule.onNodeWithText("Setelan").assertExists()
             capture("landscape")
         } finally {

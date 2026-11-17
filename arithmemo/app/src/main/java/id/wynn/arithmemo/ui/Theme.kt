@@ -1,6 +1,9 @@
 package id.wynn.arithmemo.ui
 
-import android.app.Activity
+import android.content.ContextWrapper
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -12,7 +15,6 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
 import id.wynn.arithmemo.R
 
 private val Jakarta =
@@ -92,13 +94,16 @@ fun ArithMemoTheme(theme: String = "system", content: @Composable () -> Unit) {
             else -> isSystemInDarkTheme()
         }
     val view = LocalView.current
+    val activity =
+        generateSequence(view.context) { (it as? ContextWrapper)?.baseContext }
+            .filterIsInstance<ComponentActivity>()
+            .firstOrNull()
     SideEffect {
-        (view.context as? Activity)?.window?.let { window ->
-            WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = !dark
-                isAppearanceLightNavigationBars = !dark
-            }
-        }
+        val transparent = android.graphics.Color.TRANSPARENT
+        val style =
+            if (dark) SystemBarStyle.dark(transparent)
+            else SystemBarStyle.light(transparent, transparent)
+        activity?.enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
     }
     MaterialTheme(
         colorScheme = if (dark) Dark else Light,
