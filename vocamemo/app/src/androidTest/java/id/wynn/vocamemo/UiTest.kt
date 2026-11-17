@@ -105,11 +105,14 @@ class UiTest {
             Thread.sleep(700)
             rule.activityRule.scenario.recreate()
             rule.waitForIdle()
-            rule.onNodeWithTag("search").assertIsDisplayed()
+            rule.onNodeWithTag("search").performScrollTo().assertIsDisplayed()
             capture("08-dark-large-text")
         } finally {
             device.executeShellCommand("settings put system font_scale 1.0")
             rule.runOnUiThread { vm.theme("Sistem") }
+            Thread.sleep(350)
+            rule.activityRule.scenario.recreate()
+            rule.waitForIdle()
         }
     }
 
@@ -125,9 +128,8 @@ class UiTest {
         }
         capture("01-kamus")
         rule.onNodeWithTag("search").performTextInput("apple")
-        rule.waitUntil(15000) {
-            rule.onAllNodesWithText("apple", useUnmergedTree = true).fetchSemanticsNodes().size >= 2
-        }
+        rule.waitUntil(15000) { vm.results.isNotEmpty() }
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("apel"))
         rule.onAllNodesWithText("apple").onLast().performClick()
         rule.waitUntil(15000) {
             rule.onAllNodesWithText("Simpan").fetchSemanticsNodes().isNotEmpty()

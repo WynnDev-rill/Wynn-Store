@@ -56,6 +56,11 @@ class MainActivity : ComponentActivity() {
             val vm: VocaModel = viewModel()
             val dark = vm.theme == "Gelap" || vm.theme == "Sistem" && isSystemInDarkTheme()
             SideEffect {
+                window.setBackgroundDrawable(
+                    android.graphics.drawable.ColorDrawable(
+                        if (dark) 0xFF101B2D.toInt() else 0xFFF4F7FD.toInt()
+                    )
+                )
                 androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
                     .apply {
                         isAppearanceLightStatusBars = !dark
