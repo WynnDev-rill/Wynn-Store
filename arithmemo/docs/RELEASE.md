@@ -30,3 +30,6 @@ An authenticated AES-256-GCM `.amkey` backup and a separate recovery-password fi
 uv run --with cryptography python tools/signing-backup.py restore /safe/ArithMemo-signing-backup.amkey /safe/empty-directory
 ```
 Enter the recovery password at the prompt; do not place it in a shell command. The restored JSON updates the local keystore path automatically. Point `ARITHMEMO_SIGNING_FILE` at it. The helper refuses to restore signing material anywhere inside this repository.
+
+## Initial distribution without exposing the signing key
+The local integration cannot upload release assets (`uploads.github.com` returns HTTP 401), although repository writes work. The initial verified signed APK and frozen signed upgrade fixtures are therefore stored as public binary artifacts in `distribution/` and `qa/fixtures/`. They contain no keystore or credentials. `arithmemo-bootstrap.yml` verifies the production certificate and hashes, uploads through the runner's scoped GitHub token, then runs the real upgrade gate. A separate activation phase requires successful API 26/36 verification and successful upgrade verification, and rejects any unverified app-source differences. This supports the first release while Actions Secrets administration remains blocked. The normal future release workflow builds from the same private key once its four secrets are configured.

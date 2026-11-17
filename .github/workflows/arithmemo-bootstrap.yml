@@ -1,0 +1,82 @@
+name: ArithMemo verified signed distribution
+on:
+  workflow_dispatch:
+  push:
+    paths: ['arithmemo/distribution/release-job.json', '.github/workflows/arithmemo-bootstrap.yml']
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      phase: ${{ steps.phase.outputs.phase }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: phase
+        run: echo "phase=$(python3 -c 'import json; print(json.load(open("arithmemo/distribution/release-job.json"))["phase"])')" >> "$GITHUB_OUTPUT"
+  stage:
+    if: needs.prepare.outputs.phase == 'stage'
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+      - name: Verify signatures and stage public APKs
+        working-directory: arithmemo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tools/prepare-release.py distribution/ArithMemo.apk
+          python3 - <<'PY'
+          import hashlib,json,pathlib,subprocess
+          m=json.loads(pathlib.Path('qa/upgrade-fixture.json').read_text())
+          for name,item in m['files'].items():
+              assert hashlib.sha256(pathlib.Path('qa/fixtures',name).read_bytes()).hexdigest()==item['sha256']
+          assert json.loads(subprocess.check_output(['gh','release','view','arithmemo-qa-upgrade','--repo','WynnDev-rill/Wynn-Store','--json','isPrerelease'],text=True))['isPrerelease']
+          PY
+          gh release upload arithmemo-qa-upgrade qa/fixtures/ArithMemo-baseline.apk qa/fixtures/ArithMemo-upgrade-test.apk --repo WynnDev-rill/Wynn-Store --clobber
+          python3 tools/publish-release.py --stage
+  upgrade:
+    needs: stage
+    uses: ./.github/workflows/arithmemo-upgrade.yml
+  activate:
+    if: needs.prepare.outputs.phase == 'activate'
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+      - name: Verify both device and real upgrade outcomes
+        working-directory: arithmemo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,subprocess
+          config=json.loads(pathlib.Path('distribution/release-job.json').read_text())
+          for key in ('verifiedRun','upgradeRun'):
+              run=json.loads(subprocess.check_output(['gh','api',f'repos/WynnDev-rill/Wynn-Store/actions/runs/{config[key]}'],text=True))
+              assert run['conclusion']=='success',key+' did not pass'
+              if key=='verifiedRun':assert run['head_sha']==config['verifiedSource']
+          paths=['arithmemo/app','arithmemo/build.gradle.kts','arithmemo/settings.gradle.kts','arithmemo/gradle.properties','arithmemo/gradle','arithmemo/gradlew','arithmemo/qa/run-device.sh']
+          changed=subprocess.check_output(['git','diff','--name-only',config['verifiedSource'],'HEAD','--',*paths],text=True,cwd='..').strip()
+          assert not changed,'Unverified application changes: '+changed
+          PY
+          python3 tools/prepare-release.py distribution/ArithMemo.apk
+          python3 tools/publish-release.py --activate

@@ -19,7 +19,7 @@ code=int(m[2]);assert code>0,'QA version code cannot be released'
 version=m[3];assert re.fullmatch(r'\d+\.\d+\.\d+',version)
 minimum=int(re.search(r"sdkVersion:'(\d+)'",badging)[1])
 out=root/'distribution';out.mkdir(exist_ok=True)
-shutil.copyfile(apk,out/'ArithMemo.apk')
+if apk != (out/'ArithMemo.apk').resolve():shutil.copyfile(apk,out/'ArithMemo.apk')
 digest=hashlib.sha256(apk.read_bytes()).hexdigest()
 manifest={'versionCode':code,'versionName':version,'packageName':m[1],'minSdk':minimum,'apkUrl':f'https://github.com/WynnDev-rill/Wynn-Store/releases/download/arithmemo-v{version}/ArithMemo.apk','sha256':digest,'signerSha256':cert,'sizeBytes':apk.stat().st_size,'notes':(root/'docs/CHANGELOG.md').read_text()[:8000]}
 (out/'update.json').write_text(json.dumps(manifest,indent=2)+'\n')
