@@ -1,14 +1,18 @@
 package id.wynn.arithmemo.ui
 
+import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import id.wynn.arithmemo.R
 
 private val Jakarta =
@@ -87,6 +91,15 @@ fun ArithMemoTheme(theme: String = "system", content: @Composable () -> Unit) {
             "light" -> false
             else -> isSystemInDarkTheme()
         }
+    val view = LocalView.current
+    SideEffect {
+        (view.context as? Activity)?.window?.let { window ->
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !dark
+                isAppearanceLightNavigationBars = !dark
+            }
+        }
+    }
     MaterialTheme(
         colorScheme = if (dark) Dark else Light,
         typography = Type,

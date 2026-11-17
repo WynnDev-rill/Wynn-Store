@@ -27,3 +27,6 @@ python3 tools/prepare-release.py app/build/outputs/apk/release/app-release.apk
 bash tools/refresh-graph.sh
 ```
 Use the private signing wrapper for release builds. Keep device logs out of git; attach curated evidence to the release as needed.
+
+## Contrast checks
+Explicit text/background token pairs were measured using WCAG sRGB relative luminance: primary white/blue 5.62:1; body 15.53:1; muted body 5.84:1; blue container text 8.88:1; dark body 13.60:1; dark muted body 10.67:1; dark blue container text 8.49:1. System bars follow the selected app theme, including forced dark on a light Android system.

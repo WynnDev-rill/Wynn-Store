@@ -8,13 +8,16 @@ ADB_BIN=${ADB_BIN:-adb}
 "$ADB_BIN" install -r app/build/outputs/apk/debug/app-debug.apk
 "$ADB_BIN" install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 "$ADB_BIN" shell pm clear id.wynn.arithmemo.debug
-"$ADB_BIN" logcat -c
+"$ADB_BIN" logcat -c || true
 "$ADB_BIN" shell am instrument -w -r id.wynn.arithmemo.debug.test/androidx.test.runner.AndroidJUnitRunner | tee qa/output/instrumentation.txt
 python3 - <<'PY'
 from pathlib import Path
 s=Path('qa/output/instrumentation.txt').read_text()
 assert 'OK (' in s and 'FAILURES' not in s and 'INSTRUMENTATION_FAILED' not in s,s
 PY
+for shot in home flashcard stats settings recall feedback; do
+  "$ADB_BIN" exec-out run-as id.wynn.arithmemo.debug cat "files/qa-$shot.png" > "qa/output/$shot.png"
+done
 "$ADB_BIN" shell am force-stop id.wynn.arithmemo.debug
 "$ADB_BIN" shell am start -W -n id.wynn.arithmemo.debug/id.wynn.arithmemo.MainActivity
 "$ADB_BIN" shell uiautomator dump /sdcard/arithmemo.xml

@@ -7,11 +7,12 @@ plugins {
 android {
     namespace = "id.wynn.arithmemo"
     compileSdk = 36
+    buildToolsVersion = "36.0.0"
     defaultConfig {
         applicationId = "id.wynn.arithmemo"
         minSdk = 26
         targetSdk = 36
-        versionCode = providers.gradleProperty("releaseCode").orElse("1").get().toInt()
+        versionCode = providers.gradleProperty("releaseCode").orElse("2").get().toInt()
         versionName = providers.gradleProperty("releaseName").orElse("1.0.0").get()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -24,11 +25,14 @@ android {
             keyPassword = providers.environmentVariable("AM_KEY_PASSWORD").get()
         }
     }
+    testBuildType = if (providers.gradleProperty("testProduction").isPresent) "release" else "debug"
+    val qaBaseline = providers.gradleProperty("qaBaseline").isPresent
     buildTypes {
         debug { applicationIdSuffix = ".debug"; versionNameSuffix = "-debug" }
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isDebuggable = qaBaseline
+            isMinifyEnabled = !qaBaseline
+            isShrinkResources = !qaBaseline
             if (releaseStore.isPresent) signingConfig = signingConfigs.getByName("privateRelease")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }

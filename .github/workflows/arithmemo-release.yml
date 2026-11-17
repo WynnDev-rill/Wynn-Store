@@ -47,7 +47,28 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 tools/prepare-release.py app/build/outputs/apk/release/app-release.apk
-          python3 tools/publish-release.py
+          python3 tools/publish-release.py --stage
+      - name: Enable KVM for actual production upgrade
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Verify GitHub download, Android installation and data retention
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          UPDATE_MANIFEST_FILE: distribution/update.json
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_3a
+          disable-animations: false
+          script: bash arithmemo/qa/run-upgrade.sh
+      - name: Activate verified stable release
+        working-directory: arithmemo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/publish-release.py --activate
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -55,6 +76,7 @@ jobs:
           path: |
             arithmemo/distribution/
             arithmemo/app/build/outputs/mapping/release/
+            arithmemo/qa/output/upgrade/
       - name: Remove temporary signing material
         if: always()
         run: python3 -c "from pathlib import Path; Path('${{ runner.temp }}/arithmemo.p12').unlink(missing_ok=True)"

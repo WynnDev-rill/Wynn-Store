@@ -3,9 +3,9 @@ on:
   workflow_dispatch:
   workflow_call:
   push:
-    paths: ['arithmemo/**', '.github/workflows/arithmemo-*.yml']
+    paths: ['arithmemo/app/**', 'arithmemo/build.gradle.kts', 'arithmemo/settings.gradle.kts', 'arithmemo/gradle.properties', 'arithmemo/gradle/**', 'arithmemo/gradlew*', 'arithmemo/qa/run-device.sh', '.github/workflows/arithmemo-android.yml', '.github/workflows/arithmemo-release.yml']
   pull_request:
-    paths: ['arithmemo/**', '.github/workflows/arithmemo-*.yml']
+    paths: ['arithmemo/app/**', 'arithmemo/build.gradle.kts', 'arithmemo/settings.gradle.kts', 'arithmemo/gradle.properties', 'arithmemo/gradle/**', 'arithmemo/gradlew*', 'arithmemo/qa/run-device.sh', '.github/workflows/arithmemo-android.yml', '.github/workflows/arithmemo-release.yml']
 permissions:
   contents: read
 concurrency:

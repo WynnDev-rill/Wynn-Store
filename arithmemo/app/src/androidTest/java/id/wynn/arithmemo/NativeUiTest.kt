@@ -1,9 +1,12 @@
 package id.wynn.arithmemo
 
+import android.graphics.Bitmap
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import java.io.File
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,20 +21,40 @@ class NativeUiTest {
         }
     }
 
+    private fun capture(name: String) {
+        rule.waitForIdle()
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val image = instrumentation.uiAutomation.takeScreenshot() ?: error("Screenshot unavailable")
+        File(instrumentation.targetContext.filesDir, "qa-$name.png").outputStream().use {
+            check(image.compress(Bitmap.CompressFormat.PNG, 100, it))
+        }
+    }
+
     @Test
     fun navigationFiltersAndFlashcardReveal() {
         ready()
+        capture("home")
         rule.onNodeWithText("Hafalan").performClick()
         rule.onNodeWithText("Ruang hafalan").assertIsDisplayed()
+        rule.onNodeWithText("Atur pilihan · 1 digit").performClick()
+        rule.onNodeWithTag("factList").performScrollToNode(hasText("2 digit"))
+        rule.onNodeWithText("2 digit").performClick()
+        rule.onNodeWithText("1 digit").performClick()
+        rule.onNodeWithTag("factList").performScrollToNode(hasText("Daftar"))
         rule.onNodeWithText("Daftar").performClick()
         rule.onNodeWithTag("factList").assertExists()
+        rule.onNodeWithTag("factList").performScrollToNode(hasText("Flashcard"))
         rule.onNodeWithText("Flashcard", useUnmergedTree = true).performClick()
-        rule.onNodeWithText("Balik kartu").performScrollTo().performClick()
+        rule.onNodeWithTag("factList").performScrollToNode(hasText("Balik kartu"))
+        rule.onNodeWithText("Balik kartu").performClick()
         rule.onNodeWithTag("revealedAnswer").assertExists()
+        capture("flashcard")
         rule.onNodeWithText("Statistik").performClick()
         rule.onNodeWithText("Perkembangan Anda").assertIsDisplayed()
+        capture("stats")
         rule.onNodeWithText("Pengaturan").performClick()
         rule.onNodeWithText("Target harian").assertExists()
+        capture("settings")
     }
 
     @Test
@@ -41,6 +64,7 @@ class NativeUiTest {
         rule.waitUntil(10000) {
             rule.onAllNodesWithTag("question").fetchSemanticsNodes().isNotEmpty()
         }
+        capture("recall")
         val text =
             rule
                 .onNodeWithTag("question")
@@ -65,6 +89,7 @@ class NativeUiTest {
         rule.waitUntil(10000) {
             rule.onAllNodesWithText("Benar, sudah tersimpan.").fetchSemanticsNodes().isNotEmpty()
         }
+        capture("feedback")
         rule.onNodeWithText("Lanjut").performScrollTo().performClick()
         rule.onNodeWithContentDescription("Jeda sesi").performClick()
         rule.onNodeWithText("Lanjutkan sesi").assertExists()

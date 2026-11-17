@@ -6,13 +6,17 @@ apk=pathlib.Path(sys.argv[1]).resolve()
 sdk=pathlib.Path(os.environ.get('ANDROID_HOME',os.environ.get('ANDROID_SDK_ROOT','/workspace/android-sdk')))
 build=sdk/'build-tools'/'36.0.0'
 def run(*args):return subprocess.check_output([str(x) for x in args],text=True)
-cert=re.search(r'certificate SHA-256 digest: ([0-9a-fA-F]+)',run(build/'apksigner','verify','--verbose','--print-certs',apk)).group(1).lower()
+verification=run(build/'apksigner','verify','--verbose','--print-certs',apk)
+assert 'Number of signers: 1' in verification,'Expected exactly one production signer'
+cert=re.search(r'certificate SHA-256 digest: ([0-9a-fA-F]+)',verification).group(1).lower()
 pinned=(root/'signing-certificate.sha256').read_text().strip().lower()
 assert cert==pinned,'Production certificate mismatch; refusing release'
 badging=run(build/'aapt','dump','badging',apk)
+assert 'application-debuggable' not in badging,'Debuggable QA APK cannot be released'
 m=re.search(r"package: name='([^']+)' versionCode='([^']+)' versionName='([^']+)'",badging)
 assert m and m[1]=='id.wynn.arithmemo','Wrong package'
-code=int(m[2]);version=m[3];assert re.fullmatch(r'\d+\.\d+\.\d+',version)
+code=int(m[2]);assert code>0,'QA version code cannot be released'
+version=m[3];assert re.fullmatch(r'\d+\.\d+\.\d+',version)
 minimum=int(re.search(r"sdkVersion:'(\d+)'",badging)[1])
 out=root/'distribution';out.mkdir(exist_ok=True)
 shutil.copyfile(apk,out/'ArithMemo.apk')

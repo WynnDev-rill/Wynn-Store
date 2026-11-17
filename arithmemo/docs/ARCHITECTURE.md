@@ -1,0 +1,13 @@
+# Architecture
+
+`MainActivity` hosts a native Compose application. `MemoViewModel` owns visible state, serializes mutations with a coroutine Mutex, and moves SQLite/file work off the main thread. Compose observes StateFlow with lifecycle-aware collectors. Screen selection uses four destinations, an adaptive rail on wider screens, and standard Android Back. Session time uses the monotonic elapsed realtime clock and excludes background/paused time.
+
+`core/Core.kt` implements validated facts, range-safe generation, stable study catalogs, and interval scheduling. `core/Models.kt` contains versioned serialization models and statistics. Division selects valid divisors of an in-range dividend; it never retries randomly until success. A 3-digit catalog is bounded at 240 cards per operation, while random generation spans every supported operand range. Spaced review includes due learned cards from all previous modes plus new cards in the chosen catalog.
+
+`MemoStore` uses a version-1 SQLite schema: state (settings/current session), progress (one scheduler state per fact), attempts (append-only answer history). A transaction inserts an idempotent attempt, advances the fact scheduler, and writes session feedback together. The unique attempt key is session UUID + index, so retries cannot double-count. Imports validate the root schema and the entire payload before opening a replacement transaction; exceptions roll back without deleting valid data. Future schema upgrades must migrate explicitly and never use destructive fallback.
+
+`AppUpdater` reuses and adapts the repository ScreenGuard transport. A small bounded public manifest identifies a release. HTTPS and a constrained GitHub redirect allowlist protect transport; streaming SHA-256 and length verification protect integrity; Android package parsing verifies package, strictly higher version and the installed signing certificate. Verification repeats immediately before installation. WorkManager schedules connected checks; notification permission is optional. Downloads can be canceled; partial files are removed on cancellation/failure. Android owns final installation confirmation.
+
+App data never leaves the device except a backup file explicitly chosen by its owner. No usage telemetry, account service, analytics, or advertising SDK is included. The INTERNET permission serves GitHub update checks/downloads only.
+
+The project deliberately uses Android SQLite APIs rather than an extra persistence code generator or dependency injection layer. Add abstractions only when actual additional implementations or schema complexity justify them. Graphify indexes app source and tests locally; its graph is a navigation aid with EXTRACTED/INFERRED confidence and source provenance.

@@ -29,7 +29,7 @@ bash qa/run-device.sh
 
 Build rilis bertanda tangan menggunakan keystore produksi yang sama untuk setiap versi. Baca [rilis dan pemulihan signing](docs/RELEASE.md). Workflow [verifikasi](../.github/workflows/arithmemo-android.yml) dan [rilis](../.github/workflows/arithmemo-release.yml) terpisah; rilis menunggu pemeriksaan perangkat API 26 dan 36.
 
-- [Arsitektur dan keputusan](docs/IMPLEMENTATION.md)
+- [Arsitektur](docs/ARCHITECTURE.md) dan [keputusan implementasi](docs/IMPLEMENTATION.md)
 - [Riset dan sumber desain](docs/RESEARCH.md), [sistem desain](DESIGN.md)
 - [Bukti pengujian dan batasan](docs/VERIFICATION.md)
 - [Pedoman AI dan skill permanen](AGENTS.md)
