@@ -72,3 +72,9 @@ tidak memiliki DNS. Ini merupakan pembatasan jaringan environment, bukan error
 dari manifest npm atau konfigurasi Vite.
 
 > Proyek ini hanya simulasi UI. Tidak ada pembayaran atau transaksi nyata yang diproses.
+
+## ArithMemo Android
+
+Aplikasi hafalan aritmatika native Kotlin + Jetpack Compose, offline tanpa akun atau iklan.
+Lihat [panduan ArithMemo](arithmemo/README.md), [alur rilis](arithmemo/docs/RELEASE.md),
+dan [GitHub Releases](https://github.com/WynnDev-rill/Wynn-Store/releases).

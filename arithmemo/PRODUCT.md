@@ -1,0 +1,3 @@
+# ArithMemo
+Native Android personal arithmetic memorization, Indonesian-first. A quiet daily practice tool, offline, no account, no ads, no formulas. Users select addition/subtraction/multiplication/exact integer division, 1–3 digit operands, a memorization group and daily goal. Study a paginated fact list or flip cards, type recall answers, complete a 60-second speed session, review due cards adaptively, or use random practice. Preserve all completed answers immediately. Show honest empty states, mastery, accuracy, answer time and daily history. Updates are opt-in installation from verified GitHub Releases; background checks may notify.
+Platform: android. Mode: Operate. User supplied references and blue ring-bound flashcard icon are visual authority.

@@ -1,0 +1,9 @@
+.agents/
+.codex/
+.gradle/
+.kotlin/
+graphify-out/
+artwork/
+**/build/
+**/res/
+local.properties

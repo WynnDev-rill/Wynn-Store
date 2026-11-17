@@ -16,3 +16,7 @@ Keep signing keys, credentials, local SDK paths, build caches and device logs ou
 of version control. Do not publish or change stable APK feeds as part of a source
 fix unless the release has been explicitly requested and its checks have passed.
 Report what was tested and distinguish emulator results from physical-device results.
+
+- `arithmemo/`: independent native Android arithmetic memorization app. Read
+  `arithmemo/AGENTS.md`; includes pinned project skills, Graphify, signing and
+  verification instructions. Dedicated workflows: `.github/workflows/arithmemo-*.yml`.

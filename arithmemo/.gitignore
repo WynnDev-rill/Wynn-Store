@@ -1,0 +1,17 @@
+.gradle/
+.kotlin/
+**/build/
+local.properties
+*.jks
+*.keystore
+*.p12
+keystore.properties
+.env*
+qa/output/
+__pycache__/
+.graphify/
+
+distribution/
+graphify-out/cache/
+graphify-out/graphify-out/
+graphify-out/.*

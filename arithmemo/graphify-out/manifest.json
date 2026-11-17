@@ -1,0 +1,104 @@
+{
+  "app/src/androidTest/java/id/wynn/arithmemo/NativeUiTest.kt": {
+    "mtime": 1794914039.8428226,
+    "seen": 1794914272.4954834,
+    "ast_hash": "1c702cb5c9c855e46f8d4c33734060ea",
+    "semantic_hash": "1c702cb5c9c855e46f8d4c33734060ea"
+  },
+  "app/src/main/java/id/wynn/arithmemo/MainActivity.kt": {
+    "mtime": 1794914038.204291,
+    "seen": 1794914272.4954896,
+    "ast_hash": "a1c882918b228ccc6e64bdbc6b195173",
+    "semantic_hash": "a1c882918b228ccc6e64bdbc6b195173"
+  },
+  "app/src/main/java/id/wynn/arithmemo/MemoApplication.kt": {
+    "mtime": 1794914041.9395747,
+    "seen": 1794914272.4954915,
+    "ast_hash": "9967ae51ee8cdb7f0a29cdc99d2efcbb",
+    "semantic_hash": "9967ae51ee8cdb7f0a29cdc99d2efcbb"
+  },
+  "app/src/main/java/id/wynn/arithmemo/core/Core.kt": {
+    "mtime": 1794914039.2120163,
+    "seen": 1794914272.495493,
+    "ast_hash": "866e0986c9c49c91597eb24255a95787",
+    "semantic_hash": "866e0986c9c49c91597eb24255a95787"
+  },
+  "app/src/main/java/id/wynn/arithmemo/core/Models.kt": {
+    "mtime": 1794914039.4846764,
+    "seen": 1794914272.495494,
+    "ast_hash": "dcd852a65e8fd2085f2a7b0f361babca",
+    "semantic_hash": "dcd852a65e8fd2085f2a7b0f361babca"
+  },
+  "app/src/main/java/id/wynn/arithmemo/data/MemoStore.kt": {
+    "mtime": 1794914038.8323774,
+    "seen": 1794914272.4954948,
+    "ast_hash": "dcc668484f6910dc52cff0aa88917c3b",
+    "semantic_hash": "dcc668484f6910dc52cff0aa88917c3b"
+  },
+  "app/src/main/java/id/wynn/arithmemo/ui/MemoApp.kt": {
+    "mtime": 1794914041.643495,
+    "seen": 1794914272.495496,
+    "ast_hash": "1a0cb9a151752d4cf0184a24bb4ce199",
+    "semantic_hash": "1a0cb9a151752d4cf0184a24bb4ce199"
+  },
+  "app/src/main/java/id/wynn/arithmemo/ui/MemoViewModel.kt": {
+    "mtime": 1794914041.933073,
+    "seen": 1794914272.4954967,
+    "ast_hash": "f0568d36bec44fbc1bfc7d7eff45da63",
+    "semantic_hash": "f0568d36bec44fbc1bfc7d7eff45da63"
+  },
+  "app/src/main/java/id/wynn/arithmemo/ui/Theme.kt": {
+    "mtime": 1794914040.051266,
+    "seen": 1794914272.4954977,
+    "ast_hash": "3bf749bfdd5cf60f3af78eec6d4b2b3c",
+    "semantic_hash": "3bf749bfdd5cf60f3af78eec6d4b2b3c"
+  },
+  "app/src/main/java/id/wynn/arithmemo/update/ApkTransfer.kt": {
+    "mtime": 1794914038.483407,
+    "seen": 1794914272.4954987,
+    "ast_hash": "b88f1a645d8ea3ba9278d82749b7b1da",
+    "semantic_hash": "b88f1a645d8ea3ba9278d82749b7b1da"
+  },
+  "app/src/main/java/id/wynn/arithmemo/update/AppUpdater.kt": {
+    "mtime": 1794914039.9208043,
+    "seen": 1794914272.4954998,
+    "ast_hash": "cbf12703fb195f572ea8c3fe9049ad74",
+    "semantic_hash": "cbf12703fb195f572ea8c3fe9049ad74"
+  },
+  "app/src/main/java/id/wynn/arithmemo/update/UpdateManifest.kt": {
+    "mtime": 1794914038.2366385,
+    "seen": 1794914272.495501,
+    "ast_hash": "52f23b60621390fcb9145d679dd5931a",
+    "semantic_hash": "52f23b60621390fcb9145d679dd5931a"
+  },
+  "app/src/main/java/id/wynn/arithmemo/update/UpdateWorker.kt": {
+    "mtime": 1794914039.0999072,
+    "seen": 1794914272.4955022,
+    "ast_hash": "19bac422a6db6302a89e3d68e4d19dae",
+    "semantic_hash": "19bac422a6db6302a89e3d68e4d19dae"
+  },
+  "app/src/test/java/id/wynn/arithmemo/CoreTest.kt": {
+    "mtime": 1794914039.9252415,
+    "seen": 1794914272.4955034,
+    "ast_hash": "acffd1ff990f52a0fbb35abdf4370bc5",
+    "semantic_hash": "acffd1ff990f52a0fbb35abdf4370bc5"
+  },
+  "app/src/test/java/id/wynn/arithmemo/StoreTest.kt": {
+    "mtime": 1794914040.002275,
+    "seen": 1794914272.4955041,
+    "ast_hash": "0e145cb68f96c8c8f9c3c0196d9dbf37",
+    "semantic_hash": "0e145cb68f96c8c8f9c3c0196d9dbf37"
+  },
+  "app/src/test/java/id/wynn/arithmemo/TimerTest.kt": {
+    "mtime": 1794914039.6044834,
+    "seen": 1794914272.4955056,
+    "ast_hash": "a25ccd5196d82c29916b2925df073601",
+    "semantic_hash": "a25ccd5196d82c29916b2925df073601"
+  },
+  "app/src/test/java/id/wynn/arithmemo/UpdateTest.kt": {
+    "mtime": 1794914039.7071764,
+    "seen": 1794914272.495507,
+    "ast_hash": "d005ddbcefde8a903674d473ef62311d",
+    "semantic_hash": "d005ddbcefde8a903674d473ef62311d"
+  }
+}

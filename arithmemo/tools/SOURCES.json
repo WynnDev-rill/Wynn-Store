@@ -1,0 +1,18 @@
+{
+  "ponytail": {
+    "repo": "https://github.com/DietrichGebert/ponytail.git",
+    "commit": "96608e078b2d5ea607c5c3b8b5a54d1c1fba6846"
+  },
+  "ui-ux-pro-max": {
+    "repo": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git",
+    "commit": "e59ff376a41f7ca47b7541ad5c116495cbade3ee"
+  },
+  "impeccable": {
+    "repo": "https://github.com/pbakaus/impeccable.git",
+    "commit": "d41d9860b0094dcb68030657da63461212835aaa"
+  },
+  "graphify": {
+    "repo": "https://github.com/Graphify-Labs/graphify.git",
+    "commit": "480b61ed91cbc08177dc2c60caa9ffd6c9b95749"
+  }
+}
