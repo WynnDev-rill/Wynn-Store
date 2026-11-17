@@ -94,6 +94,7 @@ val stampInputs =
         rootProject.file("gradle.properties"),
         rootProject.file("gradle/wrapper/gradle-wrapper.properties"),
         file("build.gradle.kts"),
+        file("proguard-rules.pro"),
     )
 val stampDirectory = layout.buildDirectory.dir("generated/source-stamp")
 val generateSourceStamp by
