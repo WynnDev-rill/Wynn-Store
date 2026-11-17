@@ -20,3 +20,4 @@ Report what was tested and distinguish emulator results from physical-device res
 - `arithmemo/`: independent native Android arithmetic memorization app. Read
   `arithmemo/AGENTS.md`; includes pinned project skills, Graphify, signing and
   verification instructions. Dedicated workflows: `.github/workflows/arithmemo-*.yml`.
+- `vocamemo/`: native offline English–Indonesian dictionary and vocabulary practice; read `vocamemo/AGENTS.md`.

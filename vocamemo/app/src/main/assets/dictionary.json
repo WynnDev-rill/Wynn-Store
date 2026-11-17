@@ -1,0 +1,16 @@
+{
+  "version": "2_2026-06",
+  "source": "WikDict / Wiktionary contributors via DBnary",
+  "license": "CC BY-SA 4.0",
+  "senses": 20230,
+  "words": 15725,
+  "examples": 15589,
+  "excluded_low_quality": 13556,
+  "inputs": {
+    "en-id.sqlite3": "3a0c2459e020965d1eedf9f944f8e93962d90a76a5206e639983a3a4a7de0771",
+    "en.sqlite3": "f18e8e49eb601825a57d526672bfb0c8ebf32dce39662a96f47348b31b8b1eae",
+    "ind-eng.zip": "807d02ae1e0dea4531f46475c07ee837f2df6b9dc5a00d54451205b35c6b18a4"
+  },
+  "changes": "is_good=1 filter; indexed search; IPA/POS joined by exact lexentry; Tatoeba independent examples, not sense assertions",
+  "sha256": "2e1a094318ad80091a232f9c01610adfa5a7dd7dc6eeaf3fc5a3f8d3839fb14b"
+}

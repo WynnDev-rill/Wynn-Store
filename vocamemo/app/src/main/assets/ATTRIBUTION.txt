@@ -1,0 +1,29 @@
+VocaMemo 1.0.0 — Wynn Dev
+Source code: MIT (see repository LICENSE).
+
+DICTIONARY: WikDict, Karl Bartel; Wiktionary contributors, via DBnary (GETALP). Official SQLite snapshot 2_2026-06 (23 June 2026).
+https://www.wikdict.com/page/download
+https://download.wikdict.com/dictionaries/sqlite/2_2026-06/
+https://en.wiktionary.org/
+https://kaiko.getalp.org/about-dbnary/
+Licensed CC BY-SA 4.0: https://creativecommons.org/licenses/by-sa/4.0/
+Changes: removed rows marked is_good=0; selected matching lexical IPA/POS, normalized search keys, reformatted as indexed SQLite. The derivative dictionary remains CC BY-SA 4.0. Database and reproducible conversion script are available from the VocaMemo source repository. Each word detail links to Wiktionary, including contributor history there. Contexts remain in source language; translations are unaltered. No warranty of exhaustive coverage or correctness.
+15,725 normalized words; 20,230 senses. 13,556 low-quality source rows excluded.
+
+EXAMPLES: Tatoeba contributors, distributed by Charles Kelly / ManyThings.org, ind-eng.zip dated 13 February 2026. 15,589 paired sentences.
+https://www.manythings.org/anki/
+https://tatoeba.org/
+CC BY 2.0 France: https://creativecommons.org/licenses/by/2.0/fr/
+Original sentence IDs and individual contributor names are retained in the credit shown below every example and in the bundled database. Examples are independent word usage and are not asserted to correspond to a dictionary sense. No sentence text was generated or translated by AI.
+
+FONT: Nunito — Vernon Adams, Cyreal, Jacques Le Bailly. SIL Open Font License 1.1; bundled license Nunito-OFL.txt. https://github.com/google/fonts/tree/main/ofl/nunito
+
+INTERFACE LIBRARIES: AndroidX Jetpack Compose, Material 3, Room, Lifecycle, Core and WorkManager — Android Open Source Project / Google, Apache License 2.0. Kotlin and Kotlin coroutines — JetBrains, Apache License 2.0.
+https://www.apache.org/licenses/LICENSE-2.0
+Material icons — Google, Apache License 2.0.
+
+ICON: Adapted from the user-supplied VocaMemo image using OpenAI image generation on 17 November 2026. Blue layered vocabulary cards, English/Indonesian flag motifs and yellow bookmark. No artwork from UI reference pages is redistributed.
+
+RESEARCH REFERENCES (inspiration, no affiliation): AnkiDroid, WordWeb, Oxford Learner's Dictionaries, Quizlet. UI references: Terabit Projects / TERABIT IT on Dribbble; UI Ants on Dribbble; Flashcards education mobile app on Behance. These products and reference artwork are not included in the application.
+
+PRIVACY: No account, analytics, advertising or cloud sync. Personal data stays in the app's private local Room database. Android backup is disabled; export/import JSON is explicit through the system file picker. Internet is used for GitHub update checks/downloads and external sources you open. TTS selects an installed English voice that does not require network. No vocabulary is sent to an AI service.

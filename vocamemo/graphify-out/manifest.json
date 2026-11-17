@@ -1,0 +1,218 @@
+{
+  "app/build.gradle.kts": {
+    "mtime": 1794934372.9732895,
+    "seen": 1794934422.8583217,
+    "ast_hash": "3d38ebdebde01b6c96f33af3039d25d7",
+    "semantic_hash": ""
+  },
+  "app/src/androidTest/java/id/wynn/vocamemo/OfflineTest.kt": {
+    "mtime": 1794934281.840561,
+    "seen": 1794934422.8583272,
+    "ast_hash": "f3860777e9174f9d951a617b761cf08f",
+    "semantic_hash": ""
+  },
+  "app/src/androidTest/java/id/wynn/vocamemo/UiTest.kt": {
+    "mtime": 1794934334.3443356,
+    "seen": 1794934422.858332,
+    "ast_hash": "e5c55c50b07a0447d3fd50408bd07768",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/id/wynn/vocamemo/Data.kt": {
+    "mtime": 1794934335.174316,
+    "seen": 1794934422.8583333,
+    "ast_hash": "badc1e6202ef559ce30485c2675e57a7",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/id/wynn/vocamemo/Dictionary.kt": {
+    "mtime": 1794934076.4421415,
+    "seen": 1794934422.8583343,
+    "ast_hash": "4b10836021368a2b7b63e364070bcda2",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/id/wynn/vocamemo/Learning.kt": {
+    "mtime": 1794934076.4759197,
+    "seen": 1794934422.8583353,
+    "ast_hash": "2fdaa7349a1548823cc0e4ccfffffe80",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/id/wynn/vocamemo/MainActivity.kt": {
+    "mtime": 1794934335.750276,
+    "seen": 1794934422.858336,
+    "ast_hash": "e941bd142c15a4cab83aaf76842bf794",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/id/wynn/vocamemo/Theme.kt": {
+    "mtime": 1794934076.829665,
+    "seen": 1794934422.8583367,
+    "ast_hash": "8d79eee1eef94cc5b2eca16bd6c0577f",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/id/wynn/vocamemo/Updates.kt": {
+    "mtime": 1794934076.6854885,
+    "seen": 1794934422.8583376,
+    "ast_hash": "36d3fced5c72db58aed1c98cededc1b7",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/id/wynn/vocamemo/VocaModel.kt": {
+    "mtime": 1794934281.8401303,
+    "seen": 1794934422.8583384,
+    "ast_hash": "254868751b87e7cf4556cbe9b094dd4c",
+    "semantic_hash": ""
+  },
+  "app/src/test/java/id/wynn/vocamemo/CoreTest.kt": {
+    "mtime": 1794934075.2785306,
+    "seen": 1794934422.8583395,
+    "ast_hash": "d53f48abbcbadc1abe4036165c3ed337",
+    "semantic_hash": ""
+  },
+  "build.gradle.kts": {
+    "mtime": 1794932825.3702712,
+    "seen": 1794933964.5431235,
+    "ast_hash": "a87afc91816f56d9a4e6a7a577b16f11",
+    "semantic_hash": ""
+  },
+  "docs/dictionary-audit.json": {
+    "mtime": 1794933612.8700988,
+    "seen": 1794933964.5431242,
+    "ast_hash": "b5357b0142d5a456ef51c7618a0b9bfb",
+    "semantic_hash": ""
+  },
+  "gradlew": {
+    "mtime": 1794932825.3752954,
+    "seen": 1794933964.5431252,
+    "ast_hash": "ef893f7a0e9904c1a335b6261e0e84ee",
+    "semantic_hash": ""
+  },
+  "scripts/audit-dictionary.py": {
+    "mtime": 1794933486.900136,
+    "seen": 1794933964.5431263,
+    "ast_hash": "e8b01ca638bdd96b1f2bc311e0359d1d",
+    "semantic_hash": ""
+  },
+  "scripts/build-dictionary.py": {
+    "mtime": 1794932862.896731,
+    "seen": 1794933964.543127,
+    "ast_hash": "23774731aaab67a38e8f001616ae9497",
+    "semantic_hash": ""
+  },
+  "scripts/configure-signing-secrets.py": {
+    "mtime": 1794933612.8806186,
+    "seen": 1794933964.543128,
+    "ast_hash": "882d5f5d156bdeca2fc2a348c92aa35f",
+    "semantic_hash": ""
+  },
+  "scripts/device-tests.sh": {
+    "mtime": 1794934056.2631817,
+    "seen": 1794934422.8583493,
+    "ast_hash": "e3489e4a42d75357084861d7aca0b580",
+    "semantic_hash": ""
+  },
+  "scripts/project-version.py": {
+    "mtime": 1794933897.3883567,
+    "seen": 1794933964.5431297,
+    "ast_hash": "3f1fb19c5445a483462b705babcd1eb7",
+    "semantic_hash": ""
+  },
+  "scripts/refresh-graph.sh": {
+    "mtime": 1794933557.6104088,
+    "seen": 1794933964.5431306,
+    "ast_hash": "e3fecee21e87cef4964400d8e92b6d52",
+    "semantic_hash": ""
+  },
+  "scripts/release-manifest.py": {
+    "mtime": 1794934281.9710283,
+    "seen": 1794934422.8583524,
+    "ast_hash": "484f5180db9d1fac031411832f14878a",
+    "semantic_hash": ""
+  },
+  "settings.gradle.kts": {
+    "mtime": 1794934075.7367284,
+    "seen": 1794934422.8583543,
+    "ast_hash": "190f07234fc5c174ec008f6ec8eb503f",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1794932752.9329445,
+    "seen": 1794933964.5431335,
+    "ast_hash": "c7ea2eeca33d507c446574fd1aca33e3",
+    "semantic_hash": ""
+  },
+  "DESIGN.md": {
+    "mtime": 1794933408.0538218,
+    "seen": 1794933964.5431342,
+    "ast_hash": "3ae73ba7a4bdc60733bd31c8deaaa6e9",
+    "semantic_hash": ""
+  },
+  "PRODUCT.md": {
+    "mtime": 1794932752.928268,
+    "seen": 1794933964.543135,
+    "ast_hash": "47f1c750d5ec93736a961d12f4430c08",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1794934163.5788994,
+    "seen": 1794934422.8583589,
+    "ast_hash": "b7eedda51421611e0cf6c9a82c65cdbf",
+    "semantic_hash": ""
+  },
+  "RELEASE_NOTES.md": {
+    "mtime": 1794933557.6138558,
+    "seen": 1794933964.5431368,
+    "ast_hash": "e35dcb67263df126beec2f6be06e5723",
+    "semantic_hash": ""
+  },
+  "docs/ATTRIBUTION.txt": {
+    "mtime": 1794933408.0510647,
+    "seen": 1794933964.5431376,
+    "ast_hash": "a2e13d9a29834b45301233c9b7e56b4f",
+    "semantic_hash": ""
+  },
+  "docs/assets/provenance.md": {
+    "mtime": 1794934420.6591375,
+    "seen": 1794934422.8583612,
+    "ast_hash": "6742e3cbbfd83bc562123416ff8d8dbc",
+    "semantic_hash": ""
+  },
+  "docs/releasing.md": {
+    "mtime": 1794934420.6593633,
+    "seen": 1794934422.8583622,
+    "ast_hash": "78feee125e495cfbeff920c440694de4",
+    "semantic_hash": ""
+  },
+  "docs/research.md": {
+    "mtime": 1794933408.0519722,
+    "seen": 1794933964.5431404,
+    "ast_hash": "5f62608bd29785db7c3fdf202697ae26",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-11-17-vocamemo.md": {
+    "mtime": 1794932752.9329445,
+    "seen": 1794933964.5431411,
+    "ast_hash": "e74f82b38fcbf020253d2e164f46c7d3",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-11-17-vocamemo-design.md": {
+    "mtime": 1794932752.9317217,
+    "seen": 1794933964.5431418,
+    "ast_hash": "2e25ddad44c2e412fc414e09d5519e8c",
+    "semantic_hash": ""
+  },
+  "docs/tooling.md": {
+    "mtime": 1794933612.6461978,
+    "seen": 1794933964.5431426,
+    "ast_hash": "df97825b2ef610210c27b15caf912fc5",
+    "semantic_hash": ""
+  },
+  "app/src/androidTest/java/id/wynn/vocamemo/ReleaseSmokeTest.kt": {
+    "mtime": 1794934075.6587555,
+    "seen": 1794934422.85833,
+    "ast_hash": "16e96b34f63bfb30801ad871d54d7d1d",
+    "semantic_hash": ""
+  },
+  "scripts/source-fingerprint.py": {
+    "mtime": 1794934281.8625658,
+    "seen": 1794934422.8583534,
+    "ast_hash": "46b0bfe920c618f79cba31471fe6de0f",
+    "semantic_hash": ""
+  }
+}

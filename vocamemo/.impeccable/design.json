@@ -1,0 +1,30 @@
+{
+  "platform": "android",
+  "colors": {
+    "primary": "#245CCA",
+    "background": "#F4F7FD",
+    "surface": "#FFFFFF",
+    "text": "#172842",
+    "secondaryText": "#475770",
+    "bookmark": "#FFE8A6"
+  },
+  "typography": {
+    "family": "Nunito",
+    "bodySp": 16
+  },
+  "spacingDp": [
+    4,
+    8,
+    12,
+    16,
+    20,
+    24,
+    32
+  ],
+  "cornerDp": [
+    18,
+    20,
+    24,
+    28
+  ]
+}

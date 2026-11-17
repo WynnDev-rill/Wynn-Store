@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "words": 15725,
+  "senses": 20230,
+  "examples": 15589,
+  "prefix_mean_ms": 1.325,
+  "exact_query_plan": [
+    [
+      2,
+      0,
+      53,
+      "SEARCH sense USING COVERING INDEX sense_search (search=?)"
+    ]
+  ]
+}

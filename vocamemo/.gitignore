@@ -1,0 +1,17 @@
+.gradle/
+.kotlin/
+**/build/
+local.properties
+*.jks
+*.keystore
+*.p12
+*.env
+*.log
+.cxx/
+.agents/skills/**/__pycache__/
+.codex/skills/**/__pycache__/
+graphify-out/ast_cache/
+
+graphify-out/cache/
+scripts/__pycache__/
+dist/

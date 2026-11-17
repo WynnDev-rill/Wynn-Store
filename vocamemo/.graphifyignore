@@ -1,0 +1,11 @@
+.agents/
+.codex/
+.gradle/
+.kotlin/
+.impeccable/
+graphify-out/
+app/build/
+app/src/main/assets/
+app/src/main/res/
+app/schemas/
+dist/

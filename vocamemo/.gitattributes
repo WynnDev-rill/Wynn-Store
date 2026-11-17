@@ -1,0 +1,4 @@
+.agents/** linguist-vendored=true -whitespace
+.codex/** linguist-vendored=true -whitespace
+app/src/main/assets/*-OFL.txt -whitespace
+graphify-out/** linguist-generated=true

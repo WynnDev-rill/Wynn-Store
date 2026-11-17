@@ -1,0 +1,144 @@
+name: VocaMemo Android
+on:
+  workflow_dispatch:
+  push:
+    tags: ['vocamemo-v*']
+permissions:
+  contents: read
+concurrency:
+  group: vocamemo-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    permissions:
+      contents: write # Reading a staged draft release requires repository push access.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: vocamemo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Audit bundled dictionary
+        run: python3 scripts/audit-dictionary.py
+      - name: Restore private release key
+        id: key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.VOCA_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Signing secrets unavailable; validating unsigned build and staged signed release."
+            exit 0
+          fi
+          echo "available=true" >> "$GITHUB_OUTPUT"
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vocamemo-release.p12"
+      - name: Test, lint and build signed release
+        env:
+          VOCA_KEYSTORE_PATH: ${{ steps.key.outputs.available == 'true' && format('{0}/vocamemo-release.p12', runner.temp) || '' }}
+          VOCA_STORE_PASSWORD: ${{ secrets.VOCA_STORE_PASSWORD }}
+          VOCA_KEY_ALIAS: ${{ secrets.VOCA_KEY_ALIAS }}
+          VOCA_KEY_PASSWORD: ${{ secrets.VOCA_KEY_PASSWORD }}
+        run: ./gradlew testDebugUnitTest lintRelease assembleRelease assembleDebug assembleDebugAndroidTest --console=plain
+      - name: Verify production signature and prepare feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          if [ -f app/build/outputs/apk/release/app-release.apk ]; then
+            cp app/build/outputs/apk/release/app-release.apk dist/VocaMemo.apk
+          else
+            VERSION=$(python3 scripts/project-version.py)
+            gh release download "vocamemo-v$VERSION" --pattern VocaMemo.apk --dir dist
+          fi
+          python3 scripts/release-manifest.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VocaMemo-release
+          path: vocamemo/dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VocaMemo-device-input
+          path: |
+            vocamemo/app/build/outputs/apk/debug/*.apk
+            vocamemo/app/build/outputs/apk/androidTest/debug/*.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: VocaMemo-build-reports
+          path: |
+            vocamemo/app/build/reports/
+            vocamemo/app/build/test-results/
+      - name: Remove runner signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/vocamemo-release.p12"
+  device:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [26, 35]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: VocaMemo-device-input
+          path: device-input
+      - uses: actions/download-artifact@v4
+        with:
+          name: VocaMemo-release
+          path: release-input
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Offline instrumentation and release install
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: bash vocamemo/scripts/device-tests.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: VocaMemo-device-${{ matrix.api }}
+          path: device-results/
+  publish:
+    if: startsWith(github.ref, 'refs/tags/vocamemo-v')
+    needs: [build, device]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: VocaMemo-release
+          path: release
+      - name: Publish verified release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(python3 vocamemo/scripts/project-version.py)
+          test "$GITHUB_REF_NAME" = "vocamemo-v$VERSION"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" release/VocaMemo.apk release/stable.json release/SHA256SUMS release/signature-verification.txt --clobber
+            gh release edit "$GITHUB_REF_NAME" --draft=false --latest=false --title "VocaMemo ${GITHUB_REF_NAME#vocamemo-v}" --notes-file vocamemo/RELEASE_NOTES.md
+          else
+            gh release create "$GITHUB_REF_NAME" release/VocaMemo.apk release/stable.json release/SHA256SUMS release/signature-verification.txt --title "VocaMemo ${GITHUB_REF_NAME#vocamemo-v}" --notes-file vocamemo/RELEASE_NOTES.md --verify-tag --latest=false
+          fi

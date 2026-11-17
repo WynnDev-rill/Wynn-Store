@@ -1,0 +1,2 @@
+# Local, deterministic AST graph. Scope is in .graphifyignore.
+viz_node_limit=0
