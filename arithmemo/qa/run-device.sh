@@ -59,6 +59,13 @@ capture_settled dark-large
 "$ADB_BIN" shell settings put system accelerometer_rotation 0
 "$ADB_BIN" shell settings put system user_rotation 1
 capture_settled landscape
+# Keep cold-launch evidence separate; it must never replace a failing warm capture.
+restore_display
+"$ADB_BIN" shell settings put system font_scale 1.6
+"$ADB_BIN" shell cmd uimode night yes
+"$ADB_BIN" shell am force-stop id.wynn.arithmemo.debug
+"$ADB_BIN" shell am start -W -n id.wynn.arithmemo.debug/id.wynn.arithmemo.MainActivity
+capture_settled dark-cold
 restore_display
 trap - EXIT
 "$ADB_BIN" logcat -d -s AndroidRuntime:E > qa/output/crashes.txt
