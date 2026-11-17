@@ -25,6 +25,42 @@ PYCHECK
 for shot in home flashcard stats settings recall feedback dark-large landscape relaunch; do
   "$ADB_BIN" exec-out run-as id.wynn.arithmemo.debug cat "files/qa-$shot.png" > "qa/output/$shot.png"
 done
+# UiAutomation screenshots can retain an incomplete rotated surface on API 36.
+# Independently capture warm transitions after instrumentation has disconnected.
+restore_display() {
+  "$ADB_BIN" shell settings put system font_scale 1.0
+  "$ADB_BIN" shell cmd uimode night no
+  "$ADB_BIN" shell settings put system user_rotation 0
+  "$ADB_BIN" shell settings put system accelerometer_rotation 1
+}
+trap restore_display EXIT
+"$ADB_BIN" shell am start -W -n id.wynn.arithmemo.debug/id.wynn.arithmemo.MainActivity
+sleep 2
+capture_settled() {
+  local name="$1"
+  sleep 5
+  "$ADB_BIN" shell dumpsys window windows > "qa/output/$name-window.txt"
+  "$ADB_BIN" shell dumpsys display > "qa/output/$name-display.txt"
+  python3 - "$name" <<'PYCHECK'
+import re,sys
+from pathlib import Path
+s=Path('qa/output/'+sys.argv[1]+'-window.txt').read_text()
+assert re.search(r'mCurrentFocus=.*id\.wynn\.arithmemo\.debug/',s),'ArithMemo is not the focused window'
+PYCHECK
+  "$ADB_BIN" exec-out screencap -p > "qa/output/$name.png"
+  sleep 1
+  "$ADB_BIN" exec-out screencap -p > "qa/output/$name-confirm.png"
+}
+"$ADB_BIN" shell settings put system font_scale 1.6
+"$ADB_BIN" shell cmd uimode night yes
+capture_settled dark-large
+"$ADB_BIN" shell settings put system font_scale 1.0
+"$ADB_BIN" shell cmd uimode night no
+"$ADB_BIN" shell settings put system accelerometer_rotation 0
+"$ADB_BIN" shell settings put system user_rotation 1
+capture_settled landscape
+restore_display
+trap - EXIT
 "$ADB_BIN" logcat -d -s AndroidRuntime:E > qa/output/crashes.txt
 python3 - <<'PYCHECK'
 from pathlib import Path
