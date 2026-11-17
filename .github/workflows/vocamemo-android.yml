@@ -11,7 +11,7 @@ concurrency:
 jobs:
   build:
     permissions:
-      contents: write # Reading a staged draft release requires repository push access.
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 25
     defaults:
@@ -58,7 +58,7 @@ jobs:
             cp app/build/outputs/apk/release/app-release.apk dist/VocaMemo.apk
           else
             VERSION=$(python3 scripts/project-version.py)
-            gh release download "vocamemo-v$VERSION" --pattern VocaMemo.apk --dir dist
+            cp "distribution/VocaMemo-$VERSION.apk" dist/VocaMemo.apk
           fi
           python3 scripts/release-manifest.py
       - uses: actions/upload-artifact@v4
