@@ -1,6 +1,6 @@
 # Native visual review
 
-Visual evidence is captured from real Android emulators, not browser mockups. Sources: GitHub Actions run 44077663917, API 26 normal home/flashcard/recall/settings/statistics and API 36 normal, dark with font scale 1.6, and landscape. Fresh final captures are checked again after the final gate.
+Visual evidence is captured from real Android emulators, not browser mockups. Sources: GitHub Actions run 44077663917, API 26 normal home/flashcard/recall/settings/statistics and API 36 normal, dark with font scale 1.6, and landscape. Final acceptance: run44123871251 passed API26/36. Independent warm-transition adb captures and their confirmation frames show correct dark-system icon contrast and a complete landscape rail; see screens/.
 
 The supplied references are reflected in the royal-blue daily card, pale-blue equation surfaces, generous rounded actions, Jakarta typography and restrained green learning/selection states. Flashcards prioritize one equation and a direct reveal action. Filters collapse to keep memorization visible. No unrelated decorative visual system or paid reference assets are included.
 

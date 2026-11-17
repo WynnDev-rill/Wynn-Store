@@ -2,6 +2,8 @@
 
 Hafalan aritmatika pribadi, sedikit setiap hari. Aplikasi Android native Kotlin + Jetpack Compose, tanpa akun, iklan, analitik, atau materi rumus. Semua aktivitas belajar berjalan offline.
 
+<p><img src="docs/screens/home.png" width="220" alt="Beranda ArithMemo"/> <img src="docs/screens/flashcard.png" width="220" alt="Flashcard hafalan"/> <img src="docs/screens/dark-large.png" width="220" alt="Tema gelap dan teks besar"/></p>
+
 ## Memakai aplikasi
 
 1. Pasang `ArithMemo.apk` dari [GitHub Release ArithMemo](https://github.com/WynnDev-rill/Wynn-Store/releases/tag/arithmemo-v1.0.0). Android 8.0 atau lebih baru.
