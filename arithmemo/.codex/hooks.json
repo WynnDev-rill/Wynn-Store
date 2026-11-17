@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "graphify hook-check"
+            "command": "uv tool run --from graphifyy==0.9.111 graphify hook-check"
           }
         ]
       }

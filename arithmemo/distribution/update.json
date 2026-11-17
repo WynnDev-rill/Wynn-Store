@@ -4,7 +4,7 @@
   "packageName": "id.wynn.arithmemo",
   "minSdk": 26,
   "apkUrl": "https://github.com/WynnDev-rill/Wynn-Store/releases/download/arithmemo-v1.0.0/ArithMemo.apk",
-  "sha256": "645b450f7b5c7eb13a6ea041437a9098e5ee4826235e3cd0a7ab17ada336aeae",
+  "sha256": "d7f04285e5e45ebec93b24347e033b991f6a56841dfa6433de172b5faa6ad9ef",
   "signerSha256": "09e663533c70cbf440f3bef30acb2832355d8f1a5e0c18834b8042f5aa6c5eab",
   "sizeBytes": 1742498,
   "notes": "# ArithMemo 1.0.0\n\nRilis pertama aplikasi hafalan aritmatika native Android.\n\n- Ruang hafalan dalam daftar dan flashcard interaktif.\n- Penjumlahan, pengurangan, perkalian, pembagian bulat; operand 1\u20133 digit.\n- Latihan mengingat, tes 60 detik, soal acak, dan pengulangan terjadwal adaptif.\n- Kelompok hafalan, pilihan operasi, target harian, statistik dan tema gelap.\n- Penyimpanan lokal transaksional, pemulihan sesi dan ekspor/impor cadangan.\n- Pemeriksaan update GitHub, notifikasi opsional dan instalasi APK terverifikasi.\n\nAndroid 8.0 atau lebih baru. Tanpa akun, iklan, analitik, atau materi rumus.\n"
