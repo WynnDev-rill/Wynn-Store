@@ -26,3 +26,5 @@ The app checks on launch/manual action and through WorkManager every 24 hours wi
 Increment versionCode, versionName and tag; update notes, dataset provenance if changed; provide Room migrations; run all tests; use same private key; inspect signed artifact, publish through workflow, update only VocaMemo stable feed; test upgrade over previous signed APK with existing Memo/progress. Never distribute a debug APK as VocaMemo.apk.
 
 Initial upload endpoint rejected the workspace integration credential with HTTP 401. The signed APK is therefore staged in Git following the ScreenGuard distribution pattern; no signing key or password enters Git. GitHub Actions publishes with its own scoped GITHUB_TOKEN after all checks pass.
+
+Dictionary refresh: bump the versioned copied asset filename in Dictionary.kt (currently dictionary-v1.db) whenever changing the bundled database; otherwise existing installs retain their prior cached dictionary. Verify/copy the new generation atomically, preserve the separate personal Room database and retain source licences. Never use destructive Room migrations for an update.

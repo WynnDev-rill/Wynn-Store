@@ -1058,14 +1058,18 @@ private fun PracticeScreen(vm: VocaModel, tts: Pronouncer) {
                     )
                 val typed = p.mode == "Mengetik" || p.mode == "Tes kecepatan"
                 Card(
-                    onClick = { if (!typed) vm.reveal() },
-                    enabled = !typed,
                     shape = RoundedCornerShape(28.dp),
                     colors =
                         CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer
                         ),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 230.dp),
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .heightIn(min = 230.dp)
+                            .then(
+                                if (!typed) Modifier.clickable(role = Role.Button) { vm.reveal() }
+                                else Modifier
+                            ),
                 ) {
                     Column(
                         Modifier.fillMaxWidth().padding(24.dp).animateContentSize(),

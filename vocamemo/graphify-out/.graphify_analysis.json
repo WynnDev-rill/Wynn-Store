@@ -10,8 +10,6 @@
       "app_src_main_java_id_wynn_vocamemo_mainactivity_flowrowcompat",
       "app_src_main_java_id_wynn_vocamemo_mainactivity_grouppicker",
       "app_src_main_java_id_wynn_vocamemo_mainactivity_hint",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_kt_bytearray",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_kt_composable",
       "app_src_main_java_id_wynn_vocamemo_mainactivity_mainactivity",
       "app_src_main_java_id_wynn_vocamemo_mainactivity_mainactivity_oncreate",
       "app_src_main_java_id_wynn_vocamemo_mainactivity_memoeditor",
@@ -33,17 +31,25 @@
       "app_src_main_java_id_wynn_vocamemo_mainactivity_todayreviews",
       "app_src_main_java_id_wynn_vocamemo_mainactivity_vocascreen",
       "app_src_main_java_id_wynn_vocamemo_mainactivity_wordscreen",
-      "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel_report",
+      "app_src_main_java_id_wynn_vocamemo_theme",
+      "app_src_main_java_id_wynn_vocamemo_theme_vocatheme",
       "backhandler",
       "bundle",
+      "bytearray",
       "collectasstatewithlifecycle",
+      "color",
       "componentactivity",
+      "composable",
       "delay",
       "dp",
       "enableedgetoedge",
+      "font",
+      "fontfamily",
+      "fontweight",
       "icons",
       "imagevector",
       "instant",
+      "issystemindarktheme",
       "items",
       "launch",
       "lazycolumn",
@@ -143,8 +149,7 @@
       "primarykey",
       "query",
       "roomdatabase",
-      "update",
-      "uuid"
+      "update"
     ],
     "3": [
       "app_build_gradle",
@@ -264,6 +269,7 @@
       "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel_nextunscored",
       "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel_openword",
       "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel_page",
+      "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel_report",
       "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel_reveal",
       "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel_search",
       "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel_start",
@@ -275,6 +281,7 @@
       "savedstatehandle",
       "sharingstarted",
       "statein",
+      "uuid",
       "viewmodelscope",
       "withtransaction"
     ],
@@ -301,14 +308,7 @@
       "uidevice"
     ],
     "9": [
-      "app_src_main_java_id_wynn_vocamemo_theme",
-      "app_src_main_java_id_wynn_vocamemo_theme_vocatheme",
-      "color",
-      "composable",
-      "font",
-      "fontfamily",
-      "fontweight",
-      "issystemindarktheme"
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_kt_bytearray"
     ],
     "10": [
       "app_src_main_java_id_wynn_vocamemo_data_memokey",
@@ -369,7 +369,7 @@
       "scripts_refresh_graph_sh__entry"
     ],
     "17": [
-      "bytearray"
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_kt_composable"
     ],
     "18": [
       "build_gradle"
@@ -401,16 +401,16 @@
     ]
   },
   "cohesion": {
-    "0": 0.06400409626216078,
+    "0": 0.05711849957374254,
     "1": 0.04878048780487805,
-    "2": 0.11904761904761904,
+    "2": 0.12436974789915967,
     "3": 0.06829268292682927,
     "4": 0.12681159420289856,
     "5": 0.2571428571428571,
     "6": 0.23076923076923078,
-    "7": 0.09359605911330049,
-    "8": 0.1631578947368421,
-    "9": 0.2857142857142857,
+    "7": 0.08602150537634409,
+    "8": 0.16842105263157894,
+    "9": 1.0,
     "10": 0.13157894736842105,
     "11": 0.3333333333333333,
     "12": 0.4,
@@ -446,13 +446,13 @@
       "degree": 15
     },
     {
-      "id": "app_src_main_java_id_wynn_vocamemo_updates_updates",
-      "label": "Updates",
+      "id": "app_src_main_java_id_wynn_vocamemo_mainactivity_memoscreen",
+      "label": "MemoScreen()",
       "degree": 13
     },
     {
-      "id": "app_src_main_java_id_wynn_vocamemo_mainactivity_memoscreen",
-      "label": "MemoScreen()",
+      "id": "app_src_main_java_id_wynn_vocamemo_updates_updates",
+      "label": "Updates",
       "degree": 13
     },
     {
@@ -466,13 +466,13 @@
       "degree": 12
     },
     {
-      "id": "app_src_main_java_id_wynn_vocamemo_dictionary_dictionary",
-      "label": "Dictionary",
+      "id": "app_src_main_java_id_wynn_vocamemo_mainactivity_dictionaryscreen",
+      "label": "DictionaryScreen()",
       "degree": 10
     },
     {
-      "id": "app_src_main_java_id_wynn_vocamemo_mainactivity_dictionaryscreen",
-      "label": "DictionaryScreen()",
+      "id": "app_src_main_java_id_wynn_vocamemo_dictionary_dictionary",
+      "label": "Dictionary",
       "degree": 10
     },
     {
@@ -505,8 +505,19 @@
       "why": "inferred connection - not explicitly stated in source; bridges separate communities"
     },
     {
-      "source": "MemoEditor()",
-      "target": "Memo",
+      "source": "VocaScreen()",
+      "target": "VocaModel",
+      "source_files": [
+        "app/src/main/java/id/wynn/vocamemo/MainActivity.kt",
+        "app/src/main/java/id/wynn/vocamemo/VocaModel.kt"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "DictionaryScreen()",
+      "target": "Review",
       "source_files": [
         "app/src/main/java/id/wynn/vocamemo/MainActivity.kt",
         "app/src/main/java/id/wynn/vocamemo/Data.kt"
@@ -516,22 +527,11 @@
       "why": "bridges separate communities"
     },
     {
-      "source": "MemoScreen()",
-      "target": "Memo",
+      "source": "DictionaryScreen()",
+      "target": "VocaModel",
       "source_files": [
         "app/src/main/java/id/wynn/vocamemo/MainActivity.kt",
-        "app/src/main/java/id/wynn/vocamemo/Data.kt"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "references",
-      "why": "bridges separate communities"
-    },
-    {
-      "source": "PracticeHome()",
-      "target": "Memo",
-      "source_files": [
-        "app/src/main/java/id/wynn/vocamemo/MainActivity.kt",
-        "app/src/main/java/id/wynn/vocamemo/Data.kt"
+        "app/src/main/java/id/wynn/vocamemo/VocaModel.kt"
       ],
       "confidence": "EXTRACTED",
       "relation": "references",
@@ -542,7 +542,7 @@
     {
       "type": "bridge_node",
       "question": "Why does `Memo` connect `Community 2` to `Community 0`, `Community 6`, `Community 7`, `Community 8`, `Community 10`?",
-      "why": "High betweenness centrality (0.130) - this node is a cross-community bridge."
+      "why": "High betweenness centrality (0.131) - this node is a cross-community bridge."
     },
     {
       "type": "verify_inferred",
@@ -552,17 +552,12 @@
     {
       "type": "low_cohesion",
       "question": "Should `Community 0` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.06400409626216078 - nodes in this community are weakly interconnected."
+      "why": "Cohesion score 0.05711849957374254 - nodes in this community are weakly interconnected."
     },
     {
       "type": "bridge_node",
       "question": "Why does `VocaModel` connect `Community 7` to `Community 0`, `Community 10`, `Community 3`, `Community 5`?",
-      "why": "High betweenness centrality (0.121) - this node is a cross-community bridge."
-    },
-    {
-      "type": "verify_inferred",
-      "question": "Are the 2 inferred relationships involving `Updates` (e.g. with `.checkUpdates()` and `.installUpdate()`) actually correct?",
-      "why": "`Updates` has 2 INFERRED edges - model-reasoned connections that need verification."
+      "why": "High betweenness centrality (0.122) - this node is a cross-community bridge."
     },
     {
       "type": "low_cohesion",
@@ -572,7 +567,12 @@
     {
       "type": "low_cohesion",
       "question": "Should `Community 2` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.11904761904761904 - nodes in this community are weakly interconnected."
+      "why": "Cohesion score 0.12436974789915967 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 3` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.06829268292682927 - nodes in this community are weakly interconnected."
     }
   ]
 }

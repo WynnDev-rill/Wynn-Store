@@ -56,8 +56,9 @@ class UiTest {
             vm.type(" REMEMBER ")
             vm.checkAnswer()
             org.junit.Assert.assertTrue(vm.practice!!.correct)
-            vm.grade(3)
         }
+        capture("09-typing")
+        rule.runOnUiThread { vm.grade(3) }
         rule.waitUntil(10000) { !vm.busy }
         rule.runOnUiThread { vm.save(original.copy(favourite = true)) }
         rule.waitUntil(10000) { vm.memos.value.first { it.id == original.id }.favourite }
@@ -73,13 +74,20 @@ class UiTest {
             }
             org.junit.Assert.assertEquals(0, vm.practice!!.reviewed)
             org.junit.Assert.assertFalse(vm.practice!!.finished)
+        }
+        capture("10-mechanical")
+        rule.runOnUiThread {
             vm.start("Daftar", true, "QA modes")
             org.junit.Assert.assertEquals("ingat", vm.practice!!.prompt)
+        }
+        capture("11-list")
+        rule.runOnUiThread {
             vm.start("Flashcard", false, "QA modes")
             vm.reveal()
             org.junit.Assert.assertEquals("ingat", vm.practice!!.answer)
-            vm.end()
         }
+        capture("12-flashcard")
+        rule.runOnUiThread { vm.end() }
     }
 
     @Test
