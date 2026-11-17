@@ -176,9 +176,20 @@ class MemoViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun persistSession() = action {
-        val s = snapshot.value.session
-        withContext(Dispatchers.IO) { store.saveSession(s) }
+    private fun persistSession() {
+        viewModelScope.launch {
+            mutex.withLock {
+                try {
+                    val s = snapshot.value.session
+                    withContext(Dispatchers.IO) { store.saveSession(s) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    message.value =
+                        "Sesi belum dapat disimpan. Periksa ruang penyimpanan dan coba lagi."
+                }
+            }
+        }
     }
 
     fun export(write: (String) -> Unit) = action {

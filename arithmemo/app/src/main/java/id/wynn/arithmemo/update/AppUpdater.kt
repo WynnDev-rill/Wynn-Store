@@ -208,6 +208,9 @@ class AppUpdater(private val context: Context) {
                 val uri = FileProvider.getUriForFile(context, "${context.packageName}.updates", apk)
                 Intent(Intent.ACTION_VIEW)
                     .setDataAndType(uri, "application/vnd.android.package-archive")
+                    .apply {
+                        clipData = android.content.ClipData.newRawUri("ArithMemo update", uri)
+                    }
                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
         } catch (e: CancellationException) {

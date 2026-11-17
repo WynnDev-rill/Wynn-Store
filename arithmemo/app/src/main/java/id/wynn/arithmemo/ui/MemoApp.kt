@@ -39,7 +39,7 @@ private enum class Page(val label: String, val icon: ImageVector) {
     HOME("Beranda", Icons.Outlined.Home),
     LIBRARY("Hafalan", Icons.Outlined.Style),
     STATS("Statistik", Icons.Outlined.Insights),
-    SETTINGS("Pengaturan", Icons.Outlined.Settings),
+    SETTINGS("Setelan", Icons.Outlined.Settings),
 }
 
 @Composable

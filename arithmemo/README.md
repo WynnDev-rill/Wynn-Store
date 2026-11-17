@@ -5,11 +5,11 @@ Hafalan aritmatika pribadi, sedikit setiap hari. Aplikasi Android native Kotlin 
 ## Memakai aplikasi
 
 1. Pasang `ArithMemo.apk` dari [GitHub Release ArithMemo](https://github.com/WynnDev-rill/Wynn-Store/releases/tag/arithmemo-v1.0.0). Android 8.0 atau lebih baru.
-2. Buka **Hafalan** atau **Pengaturan** untuk memilih operasi, operand 1–3 digit, dan kelompok. Minimal satu operasi harus aktif. Pengurangan tidak negatif; pembagian selalu bulat tanpa sisa.
+2. Buka **Hafalan** atau **Setelan** untuk memilih operasi, operand 1–3 digit, dan kelompok. Minimal satu operasi harus aktif. Pengurangan tidak negatif; pembagian selalu bulat tanpa sisa.
 3. Baca **Daftar**, buka jawaban pada **Flashcard**, atau mulai **Latihan mengingat**. Daftar/pratinjau tidak mengubah statistik.
 4. **Ulangi terjadwal** mendahulukan kartu jatuh tempo lalu kartu baru. Salah/“Ulangi” dijadwalkan sekitar 1 menit; jawaban berhasil memperpanjang interval. **Tes kecepatan** berlangsung 60 detik aktif; meninggalkan layar menjeda waktu. **Soal acak** mengambil dari seluruh rentang operand yang dipilih.
 5. Atur target harian dan pantau akurasi, penguasaan, waktu jawaban benar, hari beruntun, serta riwayat 7 hari. Flashcard memakai penilaian diri; waktunya tidak dicampur dengan kecepatan jawaban ketik.
-6. Jawaban langsung disimpan melalui transaksi SQLite. Sesi yang terhenti dapat dilanjutkan setelah aplikasi ditutup. Ekspor cadangan JSON melalui **Pengaturan**, dan simpan file secara aman. Pemulihan meminta konfirmasi dan memvalidasi isi sebelum mengganti data. Menghapus aplikasi juga menghapus data lokalnya.
+6. Jawaban langsung disimpan melalui transaksi SQLite. Sesi yang terhenti dapat dilanjutkan setelah aplikasi ditutup. Ekspor cadangan JSON melalui **Setelan**, dan simpan file secara aman. Pemulihan meminta konfirmasi dan memvalidasi isi sebelum mengganti data. Menghapus aplikasi juga menghapus data lokalnya.
 
 Katalog 1 digit mencakup semua pasangan valid. Untuk 2–3 digit, daftar berisi hingga 240 kartu pilihan stabil per operasi agar mudah dipelajari; mode acak mencakup seluruh rentang. Kelompok awal/akhir membagi rentang angka pertama menjadi dua. Semua statistik berasal dari jawaban nyata, tanpa data contoh.
 

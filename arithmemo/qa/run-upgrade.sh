@@ -2,6 +2,19 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p qa/output/upgrade qa/fixtures
+capture_exit() {
+  local status=$?
+  adb logcat -d -b main -b crash > qa/output/upgrade/device-log.txt || true
+  adb exec-out screencap -p > qa/output/upgrade/final-screen.png || true
+  if test "$status" -ne 0; then
+    adb exec-out run-as id.wynn.arithmemo cat cache/updates/update.apk > qa/fixtures/diagnostic.apk || true
+    if test -s qa/fixtures/diagnostic.apk; then
+      adb install -r qa/fixtures/diagnostic.apk > qa/output/upgrade/diagnostic-adb-install.txt 2>&1 || true
+    fi
+  fi
+  return "$status"
+}
+trap capture_exit EXIT
 python3 - <<'PY'
 import hashlib,json,pathlib,urllib.request,os,time
 m=json.loads(pathlib.Path('qa/upgrade-fixture.json').read_text())

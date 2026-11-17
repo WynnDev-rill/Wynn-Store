@@ -6,6 +6,7 @@ import id.wynn.arithmemo.core.*
 import id.wynn.arithmemo.ui.MemoViewModel
 import java.time.Duration
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.*
 import org.junit.Assert.*
@@ -59,4 +60,46 @@ class TimerTest {
             Dispatchers.resetMain()
         }
     }
+
+    @Test
+    fun backgroundAutosaveDoesNotDisableNumberEntry() =
+        runBlocking<Unit> {
+            Dispatchers.setMain(UnconfinedTestDispatcher())
+            try {
+                val app = ApplicationProvider.getApplicationContext<Application>()
+                app.deleteDatabase("arithmemo.db")
+                val vm = MemoViewModel(app)
+                withTimeout(10000) {
+                    vm.loaded.first { it }
+                    vm.busy.first { !it }
+                }
+                vm.snapshot.value =
+                    Snapshot(
+                        session =
+                            StudySession(
+                                mode = StudyMode.RECALL,
+                                cards = listOf(Fact(2, Operation.ADD, 3)),
+                            )
+                    )
+                vm.foreground(true)
+                val states = mutableListOf<Boolean>()
+                val observer =
+                    CoroutineScope(UnconfinedTestDispatcher()).launch {
+                        vm.busy.collect { states.add(it) }
+                    }
+                ShadowSystemClock.advanceBy(Duration.ofSeconds(3))
+                vm.tick()
+                assertFalse("Automatic save must not block the keypad", states.any { it })
+                vm.input("5")
+                assertEquals("5", vm.snapshot.value.session!!.typed)
+                observer.cancel()
+                vm.abandon()
+                withTimeout(10000) {
+                    vm.snapshot.first { it.session == null }
+                    vm.busy.first { !it }
+                }
+            } finally {
+                Dispatchers.resetMain()
+            }
+        }
 }

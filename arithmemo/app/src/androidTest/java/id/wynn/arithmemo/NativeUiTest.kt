@@ -52,7 +52,7 @@ class NativeUiTest {
         rule.onNodeWithText("Statistik").performClick()
         rule.onNodeWithText("Perkembangan Anda").assertIsDisplayed()
         capture("stats")
-        rule.onNodeWithText("Pengaturan").performClick()
+        rule.onNodeWithText("Setelan").performClick()
         rule.onNodeWithText("Target harian").assertExists()
         capture("settings")
     }
@@ -63,6 +63,12 @@ class NativeUiTest {
         rule.onNodeWithText("Latihan mengingat").performScrollTo().performClick()
         rule.waitUntil(10000) {
             rule.onAllNodesWithTag("question").fetchSemanticsNodes().isNotEmpty()
+        }
+        rule.waitUntil(10000) {
+            rule
+                .onAllNodes(hasContentDescription("Angka 1") and isEnabled())
+                .fetchSemanticsNodes()
+                .isNotEmpty()
         }
         capture("recall")
         val text =

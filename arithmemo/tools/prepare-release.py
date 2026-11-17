@@ -15,7 +15,7 @@ badging=run(build/'aapt','dump','badging',apk)
 assert 'application-debuggable' not in badging,'Debuggable QA APK cannot be released'
 m=re.search(r"package: name='([^']+)' versionCode='([^']+)' versionName='([^']+)'",badging)
 assert m and m[1]=='id.wynn.arithmemo','Wrong package'
-code=int(m[2]);assert code>0,'QA version code cannot be released'
+code=int(m[2]);assert code>0,'Version code must be positive'
 version=m[3];assert re.fullmatch(r'\d+\.\d+\.\d+',version)
 minimum=int(re.search(r"sdkVersion:'(\d+)'",badging)[1])
 out=root/'distribution';out.mkdir(exist_ok=True)
