@@ -67,16 +67,32 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          python3 tools/prepare-release.py distribution/ArithMemo.apk
           python3 - <<'PY'
-          import json,pathlib,subprocess
+          import hashlib,json,pathlib,subprocess
           config=json.loads(pathlib.Path('distribution/release-job.json').read_text())
+          expected={'verifiedRun':'.github/workflows/arithmemo-android.yml','upgradeRun':'.github/workflows/arithmemo-bootstrap.yml'}
           for key in ('verifiedRun','upgradeRun'):
               run=json.loads(subprocess.check_output(['gh','api',f'repos/WynnDev-rill/Wynn-Store/actions/runs/{config[key]}'],text=True))
               assert run['conclusion']=='success',key+' did not pass'
-              if key=='verifiedRun':assert run['head_sha']==config['verifiedSource']
+              assert run['path']==expected[key],key+' workflow mismatch'
+              source=config['verifiedSource' if key=='verifiedRun' else 'upgradeSource']
+              assert run['head_sha']==source,key+' source mismatch'
+              if key=='upgradeRun':
+                  jobs=json.loads(subprocess.check_output(['gh','api',f'repos/WynnDev-rill/Wynn-Store/actions/runs/{config[key]}/jobs'],text=True))['jobs']
+                  assert any(j['name']=='upgrade / upgrade' and j['conclusion']=='success' for j in jobs),'Real upgrade job did not pass'
+          def prior(path):
+              return subprocess.check_output(['git','show',config['upgradeSource']+':arithmemo/'+path],cwd='..')
+          fixture=json.loads(prior('qa/upgrade-fixture.json'))
+          candidate=json.loads(pathlib.Path('distribution/update.json').read_text())
+          assert fixture['candidate']==candidate,'Upgrade tested a different candidate manifest'
+          assert hashlib.sha256(prior('distribution/ArithMemo.apk')).hexdigest()==candidate['sha256'],'Upgrade APK mismatch'
+          for name,item in fixture['files'].items():
+              assert hashlib.sha256(prior('qa/fixtures/'+name)).hexdigest()==item['sha256'],'Upgrade fixture mismatch'
+          upgrade_paths=['arithmemo/qa/run-upgrade.sh','arithmemo/qa/upgrade-fixture.json','.github/workflows/arithmemo-upgrade.yml']
+          assert not subprocess.check_output(['git','diff','--name-only',config['upgradeSource'],'HEAD','--',*upgrade_paths],text=True,cwd='..').strip(),'Unverified upgrade harness changes'
           paths=['arithmemo/app','arithmemo/build.gradle.kts','arithmemo/settings.gradle.kts','arithmemo/gradle.properties','arithmemo/gradle','arithmemo/gradlew','arithmemo/qa/run-device.sh']
           changed=subprocess.check_output(['git','diff','--name-only',config['verifiedSource'],'HEAD','--',*paths],text=True,cwd='..').strip()
           assert not changed,'Unverified application changes: '+changed
           PY
-          python3 tools/prepare-release.py distribution/ArithMemo.apk
           python3 tools/publish-release.py --activate

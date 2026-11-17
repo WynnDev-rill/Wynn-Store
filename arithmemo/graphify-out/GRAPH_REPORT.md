@@ -4,12 +4,12 @@
 - cluster-only mode — file stats not available
 
 ## Summary
-- 333 nodes · 664 edges · 12 communities (7 shown, 5 thin omitted)
-- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 57 edges (avg confidence: 0.85)
+- 341 nodes · 684 edges · 13 communities (6 shown, 7 thin omitted)
+- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 57 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `47da2236`
+- Built from commit: `f35abab8`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -26,12 +26,13 @@
 - NativeUiTest.kt
 - Theme.kt
 - MainActivity.kt
+- MainActivity.kt
 
 ## God Nodes (most connected - your core abstractions)
 1. `MemoViewModel` - 31 edges
-2. `MemoStore` - 21 edges
-3. `AppUpdater` - 19 edges
-4. `Fact` - 19 edges
+2. `MemoStore` - 23 edges
+3. `Fact` - 19 edges
+4. `AppUpdater` - 19 edges
 5. `StudySession` - 14 edges
 6. `MemoApp()` - 14 edges
 7. `PracticeConfig` - 13 edges
@@ -54,55 +55,51 @@
 ## Import Cycles
 - None detected.
 
-## Communities (12 total, 5 thin omitted)
+## Communities (13 total, 7 thin omitted)
 
 ### Community 0 - "MemoApp.kt"
-Cohesion: 0.09
-Nodes (15): HomeScreen(), LibraryScreen(), MemoApp(), SessionScreen(), SettingsScreen(), StatsScreen(), ActionIcon(), EquationCard() (+7 more)
+Cohesion: 0.06
+Nodes (20): HomeScreen(), LibraryScreen(), MemoApp(), Page, HOME, LIBRARY, SETTINGS, STATS (+12 more)
 
 ### Community 1 - "Fact"
 Cohesion: 0.09
-Nodes (19): FactGroup, ALL, LOWER, UPPER, Facts, Operation, ADD, DIVIDE (+11 more)
-
-### Community 2 - "AppUpdater.kt"
-Cohesion: 0.08
-Nodes (3): AppUpdater, State, UpdateManifest
+Nodes (20): Fact, FactGroup, ALL, LOWER, UPPER, Facts, Operation, ADD (+12 more)
 
 ### Community 3 - "MemoStore"
 Cohesion: 0.12
-Nodes (14): Fact, Attempt, Backup, Snapshot, Stats, StudyMode, ADAPTIVE, FLASHCARD (+6 more)
+Nodes (13): Attempt, Backup, Snapshot, Stats, StudyMode, ADAPTIVE, FLASHCARD, RANDOM (+5 more)
 
 ### Community 4 - "StudySession"
-Cohesion: 0.08
-Nodes (3): MainActivity, MemoApplication, UpdateWorker
-
-### Community 5 - "UpdateManifest"
 Cohesion: 0.09
 Nodes (4): ArithMemoTheme(), branded(), ApkTransfer, UpdateTest
 
-### Community 9 - "NativeUiTest.kt"
-Cohesion: 0.12
-Nodes (5): Page, HOME, LIBRARY, SETTINGS, STATS
+### Community 6 - "TimerTest.kt"
+Cohesion: 0.16
+Nodes (3): NativeUiTest, RestorationTest, saveDeviceCapture()
+
+### Community 7 - "MemoViewModel"
+Cohesion: 0.17
+Nodes (3): AppUpdater, State, UpdateManifest
 
 ## Knowledge Gaps
-- **20 isolated node(s):** `ALL`, `LOWER`, `UPPER`, `ADD`, `DIVIDE` (+15 more)
-  These have ≤1 connection - possible missing edges. (Counts symbols only; 111 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **20 isolated node(s):** `HOME`, `LIBRARY`, `SETTINGS`, `STATS`, `ALL` (+15 more)
+  These have ≤1 connection - possible missing edges. (Counts symbols only; 114 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AppUpdater` connect `AppUpdater.kt` to `MemoApp.kt`, `MemoStore`, `StudySession`, `TimerTest.kt`, `AppUpdater`?**
-  _High betweenness centrality (0.225) - this node is a cross-community bridge._
+- **Why does `MemoStore` connect `UpdateManifest` to `MemoApp.kt`, `MemoStore`, `TimerTest.kt`, `AppUpdater`, `NativeUiTest.kt`, `Theme.kt`, `MainActivity.kt`?**
+  _High betweenness centrality (0.260) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `MemoStore` (e.g. with `.answersAndSessionSurviveCloseAndDuplicateCommit()` and `.invalidImportCannotOverwriteExistingData()`) actually correct?**
   _`MemoStore` has 2 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `ALL`, `LOWER`, `UPPER` to the rest of the system?**
+- **What connects `HOME`, `LIBRARY`, `SETTINGS` to the rest of the system?**
   _20 weakly-connected nodes found - possible missing edges._
 - **Should `MemoApp.kt` be split into smaller, more focused modules?**
-  _Cohesion score 0.08974358974358974 - nodes in this community are weakly interconnected._
-- **Why does `MemoViewModel` connect `AppUpdater` to `MemoApp.kt`, `AppUpdater.kt`, `MemoStore`, `TimerTest.kt`, `MemoViewModel`?**
-  _High betweenness centrality (0.224) - this node is a cross-community bridge._
-- **Are the 2 inferred relationships involving `AppUpdater` (e.g. with `.verifiedDownloadOpensAndroidInstallerAndRetainsStudyData()` and `.doWork()`) actually correct?**
-  _`AppUpdater` has 2 INFERRED edges - model-reasoned connections that need verification._
+  _Cohesion score 0.06095481670929241 - nodes in this community are weakly interconnected._
+- **Why does `MemoViewModel` connect `AppUpdater` to `MemoApp.kt`, `MemoStore`, `UpdateManifest`, `MemoViewModel`, `NativeUiTest.kt`?**
+  _High betweenness centrality (0.221) - this node is a cross-community bridge._
+- **Are the 6 inferred relationships involving `Fact` (e.g. with `.verifiedDownloadOpensAndroidInstallerAndRetainsStudyData()` and `.factKeyRoundTripsAndRejectsInvalidOperands()`) actually correct?**
+  _`Fact` has 6 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Fact` be split into smaller, more focused modules?**
-  _Cohesion score 0.09024390243902439 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09413067552602436 - nodes in this community are weakly interconnected._

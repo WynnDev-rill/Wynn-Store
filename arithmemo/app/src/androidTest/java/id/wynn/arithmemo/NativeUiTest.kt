@@ -158,6 +158,9 @@ class NativeUiTest {
 
 internal fun saveDeviceCapture(name: String) {
     val instrumentation = InstrumentationRegistry.getInstrumentation()
+    // Compose idleness can precede SurfaceFlinger presenting the new window, especially on API 26.
+    instrumentation.waitForIdleSync()
+    android.os.SystemClock.sleep(1000)
     val image = instrumentation.uiAutomation.takeScreenshot() ?: error("Screenshot unavailable")
     File(instrumentation.targetContext.filesDir, "qa-$name.png").outputStream().use {
         check(image.compress(Bitmap.CompressFormat.PNG, 100, it))
