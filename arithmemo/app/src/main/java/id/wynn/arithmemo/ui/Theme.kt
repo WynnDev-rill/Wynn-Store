@@ -1,13 +1,12 @@
 package id.wynn.arithmemo.ui
 
 import android.content.ContextWrapper
+import android.view.ViewTreeObserver
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
@@ -15,6 +14,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import id.wynn.arithmemo.R
 
 private val Jakarta =
@@ -98,12 +98,33 @@ fun ArithMemoTheme(theme: String = "system", content: @Composable () -> Unit) {
         generateSequence(view.context) { (it as? ContextWrapper)?.baseContext }
             .filterIsInstance<ComponentActivity>()
             .firstOrNull()
-    SideEffect {
-        val transparent = android.graphics.Color.TRANSPARENT
-        val style =
-            if (dark) SystemBarStyle.dark(transparent)
-            else SystemBarStyle.light(transparent, transparent)
-        activity?.enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+    DisposableEffect(activity, view, dark) {
+        val window = activity?.window
+        val decor = window?.decorView
+        if (window == null || decor == null) {
+            onDispose {}
+        } else {
+            val applyAppearance = Runnable {
+                WindowCompat.getInsetsController(window, decor).apply {
+                    isAppearanceLightStatusBars = !dark
+                    isAppearanceLightNavigationBars = !dark
+                }
+            }
+            // Window restoration can overwrite initial composition's appearance on modern Android.
+            val focusListener =
+                ViewTreeObserver.OnWindowFocusChangeListener { focused ->
+                    if (focused) decor.post(applyAppearance)
+                }
+            decor.viewTreeObserver.addOnWindowFocusChangeListener(focusListener)
+            applyAppearance.run()
+            decor.post(applyAppearance)
+            onDispose {
+                decor.removeCallbacks(applyAppearance)
+                if (decor.viewTreeObserver.isAlive) {
+                    decor.viewTreeObserver.removeOnWindowFocusChangeListener(focusListener)
+                }
+            }
+        }
     }
     MaterialTheme(
         colorScheme = if (dark) Dark else Light,
