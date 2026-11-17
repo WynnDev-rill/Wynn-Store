@@ -46,7 +46,7 @@ class UiTest {
             vm.store.dao.insert(Memo(word = "remember", meaning = "ingat", groupName = "QA modes"))
         }
         rule.waitUntil(10000) { vm.memos.value.any { it.groupName == "QA modes" } }
-        val original=vm.memos.value.first{it.groupName=="QA modes"}
+        val original = vm.memos.value.first { it.groupName == "QA modes" }
         rule.runOnUiThread {
             vm.start("Mengetik", true, "QA modes")
             org.junit.Assert.assertEquals("ingat", vm.practice!!.prompt)
@@ -56,9 +56,11 @@ class UiTest {
             vm.grade(3)
         }
         rule.waitUntil(10000) { !vm.busy }
-        rule.runOnUiThread{vm.save(original.copy(favourite=true))}
-        rule.waitUntil(10000){vm.memos.value.first{it.id==original.id}.favourite}
-        runBlocking {org.junit.Assert.assertEquals(1,vm.store.dao.memo(original.id)!!.repetitions)}
+        rule.runOnUiThread { vm.save(original.copy(favourite = true)) }
+        rule.waitUntil(10000) { vm.memos.value.first { it.id == original.id }.favourite }
+        runBlocking {
+            org.junit.Assert.assertEquals(1, vm.store.dao.memo(original.id)!!.repetitions)
+        }
         rule.runOnUiThread {
             org.junit.Assert.assertEquals(1, vm.practice!!.reviewed)
             vm.start("Ulang mekanis", false, "QA modes")
@@ -79,10 +81,15 @@ class UiTest {
 
     @Test
     fun darkThemeLargeTextKeepsSearchUsable() {
-        val vm=androidx.lifecycle.ViewModelProvider(rule.activity)[VocaModel::class.java]
-        val device=UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val vm = androidx.lifecycle.ViewModelProvider(rule.activity)[VocaModel::class.java]
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         try {
-            rule.runOnUiThread{vm.end();vm.closeWord();vm.page("Kamus");vm.theme("Gelap")}
+            rule.runOnUiThread {
+                vm.end()
+                vm.closeWord()
+                vm.page("Kamus")
+                vm.theme("Gelap")
+            }
             device.executeShellCommand("settings put system font_scale 1.5")
             Thread.sleep(700)
             rule.waitForIdle()
@@ -90,7 +97,7 @@ class UiTest {
             capture("08-dark-large-text")
         } finally {
             device.executeShellCommand("settings put system font_scale 1.0")
-            rule.runOnUiThread{vm.theme("Sistem")}
+            rule.runOnUiThread { vm.theme("Sistem") }
         }
     }
 
