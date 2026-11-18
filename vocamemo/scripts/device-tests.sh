@@ -20,7 +20,7 @@ run_tests() {
   local output=$1
   shift
   adb shell am instrument -w "$@" "$runner" | tee "$output"
-  if ! rg -q 'OK \(' "$output"; then
+  if ! grep -Fq 'OK (' "$output"; then
     adb logcat -d > device-results/logcat.txt
     exit 1
   fi
