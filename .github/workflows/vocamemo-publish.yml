@@ -67,18 +67,28 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import subprocess,json,pathlib,base64
+          import subprocess,json,pathlib,base64,hashlib,time,urllib.request
           root=pathlib.Path('vocamemo'); dist=root/'dist'; m=json.loads((dist/'stable.json').read_text())
           repo='WynnDev-rill/Wynn-Store';tag='vocamemo-v'+m['versionName']
           target=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
           existing=subprocess.run(['gh','release','view',tag,'--repo',repo,'--json','isDraft'],capture_output=True,text=True)
           assets=[str(dist/p) for p in ['VocaMemo.apk','stable.json','SHA256SUMS','signature-verification.txt']]
-          if existing.returncode==0:
-              assert json.loads(existing.stdout)['isDraft'],'Refusing to replace a public release'
+          if existing.returncode==0 and json.loads(existing.stdout)['isDraft']:
               subprocess.run(['gh','release','upload',tag,*assets,'--repo',repo,'--clobber'],check=True)
               subprocess.run(['gh','release','edit',tag,'--repo',repo,'--target',target,'--draft=false','--latest=false','--notes-file',str(root/'RELEASE_NOTES.md')],check=True)
-          else:
+          elif existing.returncode!=0:
               subprocess.run(['gh','release','create',tag,*assets,'--repo',repo,'--target',target,'--latest=false','--title','VocaMemo '+m['versionName'],'--notes-file',str(root/'RELEASE_NOTES.md')],check=True)
+          base=f'https://github.com/{repo}/releases/download/{tag}/'
+          for path in map(pathlib.Path,assets):
+              for attempt in range(5):
+                  try:
+                      with urllib.request.urlopen(base+path.name,timeout=30) as response:
+                          content=response.read()
+                      break
+                  except OSError:
+                      if attempt==4: raise
+                      time.sleep(3)
+              assert hashlib.sha256(content).digest()==hashlib.sha256(path.read_bytes()).digest(),f'Published asset mismatch: {path.name}'
           endpoint='repos/'+repo+'/contents/vocamemo/updates/stable.json'
           old=subprocess.run(['gh','api',endpoint],capture_output=True,text=True)
           request={'message':'release(vocamemo): activate '+m['versionName'],'branch':'main','content':base64.b64encode((dist/'stable.json').read_bytes()).decode()}
