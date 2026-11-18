@@ -1,0 +1,12 @@
+{
+  "sourceFingerprint": "1ac521ab876aa00fb579482710138f52b6f65e843ff24c3b2979e56b04b7822e",
+  "versionCode": 2,
+  "versionName": "1.1.0",
+  "packageName": "id.wynn.vocamemo",
+  "minSdk": 26,
+  "apkUrl": "https://github.com/WynnDev-rill/Wynn-Store/releases/download/vocamemo-v1.1.0/VocaMemo.apk",
+  "sha256": "f59268c37ffad9525f47d481e9524890a23867758340463b5d4a7d687d00cbe9",
+  "signerSha256": "e1efbf63a096ed37879f7a17e5fe84f3478e50b6364e762a89a853e4f4a6baf2",
+  "sizeBytes": 7412217,
+  "notes": "VocaMemo 1.1.0\n\nKamus kini langsung menampilkan daftar kata Inggris dan ringkasan arti Indonesia. Lompat A\u2013Z, pilih Belum Disimpan, atau gunakan Acak dan Temukan Kata untuk menemukan kosakata baru. Pencarian dua arah berjalan offline dan menyertakan saran ejaan serta bentuk dasar.\n\nKamus memuat 15.725 kata dan 20.230 arti dari WikDict, dengan 15.589 contoh Tatoeba. Memo, progres, latihan, statistik, cadangan, dan pengucapan tetap tersedia. APK menggunakan sertifikat VocaMemo yang sama dan mendukung Android 8.0 atau lebih baru.\n"
+}
