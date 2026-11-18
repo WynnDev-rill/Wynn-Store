@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
@@ -322,9 +324,24 @@ private fun GoalDialog(goal: Int, dismiss: () -> Unit, save: (Int) -> Unit) {
                 singleLine = true,
             )
         },
-        dismissButton = { TextButton(onClick = dismiss) { Text("Batal") } },
+        dismissButton = {
+            val keyboard = LocalSoftwareKeyboardController.current
+            TextButton(onClick = {
+                keyboard?.hide()
+                dismiss()
+            }) { Text("Batal") }
+        },
         confirmButton = {
-            TextButton(enabled = valid != null, onClick = { valid?.let(save) }) { Text("Simpan target") }
+            val focus = LocalFocusManager.current
+            val keyboard = LocalSoftwareKeyboardController.current
+            TextButton(
+                enabled = valid != null,
+                onClick = {
+                    focus.clearFocus()
+                    keyboard?.hide()
+                    valid?.let(save)
+                },
+            ) { Text("Simpan target") }
         },
     )
 }
