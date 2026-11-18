@@ -13,10 +13,11 @@ android {
     buildToolsVersion = "36.0.0"
     defaultConfig {
         applicationId = "id.wynn.vocamemo"
+        resValue("string", "app_name", "VocaMemo")
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     val releaseStore =
@@ -34,6 +35,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            resValue("string", "app_name", "VocaMemo Preview")
         }
         release {
             isMinifyEnabled = true

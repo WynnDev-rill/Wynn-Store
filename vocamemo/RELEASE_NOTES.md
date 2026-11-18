@@ -1,5 +1,6 @@
-VocaMemo 1.1.0
+VocaMemo 1.2.0
 
-Kamus kini langsung menampilkan daftar kata Inggris dan ringkasan arti Indonesia. Lompat A–Z, pilih Belum Disimpan, atau gunakan Acak dan Temukan Kata untuk menemukan kosakata baru. Pencarian dua arah berjalan offline dan menyertakan saran ejaan serta bentuk dasar.
-
-Kamus memuat 15.725 kata dan 20.230 arti dari WikDict, dengan 15.589 contoh Tatoeba. Memo, progres, latihan, statistik, cadangan, dan pengucapan tetap tersedia. APK menggunakan sertifikat VocaMemo yang sama dan mendukung Android 8.0 atau lebih baru.
+- Kamus berformat entri dengan indeks alfabet, pencarian dua arah, penanda kata tersimpan dan pintasan Temukan Kata.
+- Antarmuka kaca pada navigasi dan kontrol. Tema malam menggunakan grafit dan aksen hijau. Plus Jakarta Sans untuk kontrol dan Literata untuk kata Inggris.
+- Memo lebih ringkas, pengaturan terkelompok, dan latihan menampilkan pilihan utama dengan jelas.
+- Statistik menampilkan target harian, grafik aktivitas tujuh hari, akurasi, dan kata yang sering sulit diingat.

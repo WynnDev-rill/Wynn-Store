@@ -30,3 +30,16 @@ Dictionary derivative: CC BY-SA 4.0, with Wiktionary contributor, DBnary and Wik
 
 ## Verification gates
 SQLite integrity check, nonempty fields, word/sense counts, no duplicate IDs, indexed prefix query plan, licensed example credit, source sample equivalence, strict selected-answer matching, review transaction, invalid update rejection. Automated passing checks and device limitations are recorded separately in QA.md.
+
+## 1.2.0 interface research
+
+| Reference | Decision in VocaMemo |
+|---|---|
+| [Dictionary (translate & memorize), Alisa Zymovets on Behance](https://www.behance.net/gallery/124842629/Dictionary-(translate-memorize)-Mobile-App) | Keep looking up a word and saving a meaning within the same lexical flow. |
+| [Learn Mode, UI Ants on Dribbble](https://dribbble.com/shots/24138576-Learn-Mode-Mobile-App-Ui) | Give the daily learning action priority, with other modes easy to scan beneath it. |
+| [Word.ws A–Z](https://word.ws/browse/) | Browsing starts with real entries, and a direct letter jump stays close to the list. |
+| [Strava Progress Summary Chart](https://support.strava.com/en-us/articles/15401618-progress-summary-chart) | Group real activity by time period, with readable values and totals. |
+| [Apple HIG Materials](https://developer.apple.com/design/human-interface-guidelines/materials) and [Android touch target guidance](https://support.google.com/accessibility/android/answer/7101858) | Restrict glass to the control layer and keep Android-native touch, state and text scaling. |
+| [The Design of Everyday Things, Don Norman](https://mitpress.mit.edu/9780262525671/the-design-of-everyday-things/) and [Don't Make Me Think, Steve Krug](https://www.pearson.com/en-au/media/zollwzef/9780321965516.pdf) | Give letter jumps, save actions and theme controls explicit signifiers and feedback. Name sections so readers can find settings and statistics by scanning. |
+
+The design references informed information hierarchy and interaction patterns. VocaMemo uses original Compose layouts and the existing supplied icon.

@@ -22,7 +22,7 @@ class ReleaseSmokeTest {
             "Visible control: $selector"
         }
 
-    // Invoked by the device script against the installed 1.0.0 compatibility fixture.
+    // Invoked by the device script against the installed 1.1.0 compatibility fixture.
     @Test
     fun seedLegacyMemo() {
         if (InstrumentationRegistry.getArguments().getString("upgradePhase") != "seed") return

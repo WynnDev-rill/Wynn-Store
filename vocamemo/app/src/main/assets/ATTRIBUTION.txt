@@ -16,7 +16,9 @@ https://tatoeba.org/
 CC BY 2.0 France: https://creativecommons.org/licenses/by/2.0/fr/
 Original sentence IDs and individual contributor names are retained in the credit shown below every example and in the bundled database. Examples are independent word usage and are not asserted to correspond to a dictionary sense. No sentence text was generated or translated by AI.
 
-FONT: Nunito — Vernon Adams, Cyreal, Jacques Le Bailly. SIL Open Font License 1.1; bundled license Nunito-OFL.txt. https://github.com/google/fonts/tree/main/ofl/nunito
+FONTS: Plus Jakarta Sans and Literata. SIL Open Font License 1.1. See the bundled PlusJakartaSans-OFL.txt and Literata-OFL.txt.
+https://github.com/google/fonts/tree/main/ofl/plusjakartasans
+https://github.com/google/fonts/tree/main/ofl/literata
 
 INTERFACE LIBRARIES: AndroidX Jetpack Compose, Material 3, Room, Lifecycle, Core and WorkManager — Android Open Source Project / Google, Apache License 2.0. Kotlin and Kotlin coroutines — JetBrains, Apache License 2.0.
 https://www.apache.org/licenses/LICENSE-2.0

@@ -139,6 +139,30 @@ class UiTest {
     }
 
     @Test
+    fun settingsPersistAfterRecreation() {
+        val vm = androidx.lifecycle.ViewModelProvider(rule.activity)[VocaModel::class.java]
+        val originalTheme = vm.theme
+        val originalGoal = vm.goal
+        try {
+            rule.onNodeWithContentDescription("Buka setelan").performClick()
+            rule.onNodeWithText("Gelap").performClick().assertIsSelected()
+            rule.onNodeWithText("Target harian").performClick()
+            rule.onNode(hasSetTextAction()).performTextReplacement("42")
+            rule.onNodeWithText("Simpan target").performClick()
+            rule.activityRule.scenario.recreate()
+            rule.onNodeWithText("42 jawaban").assertIsDisplayed()
+            rule.onNodeWithText("Gelap").assertIsSelected()
+            capture("13-settings-dark")
+        } finally {
+            val current = androidx.lifecycle.ViewModelProvider(rule.activity)[VocaModel::class.java]
+            rule.runOnUiThread {
+                current.theme(originalTheme)
+                current.goal(originalGoal)
+            }
+        }
+    }
+
+    @Test
     fun lookupSavePracticeAndStatsOffline() {
         val vm = androidx.lifecycle.ViewModelProvider(rule.activity)[VocaModel::class.java]
         runBlocking { vm.store.dao.allMemos().forEach { vm.store.dao.delete(it.id) } }
@@ -175,7 +199,9 @@ class UiTest {
         rule.onNodeWithText("Kembali ke Latihan").performClick()
         rule.onNodeWithText("Statistik", useUnmergedTree = true).performClick()
         capture("06-statistik")
-        rule.onNodeWithText("Jawaban sepanjang waktu").assertExists()
+        rule.onNodeWithText("Aktivitas 7 hari").assertIsDisplayed()
+        rule.onNodeWithTag("statistics-list").performScrollToNode(hasText("Jawaban sepanjang waktu"))
+        rule.onNodeWithText("Jawaban sepanjang waktu").assertIsDisplayed()
         rule.onNodeWithContentDescription("Buka setelan").performClick()
         capture("07-settings")
     }
