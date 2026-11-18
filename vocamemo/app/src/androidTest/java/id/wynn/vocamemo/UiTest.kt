@@ -93,6 +93,15 @@ class UiTest {
     fun darkThemeLargeTextKeepsSearchUsable() {
         val vm = androidx.lifecycle.ViewModelProvider(rule.activity)[VocaModel::class.java]
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val originalScale = rule.activity.resources.configuration.fontScale
+        val originalTheme = vm.theme
+        fun awaitFontScale(expected: Float) {
+            rule.waitUntil(20_000) {
+                runCatching { rule.activity.resources.configuration.fontScale == expected }
+                    .getOrDefault(false)
+            }
+            rule.waitForIdle()
+        }
         try {
             rule.runOnUiThread {
                 vm.end()
@@ -101,17 +110,13 @@ class UiTest {
                 vm.theme("Gelap")
             }
             device.executeShellCommand("settings put system font_scale 1.5")
-            Thread.sleep(700)
-            rule.activityRule.scenario.recreate()
-            rule.waitForIdle()
+            awaitFontScale(1.5f)
             rule.onNodeWithTag("search").assertIsDisplayed()
             capture("08-dark-large-text")
         } finally {
-            device.executeShellCommand("settings put system font_scale 1.0")
-            rule.runOnUiThread { vm.theme("Sistem") }
-            Thread.sleep(350)
-            rule.activityRule.scenario.recreate()
-            rule.waitForIdle()
+            rule.runOnUiThread { vm.theme(originalTheme) }
+            device.executeShellCommand("settings put system font_scale $originalScale")
+            awaitFontScale(originalScale)
         }
     }
 
@@ -135,6 +140,30 @@ class UiTest {
         rule.waitUntil(15000) { vm.selected.isNotBlank() }
         rule.runOnUiThread {
             org.junit.Assert.assertFalse(vm.memos.value.any { it.word == vm.selected })
+        }
+    }
+
+    @Test
+    fun settingsPersistAfterRecreation() {
+        val vm = androidx.lifecycle.ViewModelProvider(rule.activity)[VocaModel::class.java]
+        val originalTheme = vm.theme
+        val originalGoal = vm.goal
+        try {
+            rule.onNodeWithContentDescription("Buka setelan").performClick()
+            rule.onNodeWithText("Gelap").performClick().assertIsSelected()
+            rule.onNodeWithText("Target harian").performClick()
+            rule.onNode(hasSetTextAction()).performTextReplacement("42")
+            rule.onNodeWithText("Simpan target").performClick()
+            rule.activityRule.scenario.recreate()
+            rule.onNodeWithText("42 jawaban").assertIsDisplayed()
+            rule.onNodeWithText("Gelap").assertIsSelected()
+            capture("13-settings-dark")
+        } finally {
+            val current = androidx.lifecycle.ViewModelProvider(rule.activity)[VocaModel::class.java]
+            rule.runOnUiThread {
+                current.theme(originalTheme)
+                current.goal(originalGoal)
+            }
         }
     }
 
@@ -175,7 +204,9 @@ class UiTest {
         rule.onNodeWithText("Kembali ke Latihan").performClick()
         rule.onNodeWithText("Statistik", useUnmergedTree = true).performClick()
         capture("06-statistik")
-        rule.onNodeWithText("Jawaban sepanjang waktu").assertExists()
+        rule.onNodeWithText("Aktivitas 7 hari").assertIsDisplayed()
+        rule.onNodeWithTag("statistics-list").performScrollToNode(hasText("Jawaban sepanjang waktu"))
+        rule.onNodeWithText("Jawaban sepanjang waktu").assertIsDisplayed()
         rule.onNodeWithContentDescription("Buka setelan").performClick()
         capture("07-settings")
     }

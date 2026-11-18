@@ -1,66 +1,62 @@
 {
   "communities": {
     "0": [
-      "activityresultcontracts",
       "alignment",
       "animatecontentsize",
       "animatedcontent",
       "app_src_main_java_id_wynn_vocamemo_dictionaryscreen",
+      "app_src_main_java_id_wynn_vocamemo_dictionaryscreen_dictionaryentry",
+      "app_src_main_java_id_wynn_vocamemo_dictionaryscreen_dictionaryletter",
+      "app_src_main_java_id_wynn_vocamemo_dictionaryscreen_dictionaryscreen",
+      "app_src_main_java_id_wynn_vocamemo_dictionaryscreen_kt_composable",
+      "app_src_main_java_id_wynn_vocamemo_dictionaryscreen_kt_modifier",
+      "app_src_main_java_id_wynn_vocamemo_dictionaryscreen_kt_optin",
+      "app_src_main_java_id_wynn_vocamemo_dictionaryscreen_vocasearch",
       "app_src_main_java_id_wynn_vocamemo_mainactivity",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_flowrowcompat",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_grouppicker",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_hint",
       "app_src_main_java_id_wynn_vocamemo_mainactivity_mainactivity",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_mainactivity_oncreate",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_memoeditor",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_memoscreen",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_pill",
       "app_src_main_java_id_wynn_vocamemo_mainactivity_poslabel",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_practicehome",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_practicescreen",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_pronouncer",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_pronouncer_close",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_pronouncer_speak",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_pronouncer_stop",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_readlimited",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_settingsscreen",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_title",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_vocascreen",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_wordscreen",
+      "app_src_main_java_id_wynn_vocamemo_memoscreen",
+      "app_src_main_java_id_wynn_vocamemo_practicescreen",
+      "app_src_main_java_id_wynn_vocamemo_statisticsscreen",
+      "app_src_main_java_id_wynn_vocamemo_theme_type",
       "backhandler",
-      "bundle",
-      "bytearray",
+      "bookmark",
+      "clearandsetsemantics",
       "clickable",
       "close",
       "collectasstatewithlifecycle",
       "componentactivity",
-      "composable",
+      "contentdescription",
+      "datetimeformatter",
       "delay",
       "dp",
       "enableedgetoedge",
+      "expandmore",
+      "fontweight",
+      "heading",
       "icons",
-      "imagevector",
+      "imeaction",
       "instant",
       "items",
-      "keyboardarrowright",
-      "launch",
+      "itemsindexed",
+      "keyboardactions",
       "lazycolumn",
       "lifecycle",
       "lifecycleeventobserver",
-      "localcontext",
       "localdate",
+      "localdensity",
       "localfocusmanager",
       "locallifecycleowner",
       "modifier",
-      "optin",
+      "numberformat",
       "painterresource",
-      "rememberlauncherforactivityresult",
       "remembersaveable",
       "rememberscrollstate",
-      "role",
       "roundedcornershape",
       "search",
+      "semantics",
       "setcontent",
+      "shadow",
       "shuffle",
       "testtag",
       "textalign",
@@ -75,6 +71,15 @@
       "agents_graphify",
       "agents_vocamemo_development_contract",
       "design",
+      "design_colors",
+      "design_components",
+      "design_design_system_vocamemo",
+      "design_do_s_and_don_ts",
+      "design_elevation_depth",
+      "design_layout",
+      "design_overview",
+      "design_shapes",
+      "design_typography",
       "docs_releasing",
       "docs_releasing_actions_secrets",
       "docs_releasing_arithmemo_style_private_signing_recovery",
@@ -84,6 +89,7 @@
       "docs_releasing_stable_feed",
       "docs_releasing_workflow",
       "docs_research",
+      "docs_research_1_2_0_interface_research",
       "docs_research_comparable_products",
       "docs_research_dictionary_selection",
       "docs_research_licences_and_transformation",
@@ -136,9 +142,6 @@
       "app_src_main_java_id_wynn_vocamemo_data_vocadatabase",
       "app_src_main_java_id_wynn_vocamemo_data_vocadatabase_dao",
       "app_src_main_java_id_wynn_vocamemo_data_vocadatabase_open",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_statisticsscreen",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_statrow",
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_todayreviews",
       "dao",
       "database",
       "entity",
@@ -149,37 +152,34 @@
       "primarykey",
       "query",
       "roomdatabase",
-      "update",
-      "uuid"
+      "update"
     ],
     "3": [
+      "activityresultcontracts",
       "app_build_gradle",
+      "app_src_main_java_id_wynn_vocamemo_settingsscreen",
+      "app_src_main_java_id_wynn_vocamemo_settingsscreen_goaldialog",
+      "app_src_main_java_id_wynn_vocamemo_settingsscreen_kt_composable",
+      "app_src_main_java_id_wynn_vocamemo_settingsscreen_kt_imagevector",
+      "app_src_main_java_id_wynn_vocamemo_settingsscreen_readlimited",
+      "app_src_main_java_id_wynn_vocamemo_settingsscreen_settingrow",
+      "app_src_main_java_id_wynn_vocamemo_settingsscreen_settingsgroup",
+      "app_src_main_java_id_wynn_vocamemo_settingsscreen_settingsscreen",
       "app_src_main_java_id_wynn_vocamemo_updates",
-      "app_src_main_java_id_wynn_vocamemo_updates_kt_bytearray",
-      "app_src_main_java_id_wynn_vocamemo_updates_kt_context",
-      "app_src_main_java_id_wynn_vocamemo_updates_release",
-      "app_src_main_java_id_wynn_vocamemo_updates_release_parse",
-      "app_src_main_java_id_wynn_vocamemo_updates_release_validate",
-      "app_src_main_java_id_wynn_vocamemo_updates_updatepolicy",
-      "app_src_main_java_id_wynn_vocamemo_updates_updatepolicy_trusted",
-      "app_src_main_java_id_wynn_vocamemo_updates_updates",
-      "app_src_main_java_id_wynn_vocamemo_updates_updates_certificates",
-      "app_src_main_java_id_wynn_vocamemo_updates_updates_check",
-      "app_src_main_java_id_wynn_vocamemo_updates_updates_connection",
-      "app_src_main_java_id_wynn_vocamemo_updates_updates_download",
-      "app_src_main_java_id_wynn_vocamemo_updates_updates_install",
-      "app_src_main_java_id_wynn_vocamemo_updates_updates_schedule",
-      "app_src_main_java_id_wynn_vocamemo_updates_updates_sha",
-      "app_src_main_java_id_wynn_vocamemo_updates_updates_shafile",
-      "app_src_main_java_id_wynn_vocamemo_updates_updateworker",
-      "app_src_main_java_id_wynn_vocamemo_updates_updateworker_dowork",
-      "app_src_main_java_id_wynn_vocamemo_vocamodel_vocaapp_oncreate",
+      "bytearray",
+      "cancellationexception",
       "contextcompat",
-      "coroutineworker",
       "dispatchers",
       "fileprovider",
       "httpurlconnection",
       "intent",
+      "keyboardarrowright",
+      "keyboardoptions",
+      "keyboardtype",
+      "launch",
+      "liveregion",
+      "liveregionmode",
+      "localcontext",
       "manifest",
       "messagedigest",
       "notificationchannel",
@@ -187,11 +187,13 @@
       "notificationmanager",
       "packagemanager",
       "pendingintent",
-      "result",
-      "suppress",
+      "rememberlauncherforactivityresult",
+      "role",
+      "settings",
       "timeunit",
       "uri",
       "url",
+      "volumeup",
       "withcontext"
     ],
     "4": [
@@ -235,25 +237,38 @@
       "app_src_main_java_id_wynn_vocamemo_dictionary_kt_context"
     ],
     "6": [
-      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest",
-      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_kt_androidjunit4",
-      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_kt_runwith",
-      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_kt_test",
-      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_offlinetest",
-      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_offlinetest_browsepagingandsearchdirections",
-      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_offlinetest_dictionarysearchsensesexamples",
-      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_offlinetest_malformedupdatemanifestrejected",
-      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_offlinetest_persistentroomreopens",
-      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_offlinetest_progressisatomicbackupisvalidated",
-      "applicationprovider",
-      "room",
-      "runblocking"
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_flowrowcompat",
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_hint",
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_kt_composable",
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_kt_imagevector",
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_kt_optin",
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_pill",
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_pronouncer",
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_pronouncer_close",
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_pronouncer_speak",
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_pronouncer_stop",
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_title",
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_vocadock",
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_vocascreen",
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_wordscreen",
+      "app_src_main_java_id_wynn_vocamemo_memoscreen_grouppicker",
+      "app_src_main_java_id_wynn_vocamemo_memoscreen_kt_composable",
+      "app_src_main_java_id_wynn_vocamemo_memoscreen_memoeditor",
+      "app_src_main_java_id_wynn_vocamemo_memoscreen_memoscreen",
+      "app_src_main_java_id_wynn_vocamemo_practicescreen_kt_composable",
+      "app_src_main_java_id_wynn_vocamemo_practicescreen_practicehome",
+      "app_src_main_java_id_wynn_vocamemo_practicescreen_practicescreen",
+      "app_src_main_java_id_wynn_vocamemo_theme_entrytype"
     ],
     "7": [
       "androidviewmodel",
+      "app_src_main_java_id_wynn_vocamemo_dictionary_dictionarykey",
+      "app_src_main_java_id_wynn_vocamemo_updates_kt_context",
+      "app_src_main_java_id_wynn_vocamemo_updates_updates_schedule",
       "app_src_main_java_id_wynn_vocamemo_vocamodel",
       "app_src_main_java_id_wynn_vocamemo_vocamodel_practice",
       "app_src_main_java_id_wynn_vocamemo_vocamodel_vocaapp",
+      "app_src_main_java_id_wynn_vocamemo_vocamodel_vocaapp_oncreate",
       "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel",
       "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel_browse",
       "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel_changelanguage",
@@ -288,6 +303,7 @@
       "savedstatehandle",
       "sharingstarted",
       "statein",
+      "uuid",
       "viewmodelscope",
       "withtransaction"
     ],
@@ -301,10 +317,10 @@
       "app_src_androidtest_java_id_wynn_vocamemo_uitest_uitest_capture",
       "app_src_androidtest_java_id_wynn_vocamemo_uitest_uitest_darkthemelargetextkeepssearchusable",
       "app_src_androidtest_java_id_wynn_vocamemo_uitest_uitest_lookupsavepracticeandstatsoffline",
+      "app_src_androidtest_java_id_wynn_vocamemo_uitest_uitest_settingspersistafterrecreation",
       "app_src_androidtest_java_id_wynn_vocamemo_uitest_uitest_speedexpirysurvivespendinggradeandrotation",
       "app_src_androidtest_java_id_wynn_vocamemo_uitest_uitest_studymodesanddirections",
       "createandroidcomposerule",
-      "file",
       "instrumentationregistry",
       "rule",
       "uidevice"
@@ -320,6 +336,8 @@
       "app_src_main_java_id_wynn_vocamemo_learning_answers_normalize",
       "app_src_main_java_id_wynn_vocamemo_learning_scheduler",
       "app_src_main_java_id_wynn_vocamemo_learning_scheduler_grade",
+      "app_src_main_java_id_wynn_vocamemo_updates_updatepolicy",
+      "app_src_main_java_id_wynn_vocamemo_updates_updatepolicy_trusted",
       "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel_checkanswer",
       "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel_save",
       "app_src_test_java_id_wynn_vocamemo_coretest",
@@ -354,6 +372,16 @@
       "gradlew_warn"
     ],
     "14": [
+      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest",
+      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_kt_androidjunit4",
+      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_kt_runwith",
+      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_kt_test",
+      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_offlinetest",
+      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_offlinetest_browsepagingandsearchdirections",
+      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_offlinetest_dictionarysearchsensesexamples",
+      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_offlinetest_malformedupdatemanifestrejected",
+      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_offlinetest_persistentroomreopens",
+      "app_src_androidtest_java_id_wynn_vocamemo_offlinetest_offlinetest_progressisatomicbackupisvalidated",
       "app_src_main_java_id_wynn_vocamemo_dictionary",
       "app_src_main_java_id_wynn_vocamemo_dictionary_dictionary",
       "app_src_main_java_id_wynn_vocamemo_dictionary_dictionary_browse",
@@ -366,18 +394,18 @@
       "app_src_main_java_id_wynn_vocamemo_dictionary_dictionary_search",
       "app_src_main_java_id_wynn_vocamemo_dictionary_dictionary_senses",
       "app_src_main_java_id_wynn_vocamemo_dictionary_dictionary_words",
-      "app_src_main_java_id_wynn_vocamemo_dictionary_dictionarykey",
       "app_src_main_java_id_wynn_vocamemo_dictionary_example",
       "app_src_main_java_id_wynn_vocamemo_dictionary_indonesianroots",
       "app_src_main_java_id_wynn_vocamemo_dictionary_sense",
       "app_src_main_java_id_wynn_vocamemo_dictionary_typodistance",
       "app_src_main_java_id_wynn_vocamemo_dictionary_typodistance_to",
       "app_src_main_java_id_wynn_vocamemo_dictionary_wordresult",
-      "app_src_main_java_id_wynn_vocamemo_dictionaryscreen_dictionaryscreen",
-      "app_src_main_java_id_wynn_vocamemo_dictionaryscreen_kt_composable",
-      "app_src_main_java_id_wynn_vocamemo_dictionaryscreen_kt_optin",
       "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel_add",
+      "applicationprovider",
       "context",
+      "file",
+      "room",
+      "runblocking",
       "sqlitedatabase",
       "synchronized"
     ],
@@ -390,31 +418,23 @@
       "scripts_refresh_graph_sh__entry"
     ],
     "17": [
-      "design_buttons",
-      "design_cards_containers",
-      "design_chips_and_pills",
-      "design_colors",
-      "design_components",
-      "design_design_system_vocamemo",
-      "design_direction_contract",
-      "design_do",
-      "design_do_s_and_don_ts",
-      "design_don_t",
-      "design_elevation_depth",
-      "design_feedback_and_empty_states",
-      "design_implementation_evidence_and_scope",
-      "design_inputs_fields",
-      "design_kamus_1_1",
-      "design_layout",
-      "design_navigation",
-      "design_neutral",
-      "design_overview",
-      "design_primary",
-      "design_recall_card_and_motion",
-      "design_secondary",
-      "design_shapes",
-      "design_tertiary",
-      "design_typography"
+      "app_src_main_java_id_wynn_vocamemo_updates_kt_bytearray",
+      "app_src_main_java_id_wynn_vocamemo_updates_release",
+      "app_src_main_java_id_wynn_vocamemo_updates_release_parse",
+      "app_src_main_java_id_wynn_vocamemo_updates_release_validate",
+      "app_src_main_java_id_wynn_vocamemo_updates_updates",
+      "app_src_main_java_id_wynn_vocamemo_updates_updates_certificates",
+      "app_src_main_java_id_wynn_vocamemo_updates_updates_check",
+      "app_src_main_java_id_wynn_vocamemo_updates_updates_connection",
+      "app_src_main_java_id_wynn_vocamemo_updates_updates_download",
+      "app_src_main_java_id_wynn_vocamemo_updates_updates_install",
+      "app_src_main_java_id_wynn_vocamemo_updates_updates_sha",
+      "app_src_main_java_id_wynn_vocamemo_updates_updates_shafile",
+      "app_src_main_java_id_wynn_vocamemo_updates_updateworker",
+      "app_src_main_java_id_wynn_vocamemo_updates_updateworker_dowork",
+      "coroutineworker",
+      "result",
+      "suppress"
     ],
     "18": [
       "build_gradle"
@@ -449,14 +469,31 @@
       "until"
     ],
     "23": [
+      "app_src_main_java_id_wynn_vocamemo_mainactivity_mainactivity_oncreate",
       "app_src_main_java_id_wynn_vocamemo_theme",
+      "app_src_main_java_id_wynn_vocamemo_theme_glass",
       "app_src_main_java_id_wynn_vocamemo_theme_kt_composable",
+      "app_src_main_java_id_wynn_vocamemo_theme_kt_modifier",
+      "app_src_main_java_id_wynn_vocamemo_theme_readingbackdrop",
+      "app_src_main_java_id_wynn_vocamemo_theme_usesdarktheme",
       "app_src_main_java_id_wynn_vocamemo_theme_vocatheme",
+      "app_src_main_java_id_wynn_vocamemo_theme_windowcolor",
+      "background",
+      "border",
+      "box",
+      "brush",
+      "bundle",
+      "clip",
       "color",
+      "compositionlocalprovider",
       "font",
       "fontfamily",
-      "fontweight",
-      "issystemindarktheme"
+      "issystemindarktheme",
+      "shape",
+      "sp",
+      "staticcompositionlocalof",
+      "textstyle",
+      "toargb"
     ],
     "24": [
       "docs_browse_1_1",
@@ -472,45 +509,49 @@
     "27": [
       "test"
     ],
+    "28": [
+      "composable"
+    ],
     "29": [
-      "release_notes"
+      "imagevector"
     ],
     "30": [
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_kt_composable"
+      "optin"
     ],
     "31": [
-      "app_src_main_java_id_wynn_vocamemo_mainactivity_kt_optin"
+      "release_notes"
     ]
   },
   "cohesion": {
-    "0": 0.053994732221246705,
-    "1": 0.05128205128205128,
-    "2": 0.10796221322537113,
-    "3": 0.07179487179487179,
-    "4": 0.0907563025210084,
+    "0": 0.05505952380952381,
+    "1": 0.04081632653061224,
+    "2": 0.12436974789915967,
+    "3": 0.06666666666666667,
+    "4": 0.09411764705882353,
     "5": 1.0,
-    "6": 0.24358974358974358,
-    "7": 0.07564102564102564,
-    "8": 0.225,
+    "6": 0.19480519480519481,
+    "7": 0.06464646464646465,
+    "8": 0.24166666666666667,
     "9": 1.0,
-    "10": 0.1503267973856209,
+    "10": 0.13157894736842105,
     "11": 0.3333333333333333,
     "12": 0.4,
     "13": 0.8333333333333334,
-    "14": 0.1753846153846154,
+    "14": 0.11746031746031746,
     "15": 1.0,
     "16": 1.0,
-    "17": 0.08,
+    "17": 0.20588235294117646,
     "18": 1.0,
     "19": 1.0,
     "20": 1.0,
     "21": 1.0,
     "22": 0.225,
-    "23": 0.2857142857142857,
+    "23": 0.11333333333333333,
     "24": 0.6666666666666666,
     "25": 1.0,
     "26": 1.0,
     "27": 1.0,
+    "28": 1.0,
     "29": 1.0,
     "30": 1.0,
     "31": 1.0
@@ -519,12 +560,17 @@
     {
       "id": "app_src_main_java_id_wynn_vocamemo_vocamodel_vocamodel",
       "label": "VocaModel",
-      "degree": 39
+      "degree": 38
     },
     {
       "id": "app_src_main_java_id_wynn_vocamemo_data_memo",
       "label": "Memo",
-      "degree": 25
+      "degree": 24
+    },
+    {
+      "id": "app_src_main_java_id_wynn_vocamemo_mainactivity_vocascreen",
+      "label": "VocaScreen()",
+      "degree": 16
     },
     {
       "id": "app_src_main_java_id_wynn_vocamemo_dictionary_dictionary",
@@ -532,19 +578,14 @@
       "degree": 16
     },
     {
-      "id": "app_src_main_java_id_wynn_vocamemo_mainactivity_vocascreen",
-      "label": "VocaScreen()",
-      "degree": 15
-    },
-    {
       "id": "app_src_main_java_id_wynn_vocamemo_updates_updates",
       "label": "Updates",
       "degree": 13
     },
     {
-      "id": "app_src_main_java_id_wynn_vocamemo_mainactivity_memoscreen",
+      "id": "app_src_main_java_id_wynn_vocamemo_memoscreen_memoscreen",
       "label": "MemoScreen()",
-      "degree": 13
+      "degree": 12
     },
     {
       "id": "app_src_main_java_id_wynn_vocamemo_data_vocadao",
@@ -552,27 +593,27 @@
       "degree": 12
     },
     {
-      "id": "app_src_main_java_id_wynn_vocamemo_data_review",
-      "label": "Review",
+      "id": "app_src_androidtest_java_id_wynn_vocamemo_uitest_uitest",
+      "label": "UiTest",
       "degree": 11
     },
     {
-      "id": "app_src_androidtest_java_id_wynn_vocamemo_uitest_uitest",
-      "label": "UiTest",
-      "degree": 10
+      "id": "app_src_main_java_id_wynn_vocamemo_dictionaryscreen_dictionaryscreen",
+      "label": "DictionaryScreen()",
+      "degree": 11
     },
     {
-      "id": "design_design_system_vocamemo",
-      "label": "Design System: VocaMemo",
+      "id": "app_src_main_java_id_wynn_vocamemo_mainactivity_wordscreen",
+      "label": "WordScreen()",
       "degree": 10
     }
   ],
   "surprises": [
     {
-      "source": "VocaApp",
-      "target": "Dictionary",
+      "source": "DictionaryScreen()",
+      "target": "dictionaryKey()",
       "source_files": [
-        "app/src/main/java/id/wynn/vocamemo/VocaModel.kt",
+        "app/src/main/java/id/wynn/vocamemo/DictionaryScreen.kt",
         "app/src/main/java/id/wynn/vocamemo/Dictionary.kt"
       ],
       "confidence": "INFERRED",
@@ -580,11 +621,11 @@
       "why": "inferred connection - not explicitly stated in source; bridges separate communities"
     },
     {
-      "source": "VocaApp",
-      "target": "PersonalStore",
+      "source": "DictionaryScreen()",
+      "target": "Hint()",
       "source_files": [
-        "app/src/main/java/id/wynn/vocamemo/VocaModel.kt",
-        "app/src/main/java/id/wynn/vocamemo/Data.kt"
+        "app/src/main/java/id/wynn/vocamemo/DictionaryScreen.kt",
+        "app/src/main/java/id/wynn/vocamemo/MainActivity.kt"
       ],
       "confidence": "INFERRED",
       "relation": "calls",
@@ -602,33 +643,33 @@
       "why": "inferred connection - not explicitly stated in source; bridges separate communities"
     },
     {
-      "source": "DictionaryScreen()",
-      "target": "Memo",
+      "source": "DictionaryEntry()",
+      "target": "entryType()",
       "source_files": [
         "app/src/main/java/id/wynn/vocamemo/DictionaryScreen.kt",
-        "app/src/main/java/id/wynn/vocamemo/Data.kt"
+        "app/src/main/java/id/wynn/vocamemo/Theme.kt"
       ],
-      "confidence": "EXTRACTED",
-      "relation": "references",
-      "why": "bridges separate communities"
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
     },
     {
-      "source": "MemoEditor()",
-      "target": "Memo",
+      "source": "MemoScreen()",
+      "target": "VocaSearch()",
       "source_files": [
-        "app/src/main/java/id/wynn/vocamemo/MainActivity.kt",
-        "app/src/main/java/id/wynn/vocamemo/Data.kt"
+        "app/src/main/java/id/wynn/vocamemo/MemoScreen.kt",
+        "app/src/main/java/id/wynn/vocamemo/DictionaryScreen.kt"
       ],
-      "confidence": "EXTRACTED",
-      "relation": "references",
-      "why": "bridges separate communities"
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
     }
   ],
   "questions": [
     {
       "type": "bridge_node",
-      "question": "Why does `VocaModel` connect `Community 7` to `Community 0`, `Community 2`, `Community 10`, `Community 14`?",
-      "why": "High betweenness centrality (0.114) - this node is a cross-community bridge."
+      "question": "Why does `VocaModel` connect `Community 7` to `Community 0`, `Community 3`, `Community 6`, `Community 10`, `Community 14`?",
+      "why": "High betweenness centrality (0.123) - this node is a cross-community bridge."
     },
     {
       "type": "verify_inferred",
@@ -643,22 +684,22 @@
     {
       "type": "low_cohesion",
       "question": "Should `Community 0` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.053994732221246705 - nodes in this community are weakly interconnected."
+      "why": "Cohesion score 0.05505952380952381 - nodes in this community are weakly interconnected."
     },
     {
       "type": "bridge_node",
       "question": "Why does `Memo` connect `Community 2` to `Community 0`, `Community 6`, `Community 7`, `Community 8`, `Community 10`, `Community 14`?",
-      "why": "High betweenness centrality (0.106) - this node is a cross-community bridge."
+      "why": "High betweenness centrality (0.123) - this node is a cross-community bridge."
     },
     {
       "type": "verify_inferred",
-      "question": "Are the 3 inferred relationships involving `Dictionary` (e.g. with `.browsePagingAndSearchDirections()` and `.dictionarySearchSensesExamples()`) actually correct?",
-      "why": "`Dictionary` has 3 INFERRED edges - model-reasoned connections that need verification."
+      "question": "Are the 6 inferred relationships involving `VocaScreen()` (e.g. with `DictionaryScreen()` and `MemoScreen()`) actually correct?",
+      "why": "`VocaScreen()` has 6 INFERRED edges - model-reasoned connections that need verification."
     },
     {
       "type": "low_cohesion",
       "question": "Should `Community 1` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.05128205128205128 - nodes in this community are weakly interconnected."
+      "why": "Cohesion score 0.04081632653061224 - nodes in this community are weakly interconnected."
     }
   ]
 }

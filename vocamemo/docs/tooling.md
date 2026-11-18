@@ -9,4 +9,4 @@ Ponytail defaults to Full; Ultra is available but does not remove explicitly req
 
 Graphify 0.9.112 installed in an isolated uv environment, Codex skill installed globally and in .codex/skills/graphify. Run `uv tool install graphifyy==0.9.112`, `graphify install --project --platform codex`, then `scripts/refresh-graph.sh`. Local AST extraction needs no AI API or cloud upload. Query: `graphify query "How does grading persist review and schedule?"`. Generated graph is committed after final source verification.
 
-Impeccable shipped role prompts are vendored under .agents/roles for later independent finish reviews and documentation. Nunito static weights are reproduced with fontTools 4.61.1 via scripts/prepare-fonts.py; this is a development-only dependency.
+Impeccable shipped role prompts are vendored under .agents/roles for later independent finish reviews and documentation. Plus Jakarta Sans and Literata static weights are reproduced from checksummed Google Fonts sources with fontTools 4.61.1 via scripts/prepare-fonts.py; this is a development-only dependency.
