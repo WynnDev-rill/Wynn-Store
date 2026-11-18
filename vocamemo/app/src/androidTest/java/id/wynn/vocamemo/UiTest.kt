@@ -105,7 +105,7 @@ class UiTest {
             Thread.sleep(700)
             rule.activityRule.scenario.recreate()
             rule.waitForIdle()
-            rule.onNodeWithTag("search").performScrollTo().assertIsDisplayed()
+            rule.onNodeWithTag("search").assertIsDisplayed()
             capture("08-dark-large-text")
         } finally {
             device.executeShellCommand("settings put system font_scale 1.0")
@@ -113,6 +113,29 @@ class UiTest {
             Thread.sleep(350)
             rule.activityRule.scenario.recreate()
             rule.waitForIdle()
+        }
+    }
+
+    @Test
+    fun browseJumpAndReverseSearch() {
+        val vm = androidx.lifecycle.ViewModelProvider(rule.activity)[VocaModel::class.java]
+        rule.waitUntil(15000) { vm.browseRows.isNotEmpty() }
+        rule.onNodeWithText("Semua Kata").assertIsDisplayed()
+        capture("01-browse-start")
+        rule.onNodeWithText("Lompat A–Z").performClick()
+        capture("02-alphabet-picker")
+        rule.onNodeWithText("Z", substring = false).performClick()
+        rule.waitUntil(15000) { vm.browseRows.firstOrNull()?.cursor?.startsWith("z") == true }
+        rule.onNodeWithTag("search").performTextInput("buku")
+        rule.onNodeWithText("Indonesia → Inggris").performClick()
+        rule.waitUntil(15000) { vm.results.any { it.word == "book" && it.summary == "buku" } }
+        capture("03-reverse-search")
+        rule.onNodeWithContentDescription("Hapus pencarian").performClick()
+        rule.onNodeWithText("Belum Disimpan").performClick()
+        rule.onNodeWithText("Temukan Kata").performClick()
+        rule.waitUntil(15000) { vm.selected.isNotBlank() }
+        rule.runOnUiThread {
+            org.junit.Assert.assertFalse(vm.memos.value.any { it.word == vm.selected })
         }
     }
 
@@ -129,7 +152,7 @@ class UiTest {
         capture("01-kamus")
         rule.onNodeWithTag("search").performTextInput("apple")
         rule.waitUntil(15000) { vm.results.isNotEmpty() }
-        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("apel"))
+        rule.onNodeWithTag("dictionary-list").performScrollToNode(hasText("apple"))
         rule.onAllNodesWithText("apple").onLast().performClick()
         rule.waitUntil(15000) {
             rule.onAllNodesWithText("Simpan").fetchSemanticsNodes().isNotEmpty()

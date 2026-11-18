@@ -1,0 +1,13 @@
+{
+  "versionCode": 2,
+  "versionName": "1.1.0",
+  "packageName": "id.wynn.vocamemo",
+  "minSdk": 26,
+  "sha256": "f59268c37ffad9525f47d481e9524890a23867758340463b5d4a7d687d00cbe9",
+  "sourceFingerprint": "1ac521ab876aa00fb579482710138f52b6f65e843ff24c3b2979e56b04b7822e",
+  "signerSha256": "e1efbf63a096ed37879f7a17e5fe84f3478e50b6364e762a89a853e4f4a6baf2",
+  "sizeBytes": 7412217,
+  "unitTests": 3,
+  "unitFailures": 0,
+  "lintErrors": 0
+}

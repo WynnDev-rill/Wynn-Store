@@ -329,3 +329,7 @@ Hint uses a primary rounded vector icon, Bold title and readable body copy cente
 Recorded from Theme.kt and sampled MainActivity.kt components, with existing rendered evidence in /workspace/downloads/final35/screenshots (home, dark large text and revealed flashcard) on 2026-11-17. The screenshot review is emulator evidence; this documentation pass did not run runtime or hardware tests. Default Material behaviors are described as defaults rather than restated as custom tokens. Nunito, native scrolling, stable recall contrast and system-bar background pairing replace the provisional shorthand with implementation facts.
 
 Ponytail Full controls code simplicity; UI UX Pro Max supplies accessibility/touch/Compose checks; Impeccable supplies visual quality and final rendered review. User brief and native conventions win conflicts. Skill copies and provenance remain in docs/tooling.md. No generic web hover, CSS breakpoint or synthetic tonal-ramp rules are added to this Android system.
+
+## Kamus 1.1
+
+The first viewport uses the existing Nunito and Material 3 tokens. It shows a compact labelled search field, browse filters, alphabet and discovery controls, then English headwords with Indonesian summaries. Search switches to language controls. The alphabet dialog uses a wrapping grid of 48 dp targets. The dictionary keeps its position when returning from detail. Each row opens the existing sense picker and Memo save action. Corpus information now appears in Setelan.

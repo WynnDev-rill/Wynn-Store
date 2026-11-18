@@ -1,12 +1,12 @@
 # VocaMemo
 
-Native Android English–Indonesian dictionary and personal vocabulary practice. Kotlin, Jetpack Compose, Material 3, Room and SQLite. Version **1.0.0** (code 1), Android **8.0/API 26+**.
+Native Android English–Indonesian dictionary and personal vocabulary practice. Kotlin, Jetpack Compose, Material 3, Room and SQLite. Version **1.1.0** (code 2), Android **8.0/API 26+**.
 
 ## Install
-Download **VocaMemo.apk** from [VocaMemo Releases](https://github.com/WynnDev-rill/Wynn-Store/releases/tag/vocamemo-v1.0.0), open it on Android and allow installation from your download app when Android asks. All core features work from first launch without login or internet. Install an offline English voice in Android's Text-to-speech settings for pronunciation. Keep the same package and signing key when updating.
+Download **VocaMemo.apk** from [VocaMemo Releases](https://github.com/WynnDev-rill/Wynn-Store/releases/tag/vocamemo-v1.1.0), open it on Android and allow installation from your download app when Android asks. All core features work from first launch without login or internet. Install an offline English voice in Android's Text-to-speech settings for pronunciation. Keep the same package and signing key when updating.
 
 ## Daily use
-1. **Kamus**: type an English base word. Open the result, read the part of speech and source context, then save an individual Indonesian meaning. IPA and Tatoeba examples appear where available; context remains English from the source.
+1. **Kamus**: browse immediately, jump A–Z, filter unsaved words or explore a random selection. Search English headwords or Indonesian meanings, with labelled spelling and base-form suggestions. Open the result, read the part of speech and source context, then save an individual Indonesian meaning. IPA and Tatoeba examples appear where available; context remains English from the source.
 2. **Memo**: search personal vocabulary; filter by collection, favourites, learning or mastered. Tap a memo to edit the selected meaning, collection and personal note, mark mastered or delete with confirmation.
 3. **Latihan**: choose EN → ID or ID → EN and an optional collection. Use due-card spaced repetition, flashcards, unlimited mechanical loops, typed answers, a 60-second speed test, or a parallel word/meaning list. All modes exclude words marked mastered.
 4. **Statistik**: actual review counts, accuracy, last seven local calendar days, difficult words and daily goal. Untested automatic loops do not create fictitious progress.

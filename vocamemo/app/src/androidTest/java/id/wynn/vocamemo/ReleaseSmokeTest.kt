@@ -2,8 +2,12 @@ package id.wynn.vocamemo
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.uiautomator.*
-import org.junit.Assert.*
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiObject2
+import androidx.test.uiautomator.Until
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -12,29 +16,41 @@ class ReleaseSmokeTest {
     private val device
         get() = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
+    private fun node(selector: BySelector): UiObject2 =
+        checkNotNull(device.wait(Until.findObject(selector), 20000)) {
+            "Visible control: $selector"
+        }
+
+    // Invoked by the device script against the installed 1.0.0 compatibility fixture.
     @Test
-    fun productionLookupMemoAndTtsOffline() {
-        val d = device
-        d.pressHome()
-        d.executeShellCommand("am start -W -S -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n id.wynn.vocamemo/.MainActivity")
-        val input = d.wait(Until.findObject(By.clazz("android.widget.EditText")), 15000)
-        assertNotNull("Release search control", input)
-        input.text = "apple"
-        assertTrue(
-            d.wait(Until.hasObject(By.text("apel")), 15000) ||
-                d.wait(Until.hasObject(By.textContains("arti / konteks")), 10000)
-        )
-        d.findObjects(By.text("apple")).last().click()
-        val save = d.wait(Until.findObject(By.text("Simpan")), 15000)
-        assertNotNull("Release senses", save)
-        d.findObject(By.desc("Dengarkan pengucapan"))?.click()
-        save.click()
-        d.findObject(By.text("Memo")).click()
-        assertTrue("Saved production memo", d.wait(Until.hasObject(By.text("apel")), 10000))
-        d.pressHome()
-        d.executeShellCommand("am start -W -S -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n id.wynn.vocamemo/.MainActivity")
-        assertNotNull(d.wait(Until.findObject(By.text("Memo")), 45000))
-        d.findObject(By.text("Memo")).click()
-        assertTrue("Memo after process restart", d.wait(Until.hasObject(By.text("apel")), 10000))
+    fun seedLegacyMemo() {
+        if (InstrumentationRegistry.getArguments().getString("upgradePhase") != "seed") return
+        lookupAndSave()
+        node(By.text("Latihan")).click()
+        node(By.text("Mulai pengulangan adaptif")).click()
+        node(By.text("Tampilkan jawaban")).click()
+        node(By.text("Ingat")).click()
+        node(By.text("Sesi selesai."))
+    }
+
+    @Test
+    fun productionLookupAndRetainedMemoOffline() {
+        node(By.text("Semua Kata"))
+        node(By.text("Memo")).click()
+        node(By.text("apel"))
+        node(By.text("Kamus")).click()
+        val input = node(By.clazz("android.widget.EditText"))
+        input.text = "light"
+        node(By.clazz("android.widget.TextView").text("light")).click()
+        node(By.desc("Dengarkan pengucapan")).click()
+        node(By.text("kata sifat"))
+    }
+
+    private fun lookupAndSave() {
+        node(By.clazz("android.widget.EditText")).text = "apple"
+        node(By.clazz("android.widget.TextView").text("apple")).click()
+        node(By.text("Simpan")).click()
+        node(By.text("Memo")).click()
+        assertTrue(device.wait(Until.hasObject(By.text("apel")), 15000))
     }
 }

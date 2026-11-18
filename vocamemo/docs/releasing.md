@@ -1,6 +1,6 @@
 # Signing, release and update operations
 
-Application ID `id.wynn.vocamemo`; release 1.0.0 / versionCode 1. Update identity is anchored in `signing-certificate.sha256`. A new RSA-4096 production key was created for VocaMemo, outside Git. The key and recovery credentials must be kept in a private vault and secure secondary backup. Never generate a replacement key for an update.
+Application ID `id.wynn.vocamemo`; release 1.1.0 / versionCode 2. Update identity is anchored in `signing-certificate.sha256`. A new RSA-4096 production key was created for VocaMemo, outside Git. The key and recovery credentials must be kept in a private vault and secure secondary backup. Never generate a replacement key for an update.
 
 ## Actions Secrets
 Repository WynnDev-rill/Wynn-Store needs:

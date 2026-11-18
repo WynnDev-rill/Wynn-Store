@@ -1,4 +1,4 @@
-VocaMemo 1.0.0 — Wynn Dev
+VocaMemo 1.1.0 — Wynn Dev
 Source code: MIT (see repository LICENSE).
 
 DICTIONARY: WikDict, Karl Bartel; Wiktionary contributors, via DBnary (GETALP). Official SQLite snapshot 2_2026-06 (23 June 2026).
@@ -27,3 +27,37 @@ ICON: Adapted from the user-supplied VocaMemo image using OpenAI image generatio
 RESEARCH REFERENCES (inspiration, no affiliation): AnkiDroid, WordWeb, Oxford Learner's Dictionaries, Quizlet. UI references: Terabit Projects / TERABIT IT on Dribbble; UI Ants on Dribbble; Flashcards education mobile app on Behance. These products and reference artwork are not included in the application.
 
 PRIVACY: No account, analytics, advertising or cloud sync. Personal data stays in the app's private local Room database. Android backup is disabled; export/import JSON is explicit through the system file picker. Internet is used for GitHub update checks/downloads and external sources you open. TTS selects an installed English voice that does not require network. No vocabulary is sent to an AI service.
+
+WordNet 3.0 Copyright 2006 by Princeton University. Licensed exception lists supply English inflection aliases only. See WordNet-LICENSE.txt for the complete notice.
+
+WordNet Release 3.0
+
+This software and database is being provided to you, the LICENSEE, by  
+Princeton University under the following license.  By obtaining, using  
+and/or copying this software and database, you agree that you have  
+read, understood, and will comply with these terms and conditions.:  
+  
+Permission to use, copy, modify and distribute this software and  
+database and its documentation for any purpose and without fee or  
+royalty is hereby granted, provided that you agree to comply with  
+the following copyright notice and statements, including the disclaimer,  
+and that the same appear on ALL copies of the software, database and  
+documentation, including modifications that you make for internal  
+use or for distribution.  
+  
+WordNet 3.0 Copyright 2006 by Princeton University.  All rights reserved.  
+  
+THIS SOFTWARE AND DATABASE IS PROVIDED "AS IS" AND PRINCETON  
+UNIVERSITY MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR  
+IMPLIED.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, PRINCETON  
+UNIVERSITY MAKES NO REPRESENTATIONS OR WARRANTIES OF MERCHANT-  
+ABILITY OR FITNESS FOR ANY PARTICULAR PURPOSE OR THAT THE USE  
+OF THE LICENSED SOFTWARE, DATABASE OR DOCUMENTATION WILL NOT  
+INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR  
+OTHER RIGHTS.  
+  
+The name of Princeton University or Princeton may not be used in  
+advertising or publicity pertaining to distribution of the software  
+and/or database.  Title to copyright in this software, database and  
+any associated documentation shall at all times remain with  
+Princeton University and LICENSEE agrees to preserve same.  

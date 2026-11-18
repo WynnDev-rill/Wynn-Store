@@ -219,7 +219,7 @@ fun VocaScreen(vm: VocaModel, fromUpdate: Boolean = false) {
                     vm.practice != null -> PracticeScreen(vm, tts)
                     settings -> SettingsScreen(vm)
                     vm.selected.isNotEmpty() -> WordScreen(vm, memos, tts)
-                    vm.page == "Kamus" -> DictionaryScreen(vm, reviews)
+                    vm.page == "Kamus" -> DictionaryScreen(vm, memos)
                     vm.page == "Memo" -> MemoScreen(vm, memos, tts)
                     vm.page == "Latihan" -> PracticeHome(vm, memos)
                     else -> StatisticsScreen(vm, memos, reviews)
@@ -289,165 +289,6 @@ private fun Pill(text: String, icon: ImageVector? = null) {
     }
 }
 
-@Composable
-private fun DictionaryScreen(vm: VocaModel, reviews: List<Review>) {
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        item { Title("Satu kata,\nbanyak kemungkinan.", "Temukan artinya. Simpan yang berarti.") }
-        item {
-            OutlinedTextField(
-                value = vm.query,
-                onValueChange = vm::search,
-                label = { Text("Cari kata Inggris") },
-                placeholder = { Text("Misalnya: remember") },
-                leadingIcon = { Icon(Icons.Rounded.Search, null) },
-                trailingIcon = {
-                    if (vm.query.isNotEmpty())
-                        IconButton(onClick = { vm.search("") }) {
-                            Icon(Icons.Rounded.Close, "Hapus pencarian")
-                        }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.fillMaxWidth().testTagCompat("search"),
-            )
-        }
-        if (vm.query.isBlank()) {
-            item {
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = RoundedCornerShape(24.dp),
-                ) {
-                    Column(
-                        Modifier.padding(22.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Icon(Icons.Rounded.OfflineBolt, null)
-                            Text(
-                                "Selalu siap, bahkan offline",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                        Text(
-                            if (vm.count == 0) "Menyiapkan kamus lokal…"
-                            else
-                                "${String.format(Locale.US,"%,d",vm.count)} kata • arti per konteks • tanpa akun"
-                        )
-                        Text(
-                            "Arti dipilih dari WikDict, bukan dibuat oleh AI.",
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                }
-            }
-            item {
-                Text(
-                    "Mulai dari sebuah kata",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                FlowRowCompat {
-                    listOf("learn", "remember", "beautiful", "light", "bank").forEach { word ->
-                        SuggestionChip(onClick = { vm.search(word) }, label = { Text(word) })
-                    }
-                }
-            }
-            item {
-                val today = todayReviews(reviews)
-                Card(
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
-                        ),
-                    shape = RoundedCornerShape(24.dp),
-                ) {
-                    Column(
-                        Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Text(
-                            "Sedikit setiap hari.",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text("${today.size} dari ${vm.goal} latihan hari ini")
-                        LinearProgressIndicator(
-                            progress = { (today.size.toFloat() / vm.goal).coerceIn(0f, 1f) },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        TextButton(onClick = { vm.page("Latihan") }) {
-                            Text("Lanjutkan hafalan")
-                            Icon(Icons.AutoMirrored.Rounded.ArrowForward, null)
-                        }
-                    }
-                }
-            }
-        } else if (vm.searching)
-            item {
-                LinearProgressIndicator(Modifier.fillMaxWidth())
-                Text("Mencari di kamus lokal…")
-            }
-        else if (vm.results.isEmpty())
-            item {
-                Hint(
-                    Icons.Rounded.SearchOff,
-                    "Kata belum ditemukan",
-                    "Periksa ejaan atau coba bentuk dasar. Kamus ini memuat entri yang tersedia di sumber, sehingga cakupannya belum mencakup semua kata.",
-                )
-            }
-        else {
-            item {
-                Text(
-                    "${vm.results.size}${if(vm.results.size==80)"+" else ""} hasil • Inggris → Indonesia",
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
-            items(vm.results, key = { it.word }) { result ->
-                Card(
-                    onClick = { vm.openWord(result.word) },
-                    shape = RoundedCornerShape(20.dp),
-                    colors =
-                        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(18.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(
-                            Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Text(
-                                result.word,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                result.summary.replace(" | ", ", "),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Text(
-                                "${result.senses} arti / konteks",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null)
-                    }
-                }
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FlowRowCompat(content: @Composable () -> Unit) {
@@ -459,8 +300,6 @@ private fun FlowRowCompat(content: @Composable () -> Unit) {
     }
 }
 
-private fun Modifier.testTagCompat(tag: String) = this.then(Modifier.semantics { testTag = tag })
-
 @Composable
 private fun WordScreen(vm: VocaModel, memos: List<Memo>, tts: Pronouncer) {
     val context = LocalContext.current
@@ -471,7 +310,7 @@ private fun WordScreen(vm: VocaModel, memos: List<Memo>, tts: Pronouncer) {
         item {
             TextButton(onClick = vm::closeWord) {
                 Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
-                Text("Kembali ke pencarian")
+                Text("Kembali ke Kamus")
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -1588,6 +1427,9 @@ private fun SettingsScreen(vm: VocaModel) {
                 "Tentang data & privasi",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
+            )
+            Text(
+                "Kamus offline · ${java.text.NumberFormat.getIntegerInstance(Locale.forLanguageTag("id-ID")).format(vm.count)} kata dari WikDict"
             )
             Text(
                 "Kamus dan progres tersimpan lokal. Koneksi hanya digunakan untuk memeriksa dan mengunduh rilis GitHub, atau ketika Anda membuka tautan sumber. Tanpa login, iklan, analitik, atau AI berbayar."

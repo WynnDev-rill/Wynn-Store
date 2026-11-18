@@ -72,6 +72,29 @@ class VocaModel(app: Application, private val saved: SavedStateHandle) : Android
     var searching by mutableStateOf(false)
         private set
 
+    var language by mutableStateOf(saved.get<String>("dictionaryLanguage") ?: "en")
+        private set
+
+    internal var wordFilter by mutableStateOf(saved.get<WordFilter>("wordFilter") ?: WordFilter.All)
+        private set
+
+    var alphabet by mutableStateOf(saved.get<String>("alphabet") ?: "")
+        private set
+
+    var browseRows by mutableStateOf<List<WordResult>>(emptyList())
+        private set
+
+    var browseBusy by mutableStateOf(false)
+        private set
+
+    var browseMore by mutableStateOf(true)
+        private set
+
+    var browseError by mutableStateOf(false)
+        private set
+
+    val dictionaryScroll = androidx.compose.foundation.lazy.LazyListState()
+
     var count by mutableIntStateOf(0)
         private set
 
@@ -111,10 +134,12 @@ class VocaModel(app: Application, private val saved: SavedStateHandle) : Android
 
     private var searchJob: Job? = null
     private var detailJob: Job? = null
+    private var browseJob: Job? = null
+    private var lastDiscovery: String? = null
 
     init {
         launch { count = withContext(Dispatchers.IO) { root.dictionary.count() } }
-        if (query.isNotBlank()) search(query)
+        if (query.isNotBlank()) search(query) else loadWords()
         checkUpdates(false)
     }
 
@@ -141,14 +166,16 @@ class VocaModel(app: Application, private val saved: SavedStateHandle) : Android
         results = emptyList()
         if (query.isBlank()) {
             searching = false
+            if (browseRows.isEmpty()) loadWords()
             return
         }
         searching = true
         val q = query
+        val direction = language
         searchJob = launch {
             try {
                 delay(180)
-                val found = withContext(Dispatchers.IO) { root.dictionary.search(q) }
+                val found = withContext(Dispatchers.IO) { root.dictionary.search(q, direction) }
                 if (query == q) results = found
             } finally {
                 if (query == q) searching = false
@@ -156,7 +183,68 @@ class VocaModel(app: Application, private val saved: SavedStateHandle) : Android
         }
     }
 
-    fun openWord(word: String) {
+    fun changeLanguage(value: String) {
+        language = value
+        saved["dictionaryLanguage"] = value
+        search(query)
+    }
+
+    internal fun browse(filter: WordFilter, letter: String = "") {
+        wordFilter = filter
+        alphabet = letter
+        saved["wordFilter"] = filter
+        saved["alphabet"] = letter
+        browseJob?.cancel()
+        browseRows = emptyList()
+        browseMore = true
+        browseBusy = false
+        loadWords()
+    }
+
+    fun loadWords() {
+        if (browseBusy || !browseMore) return
+        val filter = wordFilter
+        val start = alphabet.lowercase()
+        val cursor = browseRows.lastOrNull()?.cursor
+        browseBusy = true
+        browseError = false
+        browseJob = launch {
+            try {
+                val rows =
+                    withContext(Dispatchers.IO) {
+                        if (filter == WordFilter.Random) root.dictionary.random()
+                        else root.dictionary.browse(cursor, start)
+                    }
+                browseRows = browseRows + rows
+                browseMore = filter != WordFilter.Random && rows.size == PAGE_SIZE
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                browseError = true
+            } finally {
+                if (kotlin.coroutines.coroutineContext.isActive) browseBusy = false
+            }
+        }
+    }
+
+    fun discover() {
+        launch {
+            val last = lastDiscovery
+            val match =
+                withContext(Dispatchers.IO) {
+                    val savedWords =
+                        store.dao.allMemos().mapTo(hashSetOf()) { dictionaryKey(it.word) }
+                    root.dictionary.discover(savedWords, last)
+                }
+            if (match == null) report("Semua kata sudah tersimpan di Memo.")
+            else {
+                lastDiscovery = match.key
+                openWord(match.word)
+            }
+        }
+    }
+
+    fun openWord(word: String, preferredMeaning: String? = null) {
         detailJob?.cancel()
         selected = word
         senses = emptyList()
@@ -166,7 +254,11 @@ class VocaModel(app: Application, private val saved: SavedStateHandle) : Android
             try {
                 val data =
                     withContext(Dispatchers.IO) {
-                        root.dictionary.senses(word) to root.dictionary.examples(word)
+                        val entries = root.dictionary.senses(word)
+                        val ranked =
+                            if (preferredMeaning == null) entries
+                            else entries.sortedByDescending { preferredMeaning in it.translations }
+                        ranked to root.dictionary.examples(word)
                     }
                 if (selected == word) {
                     senses = data.first
@@ -416,4 +508,10 @@ class VocaModel(app: Application, private val saved: SavedStateHandle) : Android
             }
         }
     }
+}
+
+internal enum class WordFilter(val label: String) {
+    All("Semua Kata"),
+    Random("Acak"),
+    Unsaved("Belum Disimpan"),
 }

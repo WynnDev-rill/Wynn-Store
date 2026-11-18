@@ -46,7 +46,7 @@ jobs:
         env:
           VERIFIED_SHA: ${{ steps.verified.outputs.sha }}
         run: |
-          git diff --exit-code "$VERIFIED_SHA" HEAD -- vocamemo/app vocamemo/gradle vocamemo/build.gradle.kts vocamemo/settings.gradle.kts vocamemo/gradle.properties vocamemo/scripts/device-tests.sh .github/workflows/vocamemo-android.yml
+          git diff --exit-code "$VERIFIED_SHA" HEAD -- vocamemo/app vocamemo/distribution vocamemo/gradle vocamemo/build.gradle.kts vocamemo/settings.gradle.kts vocamemo/gradle.properties vocamemo/scripts/device-tests.sh .github/workflows/vocamemo-android.yml
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

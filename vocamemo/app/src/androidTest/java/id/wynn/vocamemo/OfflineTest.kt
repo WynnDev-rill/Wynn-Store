@@ -33,6 +33,23 @@ class OfflineTest {
     }
 
     @Test
+    fun browsePagingAndSearchDirections() {
+        val d = Dictionary(context)
+        val first = d.browse(null, "")
+        val second = d.browse(first.last().cursor, "")
+        assertEquals(64, first.size)
+        assertTrue(first.last().cursor < second.first().cursor)
+        assertTrue(d.browse(null, "z").first().cursor.startsWith("z"))
+        assertTrue(d.search("buku", "id").any { it.word == "book" && it.summary == "buku" })
+        assertTrue(d.search("aple").any { it.word == "apple" && it.suggestion != null })
+        assertTrue(d.search("bkuu", "id").any { it.word == "book" && it.suggestion != null })
+        assertTrue(d.search("running").any { it.word == "run" && it.suggestion != null })
+        val discovered = d.discover(first.mapTo(hashSetOf()) { it.key }, second.first().key)!!
+        assertFalse(first.any { it.key == discovered.key })
+        assertNotEquals(second.first().key, discovered.key)
+    }
+
+    @Test
     fun progressIsAtomicBackupIsValidated() = runBlocking {
         val db = Room.inMemoryDatabaseBuilder(context, VocaDatabase::class.java).build()
         try {
