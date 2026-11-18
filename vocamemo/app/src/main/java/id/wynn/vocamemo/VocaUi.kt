@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -119,6 +120,7 @@ internal fun VocaSearch(
     trailing: @Composable (() -> Unit)? = null,
 ) {
     val colors = MaterialTheme.colorScheme
+    val focus = LocalFocusManager.current
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
@@ -135,6 +137,9 @@ internal fun VocaSearch(
         ),
         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
             imeAction = androidx.compose.ui.text.input.ImeAction.Search,
+        ),
+        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+            onSearch = { focus.clearFocus() },
         ),
     )
 }

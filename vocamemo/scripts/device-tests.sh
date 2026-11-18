@@ -54,7 +54,9 @@ PYDATA
 rm device-results/local-check.db*
 adb shell am start -W -n id.wynn.vocamemo/.MainActivity | tee device-results/release-launch.txt
 run_tests device-results/upgrade-smoke.txt -e class "$smoke#productionLookupAndRetainedMemoOffline"
-run_tests device-results/instrumentation.txt -e notClass "$smoke"
+# Run onboarding before the other tests create a database in the isolated debug package.
+run_tests device-results/fresh-guest.txt -e class id.wynn.vocamemo.UiTest#freshInstallCanContinueAsGuest -e freshGuest true
+run_tests device-results/instrumentation.txt -e notClass "$smoke,id.wynn.vocamemo.UiTest#freshInstallCanContinueAsGuest"
 adb shell am start -W -n id.wynn.vocamemo/.MainActivity
 sleep 3
 adb shell pidof id.wynn.vocamemo

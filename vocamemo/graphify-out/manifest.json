@@ -12,9 +12,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/java/id/wynn/vocamemo/UiTest.kt": {
-    "mtime": 1795012596.146384,
-    "seen": 1795012734.5646932,
-    "ast_hash": "02442b1e7a191bd24aa1049c9f47964c",
+    "mtime": 1795013676.2089245,
+    "seen": 1795013795.5017984,
+    "ast_hash": "091d9653085efa2bbfeb389b233a11d3",
     "semantic_hash": ""
   },
   "app/src/main/java/id/wynn/vocamemo/Data.kt": {
@@ -36,9 +36,9 @@
     "semantic_hash": ""
   },
   "app/src/main/java/id/wynn/vocamemo/MainActivity.kt": {
-    "mtime": 1795012763.6811295,
-    "seen": 1795012864.8318906,
-    "ast_hash": "b06a162298d53ed4103f04e9df0e12d6",
+    "mtime": 1795013676.2070594,
+    "seen": 1795013795.5018048,
+    "ast_hash": "e2a3b8f7d10eba71c5c9cf77d20c6265",
     "semantic_hash": ""
   },
   "app/src/main/java/id/wynn/vocamemo/Theme.kt": {
@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "scripts/device-tests.sh": {
-    "mtime": 1795012580.4411836,
-    "seen": 1795012734.5647182,
-    "ast_hash": "3df5f00c8e51880ebccd8da830cc15b3",
+    "mtime": 1795013676.2095165,
+    "seen": 1795013795.5018206,
+    "ast_hash": "9546741060789d40461dcc0a1198f01d",
     "semantic_hash": ""
   },
   "scripts/project-version.py": {
@@ -228,9 +228,9 @@
     "semantic_hash": ""
   },
   "QA.md": {
-    "mtime": 1795012862.3517182,
-    "seen": 1795012864.831925,
-    "ast_hash": "bb83876bcac9a8e4f50f91f8ec3d51f0",
+    "mtime": 1795012870.7916727,
+    "seen": 1795013795.501833,
+    "ast_hash": "e023bb323092db675c9af86f993026c3",
     "semantic_hash": ""
   },
   "app/src/main/java/id/wynn/vocamemo/DictionaryScreen.kt": {
@@ -270,9 +270,9 @@
     "semantic_hash": ""
   },
   "app/src/main/java/id/wynn/vocamemo/VocaUi.kt": {
-    "mtime": 1795012596.144466,
-    "seen": 1795012734.5647073,
-    "ast_hash": "618d10aef76a86e18d2b1401fc7dfe06",
+    "mtime": 1795013676.207986,
+    "seen": 1795013795.5018106,
+    "ast_hash": "b04f86dc27b43212dc440d451894957a",
     "semantic_hash": ""
   },
   "app/src/main/java/id/wynn/vocamemo/WordPhotos.kt": {

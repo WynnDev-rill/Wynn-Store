@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -134,7 +135,9 @@ fun VocaScreen(vm: VocaModel, fromUpdate: Boolean = false) {
     var account by rememberSaveable { mutableStateOf(false) }
     val welcome = !settings && (vm.showWelcome || account)
     val showNav = vm.practice == null && !settings && !welcome
+    val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     val goToPage: (String) -> Unit = {
+        if (vm.page != it) snackbar.currentSnackbarData?.dismiss()
         vm.page(it)
         vm.closeWord()
     }
@@ -216,10 +219,10 @@ fun VocaScreen(vm: VocaModel, fromUpdate: Boolean = false) {
                 }
             },
             bottomBar = {
-                if (showNav && !wide) VocaNavigation(vm.page, goToPage)
+                if (showNav && !wide && !keyboardVisible) VocaNavigation(vm.page, goToPage)
             },
         ) { padding ->
-            Row(Modifier.fillMaxSize().padding(padding).imePadding()) {
+            Row(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
                 if (showNav && wide) VocaRail(vm.page, goToPage)
                 Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.TopCenter) {
                     Box(Modifier.widthIn(max = 740.dp).fillMaxSize()) {

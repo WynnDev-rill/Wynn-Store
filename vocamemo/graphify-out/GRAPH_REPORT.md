@@ -4,12 +4,12 @@
 - cluster-only mode — file stats not available
 
 ## Summary
-- 470 nodes · 811 edges · 35 communities (11 shown, 24 thin omitted)
+- 472 nodes · 816 edges · 35 communities (11 shown, 24 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 36 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a297b5b4`
+- Built from commit: `c3c58398`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -35,7 +35,6 @@
 - Community 24
 - Community 28
 - Community 29
-- Community 31
 
 ## God Nodes (most connected - your core abstractions)
 1. `VocaModel` - 41 edges
@@ -44,8 +43,8 @@
 4. `Dictionary` - 17 edges
 5. `MemoScreen()` - 15 edges
 6. `Updates` - 13 edges
-7. `VocaDao` - 12 edges
-8. `UiTest` - 11 edges
+7. `UiTest` - 12 edges
+8. `VocaDao` - 12 edges
 9. `WordScreen()` - 10 edges
 10. `Review` - 10 edges
 
@@ -99,11 +98,11 @@ Cohesion: 0.40
 Nodes (4): Global constraints, Review focus, Tasks, VocaMemo Implementation Plan
 
 ### Community 14 - "Community 14"
-Cohesion: 0.17
-Nodes (6): Dictionary, Example, indonesianRoots(), Sense, TypoDistance, WordResult
+Cohesion: 0.11
+Nodes (7): OfflineTest, Dictionary, Example, indonesianRoots(), Sense, TypoDistance, WordResult
 
 ### Community 17 - "Community 17"
-Cohesion: 0.13
+Cohesion: 0.14
 Nodes (3): VocaNavigation(), VocaRail(), VocaSearch()
 
 ### Community 29 - "Community 29"
@@ -112,22 +111,22 @@ Nodes (3): DictionaryScreen(), WordPhoto, WordTile()
 
 ## Knowledge Gaps
 - **4 isolated node(s):** `All`, `Illustrated`, `Random`, `Unsaved`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 186 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 187 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **24 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `VocaModel` connect `Community 7` to `Community 0`, `Community 3`, `Community 14`, `Community 19`, `Community 28`, `Community 29`?**
-  _High betweenness centrality (0.130) - this node is a cross-community bridge._
+  _High betweenness centrality (0.129) - this node is a cross-community bridge._
 - **Are the 5 inferred relationships involving `Memo` (e.g. with `.persistentRoomReopens()` and `.progressIsAtomicBackupIsValidated()`) actually correct?**
   _`Memo` has 5 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `All`, `Illustrated`, `Random` to the rest of the system?**
   _4 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.09292929292929293 - nodes in this community are weakly interconnected._
-- **Why does `Memo` connect `Community 2` to `Community 0`, `Community 6`, `Community 7`, `Community 8`, `Community 10`, `Community 28`, `Community 29`?**
-  _High betweenness centrality (0.121) - this node is a cross-community bridge._
+  _Cohesion score 0.08985507246376812 - nodes in this community are weakly interconnected._
+- **Why does `Memo` connect `Community 2` to `Community 0`, `Community 7`, `Community 8`, `Community 10`, `Community 14`, `Community 28`, `Community 29`?**
+  _High betweenness centrality (0.123) - this node is a cross-community bridge._
 - **Are the 6 inferred relationships involving `VocaScreen()` (e.g. with `clearGoogleAccount()` and `WelcomeScreen()`) actually correct?**
   _`VocaScreen()` has 6 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Community 1` be split into smaller, more focused modules?**

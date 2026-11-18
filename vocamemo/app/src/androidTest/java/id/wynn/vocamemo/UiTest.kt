@@ -18,11 +18,24 @@ class UiTest {
 
     @Before
     fun startAsGuest() {
+        if (InstrumentationRegistry.getArguments().getString("freshGuest") == "true") return
         val guest = rule.onAllNodesWithText("Lanjut sebagai tamu")
         if (guest.fetchSemanticsNodes().isNotEmpty()) {
             capture("00-onboarding")
             guest.onFirst().performClick()
         }
+    }
+
+    @Test
+    fun freshInstallCanContinueAsGuest() {
+        if (InstrumentationRegistry.getArguments().getString("freshGuest") != "true") return
+        rule.onNodeWithText("Kenalan dengan kata baru.").assertIsDisplayed()
+        capture("00-onboarding")
+        rule.onNodeWithText("Lanjut sebagai tamu").performClick()
+        rule.onNodeWithTag("search").assertIsDisplayed()
+        rule.activityRule.scenario.recreate()
+        rule.onNodeWithTag("search").assertIsDisplayed()
+        rule.onNodeWithText("Lanjut sebagai tamu").assertDoesNotExist()
     }
 
     private fun capture(name: String) {
