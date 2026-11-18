@@ -8,3 +8,5 @@
 Ponytail defaults to Full; Ultra is available but does not remove explicitly requested features. Skill priority: user brief → repository instructions → native Android conventions → Ponytail code economy + UI UX Pro Max interaction/accessibility + Impeccable visual craft. No third-party skill can authorize unrelated repository or account operations.
 
 Graphify 0.9.112 installed in an isolated uv environment, Codex skill installed globally and in .codex/skills/graphify. Run `uv tool install graphifyy==0.9.112`, `graphify install --project --platform codex`, then `scripts/refresh-graph.sh`. Local AST extraction needs no AI API or cloud upload. Query: `graphify query "How does grading persist review and schedule?"`. Generated graph is committed after final source verification.
+
+Impeccable shipped role prompts are vendored under .agents/roles for later independent finish reviews and documentation. Nunito static weights are reproduced with fontTools 4.61.1 via scripts/prepare-fonts.py; this is a development-only dependency.

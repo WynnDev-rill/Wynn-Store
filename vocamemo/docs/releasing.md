@@ -30,3 +30,12 @@ Initial upload endpoint rejected the workspace integration credential with HTTP 
 Dictionary refresh: bump the versioned copied asset filename in Dictionary.kt (currently dictionary-v1.db) whenever changing the bundled database; otherwise existing installs retain their prior cached dictionary. Verify/copy the new generation atomically, preserve the separate personal Room database and retain source licences. Never use destructive Room migrations for an update.
 
 Initial or staged publication can use the separate `VocaMemo Publish Verified Release` workflow with a successful VocaMemo Android run ID. It requires successful build/API26/API35 jobs, rejects changed production/test inputs, rechecks the pinned signature/source fingerprint/package/version, publishes using Actions' own token, and activates only the VocaMemo stable feed. Documentation-only changes may be included in the release tag after verification. Public releases are never silently replaced by this workflow.
+
+## ArithMemo-style private signing recovery
+Use `python3 scripts/with-signing.py ./gradlew testDebugUnitTest lintRelease assembleRelease`. Set `VOCAMEMO_SIGNING_FILE` to a private signing.json on another workstation. Credentials are passed through environment variables, never printed.
+
+The original VocaMemo key is backed up with authenticated AES-256-GCM in `/workspace/private/VocaMemo-signing-backup.vmkey`; the separate password is `/workspace/private/VocaMemo-recovery-password.txt`. Both are mode 600, outside Git. Restore was tested against the original keystore bytes. Store archive and recovery password separately in secure storage. Restore:
+```
+uv run --with cryptography python scripts/signing-backup.py restore /safe/VocaMemo-signing-backup.vmkey /safe/empty-directory
+```
+Enter the password at the prompt. The helper refuses repository destinations and updates the restored keystore path. Never replace this key for an update.

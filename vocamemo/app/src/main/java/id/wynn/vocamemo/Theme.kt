@@ -27,6 +27,11 @@ private val Light =
         surface = Color(0xFFFFFFFF),
         onSurface = Color(0xFF172842),
         surfaceVariant = Color(0xFFE7EDF8),
+        surfaceContainerLowest = Color.White,
+        surfaceContainerLow = Color(0xFFF4F7FD),
+        surfaceContainer = Color(0xFFEEF3FC),
+        surfaceContainerHigh = Color(0xFFE7EDF8),
+        surfaceContainerHighest = Color(0xFFE7EDF8),
         onSurfaceVariant = Color(0xFF475770),
         outline = Color(0xFF718099),
     )
@@ -47,6 +52,11 @@ private val Dark =
         surface = Color(0xFF18253A),
         onSurface = Color(0xFFE5EDFF),
         surfaceVariant = Color(0xFF28364D),
+        surfaceContainerLowest = Color(0xFF0B1423),
+        surfaceContainerLow = Color(0xFF142035),
+        surfaceContainer = Color(0xFF18253A),
+        surfaceContainerHigh = Color(0xFF223149),
+        surfaceContainerHighest = Color(0xFF28364D),
         onSurfaceVariant = Color(0xFFC1CDE2),
         outline = Color(0xFF91A1BC),
     )

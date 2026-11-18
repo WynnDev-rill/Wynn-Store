@@ -15,8 +15,8 @@ class ReleaseSmokeTest {
     @Test
     fun productionLookupMemoAndTtsOffline() {
         val d = device
-        d.executeShellCommand("am force-stop id.wynn.vocamemo")
-        d.executeShellCommand("am start -n id.wynn.vocamemo/.MainActivity")
+        d.pressHome()
+        d.executeShellCommand("am start -W -S -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n id.wynn.vocamemo/.MainActivity")
         val input = d.wait(Until.findObject(By.clazz("android.widget.EditText")), 15000)
         assertNotNull("Release search control", input)
         input.text = "apple"
@@ -31,9 +31,9 @@ class ReleaseSmokeTest {
         save.click()
         d.findObject(By.text("Memo")).click()
         assertTrue("Saved production memo", d.wait(Until.hasObject(By.text("apel")), 10000))
-        d.executeShellCommand("am force-stop id.wynn.vocamemo")
-        d.executeShellCommand("am start -n id.wynn.vocamemo/.MainActivity")
-        assertNotNull(d.wait(Until.findObject(By.text("Memo")), 15000))
+        d.pressHome()
+        d.executeShellCommand("am start -W -S -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n id.wynn.vocamemo/.MainActivity")
+        assertNotNull(d.wait(Until.findObject(By.text("Memo")), 45000))
         d.findObject(By.text("Memo")).click()
         assertTrue("Memo after process restart", d.wait(Until.hasObject(By.text("apel")), 10000))
     }

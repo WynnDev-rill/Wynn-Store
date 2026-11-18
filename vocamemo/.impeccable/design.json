@@ -1,30 +1,207 @@
 {
-  "platform": "android",
-  "colors": {
-    "primary": "#245CCA",
-    "background": "#F4F7FD",
-    "surface": "#FFFFFF",
-    "text": "#172842",
-    "secondaryText": "#475770",
-    "bookmark": "#FFE8A6"
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-17T17:38:51.083191+00:00",
+  "title": "Design System: VocaMemo",
+  "extensions": {
+    "platform": "android",
+    "sourceFiles": [
+      "app/src/main/java/id/wynn/vocamemo/Theme.kt",
+      "app/src/main/java/id/wynn/vocamemo/MainActivity.kt"
+    ],
+    "typographyMeta": {
+      "display-large": {
+        "displayName": "Display Large",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "display-medium": {
+        "displayName": "Display Medium",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "display-small": {
+        "displayName": "Display Small",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "headline-large": {
+        "displayName": "Headline Large",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "headline-medium": {
+        "displayName": "Headline Medium",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "headline-small": {
+        "displayName": "Headline Small",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "title-large": {
+        "displayName": "Title Large",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "title-medium": {
+        "displayName": "Title Medium",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "title-small": {
+        "displayName": "Title Small",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "body-large": {
+        "displayName": "Body Large",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "body-medium": {
+        "displayName": "Body Medium",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "body-small": {
+        "displayName": "Body Small",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "label-large": {
+        "displayName": "Label Large",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "label-medium": {
+        "displayName": "Label Medium",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      },
+      "label-small": {
+        "displayName": "Label Small",
+        "purpose": "Inherited Material 3 role with bundled Nunito."
+      }
+    },
+    "motion": [
+      {
+        "name": "recall-content",
+        "value": "Compose animateContentSize + AnimatedContent defaults",
+        "purpose": "Answer change and growing card content; follows Android animation duration scale."
+      },
+      {
+        "name": "mechanical-reveal-delay",
+        "value": "3000ms",
+        "purpose": "Resumed-only mechanical autoplay before revealing."
+      },
+      {
+        "name": "mechanical-advance-delay",
+        "value": "2400ms",
+        "purpose": "Resumed-only mechanical autoplay after revealing."
+      }
+    ],
+    "layout": [
+      {
+        "name": "content-max-width",
+        "value": "840dp",
+        "purpose": "Centered single content column."
+      },
+      {
+        "name": "interactive-target-minimum",
+        "value": "48dp",
+        "purpose": "Native Material minimum touch target."
+      },
+      {
+        "name": "recall-min-height",
+        "value": "230dp",
+        "purpose": "Minimum card height; content may grow."
+      }
+    ],
+    "nativeBehavior": {
+      "themes": [
+        "Sistem",
+        "Terang",
+        "Gelap"
+      ],
+      "systemBars": "Window background follows the active background; system-bar icon appearance follows the active theme. Scaffold reserves insets.",
+      "largeText": "Native scrolling and wrapping; existing emulator screenshot includes 150% text presentation.",
+      "background": "Timers and mechanical autoplay pause outside resumed state; speech stops on ON_STOP.",
+      "previewPolicy": "Native Compose component descriptions are authoritative. HTML/CSS previews and invented web states are intentionally omitted.",
+      "palettePolicy": "Only explicit shipped overrides are recorded in DESIGN.md; no synthesized tonal ramps."
+    }
   },
-  "typography": {
-    "family": "Nunito",
-    "bodySp": 16
-  },
-  "spacingDp": [
-    4,
-    8,
-    12,
-    16,
-    20,
-    24,
-    32
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "description": "Material 3 Button; semantic primary/onPrimary, Nunito label, native ripple/focus/disabled states."
+    },
+    {
+      "name": "Outlined Button",
+      "kind": "button",
+      "description": "Material 3 OutlinedButton; secondary actions and wrapping self-grades."
+    },
+    {
+      "name": "Text Button",
+      "kind": "button",
+      "description": "Material 3 TextButton; low-emphasis actions and confirmations."
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "Native labelled OutlinedTextField with 20dp shape, search icon and labelled clear action."
+    },
+    {
+      "name": "Bottom Navigation",
+      "kind": "nav",
+      "refersTo": "bottom-navigation",
+      "description": "Native NavigationBar and NavigationBarItem with four icon-and-label destinations and selected indicator."
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "description": "Native FilterChip for theme, direction and filtering; selected state is explicit."
+    },
+    {
+      "name": "Information Panel",
+      "kind": "card",
+      "refersTo": "information-panel",
+      "description": "Primary tonal panel, 24dp corners, 22dp padding and matched on-color."
+    },
+    {
+      "name": "Recall Card",
+      "kind": "custom",
+      "refersTo": "recall-card",
+      "description": "Stable primary-container card with full-contrast prompt and answer; content animation follows system duration scale."
+    }
   ],
-  "cornerDp": [
-    18,
-    20,
-    24,
-    28
-  ]
+  "narrative": {
+    "northStar": "A meaning carried into memory",
+    "overview": "VocaMemo is a calm, compact native Android learning surface: cool blue ground, white cards, yellow bookmarks and rounded Nunito. The layered flashcard identity connects dictionary lookup to a personal daily recall routine. Indonesian interface copy and source attribution remain readable parts of the interface.\n\nThe implementation uses Kotlin, Jetpack Compose and Material 3. Native touch, back navigation, ripples, system text scaling and lifecycle behavior govern components; these tokens use Android dp and sp, not web layout units.",
+    "keyCharacteristics": [
+      "Blue and white learning surfaces with yellow emphasis.",
+      "Rounded cards and Material rounded vector icons.",
+      "One bundled type family across every Material typography role.",
+      "Scrollable content with focused practice and persistent main navigation."
+    ],
+    "rules": [
+      {
+        "name": "Semantic Pairing",
+        "body": "Use the active Material colorScheme and its matching on-color for each surface; carry the same role into dark mode.",
+        "section": "colors"
+      },
+      {
+        "name": "One Family",
+        "body": "Every Material typography role uses bundled Nunito; retain Android glyph fallback for IPA and other unsupported characters.",
+        "section": "typography"
+      },
+      {
+        "name": "Readable Recall",
+        "body": "The prompt and revealed answer remain full-contrast text in a stable card; motion communicates the answer change without making reading depend on animation.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do use active semantic color pairs and the bundled Nunito weights.",
+      "Do keep text regions content-driven, native scrolling available and action touch targets at least 48dp.",
+      "Do preserve labelled icon actions, Material focus/ripple feedback and Android back behavior.",
+      "Do retain source/sense attribution, distinguish personal notes and keep dictionary licence notices accessible.",
+      "Do check light, dark and 150% text presentations when extending screens."
+    ],
+    "donts": [
+      "Don't hardcode light-theme colors into new screens.",
+      "Don't shrink type or clip text to preserve a screenshot composition.",
+      "Don't dim recall answers, encode correctness through color alone or require animation to understand the card.",
+      "Don't replace native controls with web hover patterns or glyph characters posing as icons.",
+      "Don't advance timers or automatic mechanical repetition while the app is in the background."
+    ]
+  }
 }
