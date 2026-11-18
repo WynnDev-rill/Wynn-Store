@@ -1,6 +1,6 @@
 # Signing, release and update operations
 
-Application ID `id.wynn.vocamemo`; release 1.1.0 / versionCode 2. Update identity is anchored in `signing-certificate.sha256`. A new RSA-4096 production key was created for VocaMemo, outside Git. The key and recovery credentials must be kept in a private vault and secure secondary backup. Never generate a replacement key for an update.
+Application ID `id.wynn.vocamemo`; build 1.2.0 / versionCode 3. Update identity is anchored in `signing-certificate.sha256`. A new RSA-4096 production key was created for VocaMemo, outside Git. The key and recovery credentials must be kept in a private vault and secure secondary backup. Never generate a replacement key for an update.
 
 ## Actions Secrets
 Repository WynnDev-rill/Wynn-Store needs:
@@ -27,7 +27,7 @@ Increment versionCode, versionName and tag; update notes, dataset provenance if 
 
 Initial upload endpoint rejected the workspace integration credential with HTTP 401. The signed APK is therefore staged in Git following the ScreenGuard distribution pattern; no signing key or password enters Git. GitHub Actions publishes with its own scoped GITHUB_TOKEN after all checks pass.
 
-Dictionary refresh: bump the versioned copied asset filename in Dictionary.kt (currently dictionary-v1.db) whenever changing the bundled database; otherwise existing installs retain their prior cached dictionary. Verify/copy the new generation atomically, preserve the separate personal Room database and retain source licences. Never use destructive Room migrations for an update.
+Dictionary refresh: bump the versioned copied asset filename in Dictionary.kt (currently dictionary-v2.db) whenever changing the bundled database; otherwise existing installs retain their prior cached dictionary. Verify/copy the new generation atomically, preserve the separate personal Room database and retain source licences. Never use destructive Room migrations for an update.
 
 Initial or staged publication can use the separate `VocaMemo Publish Verified Release` workflow with a successful VocaMemo Android run ID. It requires successful build/API26/API35 jobs, rejects changed production/test inputs, rechecks the pinned signature/source fingerprint/package/version, publishes using Actions' own token, and activates only the VocaMemo stable feed. Documentation-only changes may be included in the release tag after verification. Public releases are never silently replaced by this workflow.
 

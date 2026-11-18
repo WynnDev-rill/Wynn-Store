@@ -27,6 +27,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.*
@@ -39,9 +42,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -58,7 +59,7 @@ class MainActivity : ComponentActivity() {
             SideEffect {
                 window.setBackgroundDrawable(
                     android.graphics.drawable.ColorDrawable(
-                        if (dark) 0xFF101B2D.toInt() else 0xFFF4F7FD.toInt()
+                        if (dark) 0xFF1D1921.toInt() else 0xFFF8F5FC.toInt()
                     )
                 )
                 androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
@@ -130,6 +131,13 @@ fun VocaScreen(vm: VocaModel, fromUpdate: Boolean = false) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var settings by rememberSaveable { mutableStateOf(fromUpdate) }
+    var account by rememberSaveable { mutableStateOf(false) }
+    val welcome = !settings && (vm.showWelcome || account)
+    val showNav = vm.practice == null && !settings && !welcome
+    val goToPage: (String) -> Unit = {
+        vm.page(it)
+        vm.closeWord()
+    }
     val tts = remember { Pronouncer(context.applicationContext, vm::report) }
     DisposableEffect(lifecycle) {
         val observer = LifecycleEventObserver { _, event ->
@@ -147,82 +155,103 @@ fun VocaScreen(vm: VocaModel, fromUpdate: Boolean = false) {
             vm.message = null
         }
     }
-    BackHandler(settings || vm.selected.isNotEmpty() || vm.practice != null || vm.page != "Kamus") {
+    BackHandler(settings || account || vm.selected.isNotEmpty() || vm.practice != null || vm.page != "Kamus") {
         when {
             settings -> settings = false
+            account -> account = false
             vm.selected.isNotEmpty() -> vm.closeWord()
             vm.practice != null -> vm.end()
             else -> vm.page("Kamus")
         }
     }
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbar) },
-        topBar = {
-            if (vm.practice == null)
-                TopAppBar(
-                    title = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            Image(painterResource(R.drawable.app_icon), null, Modifier.size(38.dp))
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val wide = maxWidth >= 720.dp
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            snackbarHost = { SnackbarHost(snackbar) },
+            topBar = {
+                if (vm.practice == null && !welcome && (settings || vm.selected.isEmpty())) {
+                    TopAppBar(
+                        title = {
                             Text(
-                                if (settings) "Setelan" else "VocaMemo",
+                                when {
+                                    settings -> "Setelan"
+                                    vm.page == "Kamus" -> ""
+                                    vm.page == "Memo" -> "Memo Anda"
+                                    else -> vm.page
+                                },
+                                style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
                             )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { settings = !settings }) {
-                            Icon(
-                                if (settings) Icons.Rounded.Close else Icons.Rounded.Settings,
-                                if (settings) "Tutup setelan" else "Buka setelan",
-                            )
-                        }
-                    },
-                    colors =
-                        TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.background
+                        },
+                        navigationIcon = {
+                            if (settings) {
+                                IconButton(onClick = { settings = false }) {
+                                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Tutup setelan")
+                                }
+                            } else if (vm.page == "Kamus") {
+                                Row(
+                                    Modifier.padding(start = 18.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(9.dp),
+                                ) {
+                                    Image(painterResource(R.drawable.app_icon), null, Modifier.size(28.dp))
+                                    Text("Kamus", style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.ExtraBold)
+                                }
+                            }
+                        },
+                        actions = {
+                            if (!settings) {
+                                IconButton(onClick = { settings = true }) {
+                                    Icon(Icons.Rounded.Settings, "Buka setelan")
+                                }
+                            }
+                        },
+                        expandedHeight = 52.dp,
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.background,
                         ),
-                )
-        },
-        bottomBar = {
-            if (vm.practice == null && !settings)
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-                    listOf(
-                            "Kamus" to Icons.Rounded.Search,
-                            "Memo" to Icons.AutoMirrored.Rounded.MenuBook,
-                            "Latihan" to Icons.Rounded.Style,
-                            "Statistik" to Icons.Rounded.BarChart,
-                        )
-                        .forEach { (label, icon) ->
-                            NavigationBarItem(
-                                selected = vm.page == label,
-                                onClick = {
-                                    vm.page(label)
-                                    vm.closeWord()
+                    )
+                }
+            },
+            bottomBar = {
+                if (showNav && !wide) VocaNavigation(vm.page, goToPage)
+            },
+        ) { padding ->
+            Row(Modifier.fillMaxSize().padding(padding).imePadding()) {
+                if (showNav && wide) VocaRail(vm.page, goToPage)
+                Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.TopCenter) {
+                    Box(Modifier.widthIn(max = 740.dp).fillMaxSize()) {
+                        when {
+                            vm.practice != null -> PracticeScreen(vm, tts)
+                            settings -> SettingsScreen(vm)
+                            welcome -> WelcomeScreen(
+                                firstRun = vm.showWelcome,
+                                onProfile = {
+                                    vm.setGoogleProfile(it)
+                                    if (vm.showWelcome) vm.finishWelcome()
+                                    account = false
+                                    goToPage("Profil")
                                 },
-                                icon = { Icon(icon, null) },
-                                label = { Text(label) },
+                                onGuest = {
+                                    if (vm.showWelcome) vm.finishWelcome()
+                                    account = false
+                                },
+                            )
+                            vm.selected.isNotEmpty() -> WordScreen(vm, memos, tts)
+                            vm.page == "Kamus" -> DictionaryScreen(vm, memos)
+                            vm.page == "Memo" -> MemoScreen(vm, memos, tts)
+                            vm.page == "Latihan" -> PracticeHome(vm, memos)
+                            else -> ProfileScreen(
+                                vm, memos, reviews, onLogin = { account = true },
+                                onSignOut = {
+                                    vm.setGoogleProfile(null)
+                                    scope.launch { clearGoogleAccount(context) }
+                                },
                             )
                         }
-                }
-        },
-    ) { padding ->
-        Box(
-            Modifier.fillMaxSize().padding(padding).imePadding(),
-            contentAlignment = Alignment.TopCenter,
-        ) {
-            Box(Modifier.widthIn(max = 840.dp).fillMaxSize()) {
-                when {
-                    vm.practice != null -> PracticeScreen(vm, tts)
-                    settings -> SettingsScreen(vm)
-                    vm.selected.isNotEmpty() -> WordScreen(vm, memos, tts)
-                    vm.page == "Kamus" -> DictionaryScreen(vm, memos)
-                    vm.page == "Memo" -> MemoScreen(vm, memos, tts)
-                    vm.page == "Latihan" -> PracticeHome(vm, memos)
-                    else -> StatisticsScreen(vm, memos, reviews)
+                    }
                 }
             }
         }
@@ -312,26 +341,43 @@ private fun WordScreen(vm: VocaModel, memos: List<Memo>, tts: Pronouncer) {
                 Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
                 Text("Kembali ke Kamus")
             }
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    vm.selected,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(onClick = { tts.speak(vm.selected) }) {
-                    Icon(Icons.AutoMirrored.Rounded.VolumeUp, "Dengarkan pengucapan")
+            val colors = MaterialTheme.colorScheme
+            val photo = wordPhotos[dictionaryKey(vm.selected)]?.takeIf { asset ->
+                vm.senses.any { it.pos == "noun" && it.context == asset.context }
+            }
+            Column(
+                Modifier.fillMaxWidth().clip(MaterialTheme.shapes.extraLarge)
+                    .background(Brush.linearGradient(listOf(colors.primaryContainer, colors.secondaryContainer)))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                if (photo != null) {
+                    Image(painterResource(photo.drawable), photo.label,
+                        Modifier.fillMaxWidth().height(152.dp)
+                            .clip(MaterialTheme.shapes.medium),
+                        contentScale = ContentScale.Crop, alignment = Alignment.TopCenter)
+                }
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(vm.selected, style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.weight(1f))
+                    FilledTonalIconButton(onClick = { tts.speak(vm.selected) }) {
+                        Icon(Icons.AutoMirrored.Rounded.VolumeUp, "Dengarkan pengucapan")
+                    }
                 }
             }
-            Text(
-                "Pilih arti yang ingin Anda hafalkan.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
+        if (vm.senses.isNotEmpty()) item {
+            Text("Arti & penggunaan", style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold)
+        }
+
         if (vm.detailLoading) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         items(vm.senses, key = { it.id }) { sense ->
-            Card(shape = RoundedCornerShape(20.dp)) {
-                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Card(
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Pill(posLabel(sense.pos))
                     if (sense.ipa.isNotBlank())
                         Text(
@@ -360,7 +406,7 @@ private fun WordScreen(vm: VocaModel, memos: List<Memo>, tts: Pronouncer) {
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.weight(1f),
                             )
-                            TextButton(onClick = { vm.add(sense, meaning) }, enabled = !exists) {
+                            FilledTonalButton(onClick = { vm.add(sense, meaning) }, enabled = !exists) {
                                 Icon(
                                     if (exists) Icons.Rounded.Check else Icons.Rounded.BookmarkAdd,
                                     null,
@@ -462,17 +508,8 @@ private fun MemoScreen(vm: VocaModel, memos: List<Memo>, tts: Pronouncer) {
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        item { Title("Memo Anda", "${memos.size} kata pilihan. Arti yang ingin Anda ingat.") }
         item {
-            OutlinedTextField(
-                search,
-                { search = it },
-                label = { Text("Cari di Memo") },
-                leadingIcon = { Icon(Icons.Rounded.Search, null) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-            )
+            VocaSearch(search, { search = it }, "Cari di Memo", Modifier.fillMaxWidth())
         }
         item {
             FlowRowCompat {
@@ -505,7 +542,11 @@ private fun MemoScreen(vm: VocaModel, memos: List<Memo>, tts: Pronouncer) {
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             ) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        WordTile(memo.word, wordPhotos[dictionaryKey(memo.word)]?.takeIf {
+                            memo.context == it.context && memo.sourceSense.isNotBlank()
+                        }, Modifier.size(42.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
                                 memo.word,
@@ -679,28 +720,27 @@ private fun PracticeHome(vm: VocaModel, memos: List<Memo>) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
-            Title("Beri ingatan\nruang tumbuh.", "Belajar sebentar, ulangi sesering yang Anda mau.")
-        }
-        item {
-            Surface(
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
+            val colors = MaterialTheme.colorScheme
+            Column(
+                Modifier.fillMaxWidth().clip(MaterialTheme.shapes.extraLarge)
+                    .background(Brush.linearGradient(listOf(colors.primaryContainer, colors.secondaryContainer)))
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        "$due kata siap diulang",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text("Spaced repetition menyesuaikan jarak ulang dengan jawaban Anda.")
-                    Button(
-                        onClick = { vm.start("Spaced repetition", reverse, group) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Icon(Icons.Rounded.AutoAwesome, null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Mulai pengulangan adaptif")
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Surface(shape = MaterialTheme.shapes.medium, color = colors.surface) {
+                        Icon(Icons.Rounded.AutoAwesome, null, Modifier.padding(12.dp), tint = colors.primary)
                     }
+                    Column(Modifier.weight(1f)) {
+                        Text("Pengulangan terjadwal", style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold)
+                        Text("$due kata siap diulang", color = colors.onSurfaceVariant)
+                    }
+                }
+                Button(onClick = { vm.start("Spaced repetition", reverse, group) },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Text("Mulai pengulangan adaptif")
                 }
             }
         }
@@ -718,7 +758,7 @@ private fun PracticeHome(vm: VocaModel, memos: List<Memo>) {
         }
         item {
             Text(
-                "Pilih cara mengingat",
+                "Mode latihan",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
             )
@@ -754,12 +794,9 @@ private fun PracticeHome(vm: VocaModel, memos: List<Memo>) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Icon(
-                        icon,
-                        null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(28.dp),
-                    )
+                    Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.tertiaryContainer) {
+                        Icon(icon, null, Modifier.padding(10.dp), tint = MaterialTheme.colorScheme.onTertiaryContainer)
+                    }
                     Column(Modifier.weight(1f)) {
                         Text(
                             mode,
@@ -1060,150 +1097,6 @@ private fun PracticeScreen(vm: VocaModel, tts: Pronouncer) {
         )
 }
 
-private fun todayReviews(reviews: List<Review>): List<Review> {
-    val start = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-    return reviews.filter { it.time >= start }
-}
-
-@Composable
-private fun StatisticsScreen(vm: VocaModel, memos: List<Memo>, reviews: List<Review>) {
-    val today = todayReviews(reviews)
-    val difficult = memos.filter { it.lapses > 0 }.sortedByDescending { it.lapses }.take(10)
-    LazyColumn(
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
-        item {
-            Title(
-                "Setiap ulang\nberarti kemajuan.",
-                "Statistik dari latihan Anda di perangkat ini.",
-            )
-        }
-        item {
-            Card(
-                colors =
-                    CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    ),
-                shape = RoundedCornerShape(24.dp),
-            ) {
-                Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        "Target hari ini",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        "${today.size} / ${vm.goal} jawaban",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    LinearProgressIndicator(
-                        progress = { (today.size.toFloat() / vm.goal).coerceIn(0f, 1f) },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Text(
-                        if (today.size >= vm.goal)
-                            "Target tercapai. Sampai jumpa di latihan berikutnya."
-                        else "${(vm.goal-today.size).coerceAtLeast(0)} jawaban lagi menuju target."
-                    )
-                }
-            }
-        }
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatRow("Kosakata tersimpan", "${memos.size}")
-                StatRow("Sudah dikuasai", "${memos.count{it.mastered}}")
-                StatRow("Jawaban sepanjang waktu", "${reviews.size}")
-                StatRow(
-                    "Akurasi sepanjang waktu",
-                    if (reviews.isEmpty()) "Belum ada data"
-                    else "${reviews.count{it.correct}*100/reviews.size}%",
-                )
-                StatRow(
-                    "Akurasi hari ini",
-                    if (today.isEmpty()) "Belum ada data"
-                    else "${today.count{it.correct}*100/today.size}%",
-                )
-            }
-        }
-        item {
-            Text(
-                "Tujuh hari terakhir",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                (6 downTo 0).forEach { i ->
-                    val date = LocalDate.now().minusDays(i.toLong())
-                    val n =
-                        reviews.count {
-                            Instant.ofEpochMilli(it.time)
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDate() == date
-                        }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Text(
-                            "${date.dayOfMonth}/${date.monthValue}",
-                            modifier = Modifier.width(48.dp),
-                        )
-                        LinearProgressIndicator(
-                            progress = { (n.toFloat() / vm.goal).coerceIn(0f, 1f) },
-                            modifier = Modifier.weight(1f),
-                        )
-                        Text(n.toString(), modifier = Modifier.widthIn(min = 24.dp))
-                    }
-                }
-            }
-        }
-        item {
-            Text(
-                "Kata yang perlu perhatian",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                "Diurutkan dari jumlah jawaban salah / ulang lagi.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        if (difficult.isEmpty())
-            item {
-                Text(
-                    "Belum ada kata sulit tercatat. Mulai latihan untuk mengenali pola ingatan Anda."
-                )
-            }
-        items(difficult, key = { it.id }) { m ->
-            StatRow("${m.word} · ${m.meaning}", "${m.lapses} kali")
-        }
-        item {
-            Text(
-                "Akurasi = jawaban tepat atau penilaian Sulit/Ingat/Mudah dibagi semua jawaban dinilai. Mode Daftar dan putaran mekanis tidak dihitung. Penguasaan ditandai sendiri di Memo.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatRow(label: String, value: String) {
-    Column {
-        Row(
-            Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(label, Modifier.weight(1f))
-            Text(value, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        }
-        HorizontalDivider()
-    }
-}
-
 @Composable
 private fun SettingsScreen(vm: VocaModel) {
     val context = LocalContext.current
@@ -1271,12 +1164,6 @@ private fun SettingsScreen(vm: VocaModel) {
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        item {
-            Title(
-                "Sesuai ritme Anda.",
-                "VocaMemo ${BuildConfig.VERSION_NAME} • Android native • lokal",
-            )
-        }
         item {
             Text(
                 "Target harian",
@@ -1417,10 +1304,6 @@ private fun SettingsScreen(vm: VocaModel) {
                     Text("Unduh dan pasang update")
                 }
             }
-            Text(
-                "Update diverifikasi dengan checksum dan sertifikat signing yang sama, lalu dipasang melalui persetujuan Android.",
-                style = MaterialTheme.typography.bodySmall,
-            )
         }
         item {
             Text(
@@ -1432,13 +1315,12 @@ private fun SettingsScreen(vm: VocaModel) {
                 "Kamus offline · ${java.text.NumberFormat.getIntegerInstance(Locale.forLanguageTag("id-ID")).format(vm.count)} kata dari WikDict"
             )
             Text(
-                "Kamus dan progres tersimpan lokal. Koneksi hanya digunakan untuk memeriksa dan mengunduh rilis GitHub, atau ketika Anda membuka tautan sumber. Tanpa login, iklan, analitik, atau AI berbayar."
+                "Memo dan progres tersimpan di perangkat. Login Google bersifat opsional dan hanya untuk identitas profil."
             )
             TextButton(onClick = { licenses = true }) { Text("Lisensi, sumber data, dan atribusi") }
-            Text(
-                "Dibuat oleh Wynn Dev.\nKamus komunitas memiliki batas cakupan; gunakan konteks dan sumber asli untuk keputusan penting.",
-                style = MaterialTheme.typography.bodySmall,
-            )
+            Text("VocaMemo ${BuildConfig.VERSION_NAME} · Wynn Dev",
+                style = MaterialTheme.typography.bodySmall)
+
         }
     }
     if (licenses) {

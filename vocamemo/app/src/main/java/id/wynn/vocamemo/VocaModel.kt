@@ -60,7 +60,22 @@ class VocaModel(app: Application, private val saved: SavedStateHandle) : Android
             .observeReviews()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     private val prefs = app.getSharedPreferences("preferences", Context.MODE_PRIVATE)
-    var page by mutableStateOf(saved.get<String>("page") ?: "Kamus")
+    var showWelcome by mutableStateOf(
+        if (prefs.contains("welcomeSeen")) !prefs.getBoolean("welcomeSeen", false)
+        else !app.getDatabasePath("vocamemo-personal.db").exists() &&
+            !java.io.File(app.filesDir, "dictionary-v2.db").exists()
+    )
+        private set
+
+    internal var googleProfile by mutableStateOf(
+        prefs.getString("googleEmail", null)?.let { email ->
+            GoogleProfile(prefs.getString("googleName", null) ?: email, email)
+        }
+    )
+        private set
+
+    private val restoredPage = saved.get<String>("page")
+    var page by mutableStateOf(if (restoredPage == "Statistik") "Profil" else restoredPage ?: "Kamus")
         private set
 
     var query by mutableStateOf(saved.get<String>("query") ?: "")
@@ -138,6 +153,7 @@ class VocaModel(app: Application, private val saved: SavedStateHandle) : Android
     private var lastDiscovery: String? = null
 
     init {
+        if (!prefs.contains("welcomeSeen")) prefs.edit().putBoolean("welcomeSeen", !showWelcome).apply()
         launch { count = withContext(Dispatchers.IO) { root.dictionary.count() } }
         if (query.isNotBlank()) search(query) else loadWords()
         checkUpdates(false)
@@ -153,6 +169,16 @@ class VocaModel(app: Application, private val saved: SavedStateHandle) : Android
                 message = e.message ?: "Operasi gagal. Coba lagi."
             }
         }
+
+    fun finishWelcome() {
+        showWelcome = false
+        prefs.edit().putBoolean("welcomeSeen", true).apply()
+    }
+
+    internal fun setGoogleProfile(profile: GoogleProfile?) {
+        googleProfile = profile
+        prefs.edit().putString("googleName", profile?.name).putString("googleEmail", profile?.email).apply()
+    }
 
     fun page(value: String) {
         page = value
@@ -212,11 +238,14 @@ class VocaModel(app: Application, private val saved: SavedStateHandle) : Android
             try {
                 val rows =
                     withContext(Dispatchers.IO) {
-                        if (filter == WordFilter.Random) root.dictionary.random()
-                        else root.dictionary.browse(cursor, start)
+                        when (filter) {
+                            WordFilter.Random -> root.dictionary.random()
+                            WordFilter.Illustrated -> root.dictionary.illustrated()
+                            else -> root.dictionary.browse(cursor, start)
+                        }
                     }
                 browseRows = browseRows + rows
-                browseMore = filter != WordFilter.Random && rows.size == PAGE_SIZE
+                browseMore = rows.size == PAGE_SIZE && filter != WordFilter.Random && filter != WordFilter.Illustrated
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
@@ -512,6 +541,7 @@ class VocaModel(app: Application, private val saved: SavedStateHandle) : Android
 
 internal enum class WordFilter(val label: String) {
     All("Semua Kata"),
-    Random("Acak"),
     Unsaved("Belum Disimpan"),
+    Illustrated("Bergambar"),
+    Random("Acak"),
 }

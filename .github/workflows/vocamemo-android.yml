@@ -48,6 +48,7 @@ jobs:
           VOCA_STORE_PASSWORD: ${{ secrets.VOCA_STORE_PASSWORD }}
           VOCA_KEY_ALIAS: ${{ secrets.VOCA_KEY_ALIAS }}
           VOCA_KEY_PASSWORD: ${{ secrets.VOCA_KEY_PASSWORD }}
+          VOCA_GOOGLE_WEB_CLIENT_ID: ${{ vars.VOCA_GOOGLE_WEB_CLIENT_ID }}
         run: ./gradlew testDebugUnitTest lintRelease assembleRelease assembleDebug assembleDebugAndroidTest --console=plain
       - name: Verify production signature and prepare feed
         env:

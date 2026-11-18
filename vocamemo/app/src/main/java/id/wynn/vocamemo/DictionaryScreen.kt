@@ -1,6 +1,11 @@
 package id.wynn.vocamemo
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,7 +14,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SortByAlpha
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -41,15 +48,14 @@ internal fun DictionaryScreen(vm: VocaModel, memos: List<Memo>) {
     }
 
     Column(Modifier.fillMaxSize()) {
-        OutlinedTextField(
+        VocaSearch(
             value = vm.query,
-            onValueChange = {
+            onChange = {
                 vm.search(it)
                 toTop()
             },
-            label = { Text("Cari Inggris atau Indonesia") },
-            leadingIcon = { Icon(Icons.Rounded.Search, null) },
-            trailingIcon = {
+            label = "Cari Inggris atau Indonesia",
+            trailing = {
                 if (vm.query.isNotEmpty())
                     IconButton(
                         onClick = {
@@ -60,15 +66,14 @@ internal fun DictionaryScreen(vm: VocaModel, memos: List<Memo>) {
                         Icon(Icons.Rounded.Close, "Hapus pencarian")
                     }
             },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("search"),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp).testTag("search"),
         )
         FlowRow(
-            Modifier.padding(horizontal = 16.dp),
+            Modifier.padding(horizontal = 18.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (browsing) {
-                WordFilter.entries.forEach { filter ->
+                WordFilter.entries.filter { it != WordFilter.Random }.forEach { filter ->
                     FilterChip(
                         selected = vm.wordFilter == filter,
                         onClick = {
@@ -77,6 +82,11 @@ internal fun DictionaryScreen(vm: VocaModel, memos: List<Memo>) {
                             toTop()
                         },
                         label = { Text(filter.label) },
+                        shape = MaterialTheme.shapes.large,
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        ),
                     )
                 }
             } else {
@@ -100,8 +110,9 @@ internal fun DictionaryScreen(vm: VocaModel, memos: List<Memo>) {
         }
         if (browsing) {
             FlowRow(
-                Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                Modifier.fillMaxWidth().padding(horizontal = 14.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.Center,
             ) {
                 TextButton(
                     onClick = {
@@ -109,6 +120,8 @@ internal fun DictionaryScreen(vm: VocaModel, memos: List<Memo>) {
                         alphabetOpen = true
                     }
                 ) {
+                    Icon(Icons.Rounded.SortByAlpha, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
                     Text(
                         if (vm.alphabet.isEmpty()) "Lompat A–Z"
                         else "Lompat A–Z · ${if (vm.alphabet == "{") "#" else vm.alphabet}"
@@ -120,43 +133,65 @@ internal fun DictionaryScreen(vm: VocaModel, memos: List<Memo>) {
                         vm.discover()
                     }
                 ) {
-                    Icon(Icons.Rounded.Shuffle, null, Modifier.size(18.dp))
+                    Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
                     Text("Temukan Kata")
+                }
+                IconButton(onClick = {
+                    focus.clearFocus()
+                    vm.browse(WordFilter.Random)
+                    toTop()
+                }) {
+                    Icon(Icons.Rounded.Shuffle,
+                        if (vm.wordFilter == WordFilter.Random) "Acak lagi" else "Acak daftar kata",
+                        tint = if (vm.wordFilter == WordFilter.Random) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
         if (vm.searching || (browsing && vm.browseBusy))
             LinearProgressIndicator(Modifier.fillMaxWidth())
-        HorizontalDivider()
         LazyColumn(
             state = state,
             modifier = Modifier.weight(1f).fillMaxWidth().testTag("dictionary-list"),
-            contentPadding = PaddingValues(bottom = 12.dp),
+            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 4.dp, bottom = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp),
         ) {
             items(rows, key = { it.key }) { result ->
-                ListItem(
-                    headlineContent = { Text(result.word) },
-                    supportingContent = {
-                        Column {
-                            Text(result.summary)
-                            result.suggestion?.let {
-                                Text(it, color = MaterialTheme.colorScheme.primary)
-                            }
-                        }
-                    },
-                    trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) },
-                    modifier =
-                        Modifier.clickable(role = Role.Button) {
+                Row(
+                    Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)
+                        .background(MaterialTheme.colorScheme.surface)
+                        .clickable(role = Role.Button) {
                             focus.clearFocus(force = true)
                             vm.openWord(
                                 result.word,
                                 result.summary.takeIf { !browsing && vm.language == "id" },
                             )
-                        },
-                )
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                        }.padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    WordTile(result.word, wordPhotos[result.key], Modifier.size(42.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(result.word, style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold)
+                        Text(result.summary, style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        result.suggestion?.let {
+                            Text(it, style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                    if (result.key in savedWords) {
+                        Icon(Icons.Rounded.BookmarkBorder, "Tersimpan", Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary)
+                    }
+                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
+
             if (browsing && vm.browseMore && !vm.browseError)
                 item(key = "next-page") {
                     LaunchedEffect(vm.browseRows.size, vm.browseBusy) { vm.loadWords() }
@@ -169,24 +204,18 @@ internal fun DictionaryScreen(vm: VocaModel, memos: List<Memo>) {
                 }
             if (rows.isEmpty() && !vm.searching && (!browsing || !vm.browseMore))
                 item {
-                    Text(
-                        if (browsing) "Tidak ada kata lain dalam filter ini."
-                        else "Kata belum ditemukan. Coba ejaan atau arah pencarian lain.",
-                        Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
-            if (browsing && vm.wordFilter == WordFilter.Random)
-                item {
-                    TextButton(
-                        onClick = {
-                            vm.browse(WordFilter.Random)
-                            toTop()
+                    Surface(shape = MaterialTheme.shapes.large,
+                        color = MaterialTheme.colorScheme.primaryContainer) {
+                        Column(Modifier.fillMaxWidth().padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(if (browsing) "Daftar ini kosong" else "Kata belum ditemukan",
+                                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(if (browsing) "Pilih Semua Kata untuk menjelajah lagi."
+                                else "Coba ejaan atau arah pencarian lain.")
                         }
-                    ) {
-                        Text("Acak lagi")
                     }
                 }
+
         }
     }
     if (alphabetOpen) {
@@ -203,7 +232,7 @@ internal fun DictionaryScreen(vm: VocaModel, memos: List<Memo>) {
                             onClick = {
                                 alphabetOpen = false
                                 val filter =
-                                    if (vm.wordFilter == WordFilter.Random) WordFilter.All
+                                    if (vm.wordFilter == WordFilter.Random || vm.wordFilter == WordFilter.Illustrated) WordFilter.All
                                     else vm.wordFilter
                                 vm.browse(filter, if (letter == "#") "{" else letter)
                                 toTop()

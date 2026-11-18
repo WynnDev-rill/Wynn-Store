@@ -61,3 +61,43 @@ advertising or publicity pertaining to distribution of the software
 and/or database.  Title to copyright in this software, database and  
 any associated documentation shall at all times remain with  
 Princeton University and LICENSEE agrees to preserve same.  
+
+Poppins (OFL 1.1): see Poppins-OFL.txt. Google sign-in mark: Google Identity branding, https://developers.google.com/identity/branding-guidelines
+
+Vocabulary photographs — Wikimedia Commons. The bundled WebP files are cropped, resized, and distributed under the corresponding image licence.
+
+apple — Abhijit Tembhekar from Mumbai, India · CC BY 2.0
+https://commons.wikimedia.org/wiki/File:Red_Apple.jpg
+https://creativecommons.org/licenses/by/2.0
+
+banana — TimothyPilgrim · CC BY-SA 3.0
+https://commons.wikimedia.org/wiki/File:Bananavarieties.jpg
+https://creativecommons.org/licenses/by-sa/3.0/
+
+butterfly — fesoj · CC BY 2.0
+https://commons.wikimedia.org/wiki/File:Fesoj_-_Papilio_machaon_%28by%29.jpg
+https://creativecommons.org/licenses/by/2.0
+
+cat — Karin Langner-Bahmann, upload von Martin Bahmann · CC BY-SA 3.0
+https://commons.wikimedia.org/wiki/File:Siam_lilacpoint.jpg
+https://creativecommons.org/licenses/by-sa/3.0/
+
+mountain — Luca Galuzzi (Lucag) · CC BY-SA 2.5
+https://commons.wikimedia.org/wiki/File:Everest_North_Face_toward_Base_Camp_Tibet_Luca_Galuzzi_2006.jpg
+https://creativecommons.org/licenses/by-sa/2.5
+
+penguin — Samuel Blanc · CC BY-SA 3.0
+https://commons.wikimedia.org/wiki/File:Emperor_Penguin_Manchot_empereur.jpg
+https://creativecommons.org/licenses/by-sa/3.0
+
+sunflower — Pudelek (Edit by Yzmo) · CC BY-SA 3.0
+https://commons.wikimedia.org/wiki/File:Sunflower_from_Silesia2.jpg
+https://creativecommons.org/licenses/by-sa/3.0
+
+tiger — Charles J. Sharp · CC BY-SA 4.0
+https://commons.wikimedia.org/wiki/File:Walking_tiger_female.jpg
+https://creativecommons.org/licenses/by-sa/4.0
+
+waterfall — Diego Delso · CC BY-SA 4.0
+https://commons.wikimedia.org/wiki/File:Cascada_Dynjandi%2C_Vestfir%C3%B0ir%2C_Islandia%2C_2014-08-14%2C_DD_136-138_HDR.JPG
+https://creativecommons.org/licenses/by-sa/4.0

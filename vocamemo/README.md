@@ -1,15 +1,15 @@
 # VocaMemo
 
-Native Android English–Indonesian dictionary and personal vocabulary practice. Kotlin, Jetpack Compose, Material 3, Room and SQLite. Version **1.1.0** (code 2), Android **8.0/API 26+**.
+Native Android English–Indonesian dictionary and personal vocabulary practice. Kotlin, Jetpack Compose, Material 3, Room and SQLite. Version **1.2.0** (code 3), Android **8.0/API 26+**.
 
 ## Install
-Download **VocaMemo.apk** from [VocaMemo Releases](https://github.com/WynnDev-rill/Wynn-Store/releases/tag/vocamemo-v1.1.0), open it on Android and allow installation from your download app when Android asks. All core features work from first launch without login or internet. Install an offline English voice in Android's Text-to-speech settings for pronunciation. Keep the same package and signing key when updating.
+Install the signed [1.2.0 APK](https://raw.githubusercontent.com/WynnDev-rill/Wynn-Store/main/vocamemo/distribution/VocaMemo-1.2.0.apk) over your existing installation or start as a guest on a fresh install. Allow installation from your download app when Android asks. All core features work without sign-in or internet. Install an offline English voice in Android's Text-to-speech settings for pronunciation. Keep the same package and signing key when updating.
 
 ## Daily use
-1. **Kamus**: browse immediately, jump A–Z, filter unsaved words or explore a random selection. Search English headwords or Indonesian meanings, with labelled spelling and base-form suggestions. Open the result, read the part of speech and source context, then save an individual Indonesian meaning. IPA and Tatoeba examples appear where available; context remains English from the source.
+1. **Kamus**: browse immediately, jump A–Z, filter unsaved or illustrated words or explore a random selection. Search English headwords or Indonesian meanings, with labelled spelling and base-form suggestions. Open the result, read the part of speech and source context, then save an individual Indonesian meaning. IPA and Tatoeba examples appear where available; context remains English from the source.
 2. **Memo**: search personal vocabulary; filter by collection, favourites, learning or mastered. Tap a memo to edit the selected meaning, collection and personal note, mark mastered or delete with confirmation.
 3. **Latihan**: choose EN → ID or ID → EN and an optional collection. Use due-card spaced repetition, flashcards, unlimited mechanical loops, typed answers, a 60-second speed test, or a parallel word/meaning list. All modes exclude words marked mastered.
-4. **Statistik**: actual review counts, accuracy, last seven local calendar days, difficult words and daily goal. Untested automatic loops do not create fictitious progress.
+4. **Profil**: guest or optional Google identity, daily target, activity over seven local calendar days, learning totals, accuracy, difficult words and achievements.
 5. **Setelan**: daily goal, system/light/dark theme, JSON export/merge restore, TTS settings and verified GitHub updates. Export a backup before uninstalling; automatic Android cloud backup is disabled. JSON backup has shared validation limits of 50 MB, 50,000 memos and 100,000 review records; export rejects files beyond those limits instead of producing an unrestorable archive.
 
 Typed answers match the exact selected meaning with case/Unicode/whitespace normalization. A different synonym can be linguistically valid yet fail this specific card; edit the selected meaning in Memo when needed. Self-rating: Ulang lagi, Sulit, Ingat, Mudah. The scheduler is a documented SM-2 adaptation, not a claimed FSRS implementation. Failed cards return after a minute; successful intervals increase with performance.
@@ -17,7 +17,7 @@ Typed answers match the exact selected meaning with case/Unicode/whitespace norm
 ## Trusted offline data
 - 15,725 normalized English headwords / 20,230 contextual senses, official WikDict 2_2026-06. Source `is_good=0` rows are excluded (13,556).
 - 15,589 Tatoeba English–Indonesian sentence pairs, including sentence IDs and contributor attribution. Examples are independent usage, not guaranteed sense alignment.
-- Dictionary derivative CC BY-SA 4.0; sentences CC BY 2.0 France; font Nunito OFL. See [attribution](docs/ATTRIBUTION.txt), [research](docs/research.md), [manifest](app/src/main/assets/dictionary.json).
+- Dictionary derivative CC BY-SA 4.0; sentences CC BY 2.0 France; Nunito and Poppins OFL. Bundled Wikimedia Commons photos have individual licences and credits. See [attribution](app/src/main/assets/ATTRIBUTION.txt), [research](docs/research.md), [manifest](app/src/main/assets/dictionary.json).
 
 This is a substantial community dictionary, not an assertion that every English word or sense is covered or infallible. No AI-generated translations. Kaikki was evaluated; no unreconciled merge was shipped.
 
@@ -31,7 +31,7 @@ python3 scripts/audit-dictionary.py
 ./gradlew connectedDebugAndroidTest
 ```
 
-Release build reads `VOCA_KEYSTORE_PATH`, `VOCA_STORE_PASSWORD`, `VOCA_KEY_ALIAS`, `VOCA_KEY_PASSWORD` from the environment. Missing keys produce an unsigned artifact, never a debug-signed production APK. See [release instructions](docs/releasing.md) and [QA evidence](QA.md). Room schema is exported under app/schemas; future versions require explicit non-destructive migrations.
+Release build reads `VOCA_KEYSTORE_PATH`, `VOCA_STORE_PASSWORD`, `VOCA_KEY_ALIAS`, `VOCA_KEY_PASSWORD` from the environment. Missing keys produce an unsigned artifact, never a debug-signed production APK. See [release instructions](docs/releasing.md) and [QA evidence](QA.md). See [design audit and OAuth configuration](docs/redesign-1.2.md). Room schema is exported under app/schemas; future versions require explicit non-destructive migrations.
 
 Rebuild dataset after downloading the exact source files in the manifest:
 

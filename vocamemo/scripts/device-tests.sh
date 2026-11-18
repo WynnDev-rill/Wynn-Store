@@ -32,8 +32,8 @@ run_tests() {
   fi
 }
 
-# Use the exact APK previously offered to users, with non-debuggable production signing.
-adb install vocamemo/distribution/VocaMemo-1.0.0.apk
+# Use the exact previous public APK, with non-debuggable production signing.
+adb install vocamemo/distribution/VocaMemo-1.1.0.apk
 adb shell am start -W -n id.wynn.vocamemo/.MainActivity
 run_tests device-results/upgrade-seed.txt -e class "$smoke#seedLegacyMemo" -e upgradePhase seed
 adb shell am force-stop id.wynn.vocamemo

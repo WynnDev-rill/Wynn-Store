@@ -56,6 +56,15 @@ class Dictionary(private val context: Context) {
             arrayOf(after ?: start),
         )
 
+    fun illustrated(): List<WordResult> {
+        val keys = wordPhotos.keys.toTypedArray()
+        return words(
+            "SELECT word,summary,senses,search,sort_key,NULL FROM headword WHERE search IN (" +
+                keys.joinToString(",") { "?" } + ") ORDER BY sort_key",
+            keys,
+        )
+    }
+
     fun random(): List<WordResult> =
         words(
             "SELECT word,summary,senses,search,sort_key,NULL FROM headword ORDER BY random() LIMIT $PAGE_SIZE",

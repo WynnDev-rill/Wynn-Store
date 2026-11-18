@@ -7,6 +7,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import java.io.File
 import kotlinx.coroutines.runBlocking
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -14,6 +15,15 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class UiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @Before
+    fun startAsGuest() {
+        val guest = rule.onAllNodesWithText("Lanjut sebagai tamu")
+        if (guest.fetchSemanticsNodes().isNotEmpty()) {
+            capture("00-onboarding")
+            guest.onFirst().performClick()
+        }
+    }
 
     private fun capture(name: String) {
         rule.waitForIdle()
@@ -121,6 +131,16 @@ class UiTest {
         rule.waitUntil(15000) { vm.browseRows.isNotEmpty() }
         rule.onNodeWithText("Semua Kata").assertIsDisplayed()
         capture("01-browse-start")
+        rule.onNodeWithText("Bergambar").performClick()
+        rule.waitUntil(15000) {
+            vm.browseRows.size == wordPhotos.size && vm.browseRows.all { it.key in wordPhotos }
+        }
+        capture("14-photo-category")
+        rule.onNodeWithTag("dictionary-list").performScrollToNode(hasText("apple"))
+        rule.onNodeWithText("apple").performClick()
+        rule.waitUntil(15000) { vm.senses.isNotEmpty() }
+        rule.onNodeWithContentDescription("Apel merah").assertIsDisplayed()
+        rule.onNodeWithText("Kembali ke Kamus").performClick()
         rule.onNodeWithText("Lompat A–Z").performClick()
         capture("02-alphabet-picker")
         rule.onNodeWithText("Z", substring = false).performClick()
@@ -173,9 +193,16 @@ class UiTest {
         }
         capture("05-complete")
         rule.onNodeWithText("Kembali ke Latihan").performClick()
-        rule.onNodeWithText("Statistik", useUnmergedTree = true).performClick()
+        rule.onNodeWithTag("nav-Profil").performClick()
         capture("06-statistik")
-        rule.onNodeWithText("Jawaban sepanjang waktu").assertExists()
+        rule.onNodeWithText("Aktivitas 7 hari").assertExists()
+        rule.onNodeWithText("Masuk dengan Google").performClick()
+        capture("13-google-account")
+        if (BuildConfig.GOOGLE_WEB_CLIENT_ID.isEmpty()) {
+            rule.onNodeWithText("Masuk dengan Google").performClick()
+            rule.onNodeWithText("Login Google belum aktif di build ini.", substring = true).assertExists()
+        }
+        rule.onNodeWithText("Kembali ke Profil").performClick()
         rule.onNodeWithContentDescription("Buka setelan").performClick()
         capture("07-settings")
     }
