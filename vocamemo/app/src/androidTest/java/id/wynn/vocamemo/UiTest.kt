@@ -157,9 +157,11 @@ class UiTest {
             rule.onAllNodesWithText("Simpan").fetchSemanticsNodes().isNotEmpty()
         }
         capture("02-senses")
-        rule.onAllNodesWithText("Simpan").onFirst().performClick()
-        rule.onNodeWithText("Memo", useUnmergedTree = true).performClick()
-        rule.waitUntil(10000) { rule.onAllNodesWithText("apel").fetchSemanticsNodes().isNotEmpty() }
+        rule.onAllNodesWithText("Simpan").onFirst().performScrollTo().performClick()
+        rule.waitUntil(15000) { vm.memos.value.any { it.word == "apple" && it.meaning == "apel" } }
+        rule.onNodeWithText("Memo").performClick()
+        rule.onNodeWithText("Memo Anda").assertIsDisplayed()
+        rule.onNodeWithText("apel").assertIsDisplayed()
         capture("03-memo")
         rule.onNodeWithText("Latihan", useUnmergedTree = true).performClick()
         capture("04-latihan")

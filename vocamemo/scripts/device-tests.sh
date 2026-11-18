@@ -2,13 +2,19 @@
 set -euxo pipefail
 mkdir -p device-results
 adb shell getprop ro.build.version.sdk > device-results/api.txt
-trap 'adb logcat -d -s AndroidRuntime > device-results/runtime.txt || true' EXIT
+trap 'timeout 20 adb logcat -d -s AndroidRuntime > device-results/runtime.txt || true
+      timeout 20 adb pull /sdcard/Android/data/id.wynn.vocamemo.debug/files/screenshots device-results/ || true' EXIT
 adb install -r "$(find device-input -name app-debug.apk -print -quit)"
 adb install -r "$(find device-input -name '*androidTest.apk' -print -quit)"
 # Enforce offline independently of old Android svc implementations.
 # adbd uses the emulator pipe, so guest IP firewalling does not block the test driver.
-adb root
-adb wait-for-device
+for attempt in 1 2 3; do
+  timeout 20 adb wait-for-device || continue
+  adb root || continue
+  timeout 20 adb wait-for-device || continue
+  if [[ $(adb shell id -u | tr -d '\r') == 0 ]]; then break; fi
+done
+test "$(adb shell id -u | tr -d '\r')" = 0
 adb shell iptables -I OUTPUT -j REJECT
 adb shell ip6tables -I OUTPUT -j REJECT
 adb shell iptables -C OUTPUT -j REJECT
@@ -49,7 +55,6 @@ rm device-results/local-check.db*
 adb shell am start -W -n id.wynn.vocamemo/.MainActivity | tee device-results/release-launch.txt
 run_tests device-results/upgrade-smoke.txt -e class "$smoke#productionLookupAndRetainedMemoOffline"
 run_tests device-results/instrumentation.txt -e notClass "$smoke"
-adb pull /sdcard/Android/data/id.wynn.vocamemo.debug/files/screenshots device-results/ || true
 adb shell am start -W -n id.wynn.vocamemo/.MainActivity
 sleep 3
 adb shell pidof id.wynn.vocamemo
