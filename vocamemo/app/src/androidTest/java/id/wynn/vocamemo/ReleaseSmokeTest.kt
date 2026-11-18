@@ -36,14 +36,26 @@ class ReleaseSmokeTest {
     @Test
     fun productionLookupAndRetainedMemoOffline() {
         node(By.text("Semua Kata"))
-        node(By.text("Memo")).click()
+        openTab("Memo", "Memo Anda")
         node(By.text("apel"))
-        node(By.text("Kamus")).click()
+        openTab("Kamus", "Semua Kata")
         val input = node(By.clazz("android.widget.EditText"))
         input.text = "light"
         node(By.clazz("android.widget.TextView").text("light")).click()
         node(By.desc("Dengarkan pengucapan")).click()
         node(By.text("kata sifat"))
+    }
+
+    private fun openTab(label: String, heading: String) {
+        val selector = By.text(heading).pkg("id.wynn.vocamemo")
+        repeat(3) {
+            if (device.hasObject(selector)) return
+            val labelNode = node(By.text(label).pkg("id.wynn.vocamemo"))
+            val target = generateSequence(labelNode) { it.parent }.firstOrNull { it.isClickable }
+            (target ?: labelNode).click()
+            if (device.wait(Until.hasObject(selector), 4000)) return
+        }
+        node(selector)
     }
 
     private fun lookupAndSave() {

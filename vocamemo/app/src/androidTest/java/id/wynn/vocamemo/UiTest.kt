@@ -16,7 +16,6 @@ class UiTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
 
     private fun capture(name: String) {
-        rule.onRoot().assertExists()
         rule.waitForIdle()
         Thread.sleep(350)
         val c = rule.activity

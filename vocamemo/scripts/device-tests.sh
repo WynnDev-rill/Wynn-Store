@@ -32,8 +32,6 @@ adb shell am start -W -n id.wynn.vocamemo/.MainActivity
 run_tests device-results/upgrade-seed.txt -e class "$smoke#seedLegacyMemo" -e upgradePhase seed
 adb shell am force-stop id.wynn.vocamemo
 adb install -r release-input/VocaMemo.apk
-adb shell am start -W -n id.wynn.vocamemo/.MainActivity | tee device-results/release-launch.txt
-run_tests device-results/upgrade-smoke.txt -e class "$smoke#productionLookupAndRetainedMemoOffline"
 # Read the old and upgraded production data through the app and assert the review
 # separately from the presence of the Memo.
 adb shell am force-stop id.wynn.vocamemo
@@ -48,6 +46,8 @@ assert db.execute("select count(*) from reviews where word='apple' and rating=3"
 print("Memo and review survived the update")
 PYDATA
 rm device-results/local-check.db*
+adb shell am start -W -n id.wynn.vocamemo/.MainActivity | tee device-results/release-launch.txt
+run_tests device-results/upgrade-smoke.txt -e class "$smoke#productionLookupAndRetainedMemoOffline"
 run_tests device-results/instrumentation.txt -e notClass "$smoke"
 adb pull /sdcard/Android/data/id.wynn.vocamemo.debug/files/screenshots device-results/ || true
 adb shell am start -W -n id.wynn.vocamemo/.MainActivity
